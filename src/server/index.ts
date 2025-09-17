@@ -164,8 +164,10 @@ export class RDCPServer {
    * Handle RDCP control endpoint
    * Processes debug control operations with tenant isolation
    */
-  async handleControl(body: ControlRequestBody, tenantContext: RDCPTenantContext): Promise<RDCPControlResponse | ReturnType<typeof createRDCPError>> {
-    const { action, categories = [] } = body
+  async handleControl(body: unknown, tenantContext: RDCPTenantContext): Promise<RDCPControlResponse | ReturnType<typeof createRDCPError>> {
+    // Type guard to ensure body has expected shape
+    const requestBody = body as { action?: string; categories?: string[] }
+    const { action, categories = [] } = requestBody
     
     if (!action) {
       return createRDCPError('RDCP_VALIDATION_ERROR', 'Missing action parameter')
