@@ -4,15 +4,126 @@
  * Following RDCP v1.0 protocol specification
  */
 
-const { extractTenantContext, getTenantDebugConfig, createTenantResponse } = require('../utils/tenant.js')
-const { createRDCPError } = require('../validation/errors.js')
+import { 
+  extractTenantContext, 
+  getTenantDebugConfig, 
+  setTenantDebugConfig,
+  createTenantResponse, 
+  RDCPTenantContext,
+  TenantDebugConfig
+} from '../utils/tenant.js'
+import { createRDCPError } from '../validation/errors.js'
+import { RDCPResponse, TenantContext } from '../utils/types.js'
+
+/**
+ * RDCP Server configuration options
+ */
+export interface RDCPServerOptions {
+  debugConfig?: Record<string, boolean>
+  performance?: Record<string, unknown>
+  tenant?: Record<string, unknown>
+}
+
+/**
+ * Discovery endpoint options
+ */
+interface DiscoveryOptions {
+  basePath?: string
+  tenant?: RDCPTenantContext
+}
+
+/**
+ * RDCP Discovery response structure
+ */
+interface RDCPDiscoveryResponse extends RDCPResponse {
+  endpoints: {
+    discovery: string
+    control: string
+    status: string
+    health: string
+  }
+  capabilities: {
+    authentication: string[]
+    isolation: string[]
+    categories: string[]
+  }
+  tenant?: TenantContext
+}
+
+/**
+ * Control request body structure
+ */
+interface ControlRequestBody {
+  action: string
+  categories?: string[]
+}
+
+/**
+ * Control response change
+ */
+interface ControlChange {
+  category: string
+  action: 'enabled' | 'disabled'
+  tenantScope: string
+  isolationLevel: string
+}
+
+/**
+ * RDCP Control response structure
+ */
+interface RDCPControlResponse extends RDCPResponse {
+  tenant: TenantContext
+  changes: ControlChange[]
+  status: 'success' | 'failed'
+}
+
+/**
+ * Category status information
+ */
+interface CategoryStatus {
+  enabled: boolean
+  tenantScope: string
+}
+
+/**
+ * RDCP Status response structure
+ */
+interface RDCPStatusResponse extends RDCPResponse {
+  tenant: TenantContext
+  categories: Record<string, CategoryStatus>
+  performance: {
+    impact: {
+      cpu: string
+      memory: string
+    }
+    activeCategories: number
+  }
+}
+
+/**
+ * RDCP Health response structure
+ */
+interface RDCPHealthResponse extends RDCPResponse {
+  status: 'healthy' | 'degraded' | 'unhealthy'
+  version: string
+  uptime: number
+  system: {
+    nodeVersion: string
+    platform: string
+    arch: string
+  }
+}
 
 /**
  * RDCP Server utility class
  * Handles all RDCP v1.0 endpoints with tenant context support
  */
-class RDCPServer {
-  constructor(options = {}) {
+export class RDCPServer {
+  private debugConfig: Record<string, boolean>
+  private performance: Record<string, unknown>
+  private tenant: Record<string, unknown>
+
+  constructor(options: RDCPServerOptions = {}) {
     this.debugConfig = options.debugConfig || {}
     this.performance = options.performance || {}
     this.tenant = options.tenant || {}
@@ -21,14 +132,11 @@ class RDCPServer {
   /**
    * Handle RDCP discovery endpoint
    * Returns available endpoints and capabilities
-   * 
-   * @param {Object} options - Discovery options
-   * @param {string} options.basePath - Base path for RDCP endpoints
-   * @param {Object} options.tenant - Tenant context (optional)
-   * @returns {Object} RDCP discovery response
    */
-  handleDiscovery({ basePath = '/rdcp/v1', tenant } = {}) {
-    const response = {
+  handleDiscovery(options: DiscoveryOptions = {}): RDCPDiscoveryResponse {
+    const { basePath = '/rdcp/v1', tenant } = options
+
+    const response: RDCPDiscoveryResponse = {
       protocol: 'rdcp/1.0',
       timestamp: new Date().toISOString(),
       endpoints: {
@@ -55,12 +163,8 @@ class RDCPServer {
   /**
    * Handle RDCP control endpoint
    * Processes debug control operations with tenant isolation
-   * 
-   * @param {Object} body - Request body
-   * @param {Object} tenantContext - Tenant context
-   * @returns {Object} RDCP control response
    */
-  async handleControl(body, tenantContext) {
+  async handleControl(body: ControlRequestBody, tenantContext: RDCPTenantContext): Promise<RDCPControlResponse | ReturnType<typeof createRDCPError>> {
     const { action, categories = [] } = body
     
     if (!action) {
@@ -69,14 +173,15 @@ class RDCPServer {
 
     // Get tenant-specific configuration
     const tenantConfig = getTenantDebugConfig(tenantContext.tenantId)
-    const changes = []
+    const changes: ControlChange[] = []
 
     try {
       switch (action) {
         case 'enable':
           categories.forEach(category => {
             if (category in tenantConfig) {
-              tenantConfig[category] = true
+              const updatedConfig: Partial<TenantDebugConfig> = { [category]: true }
+              setTenantDebugConfig(tenantContext.tenantId, updatedConfig)
               changes.push({
                 category,
                 action: 'enabled',
@@ -90,7 +195,8 @@ class RDCPServer {
         case 'disable':
           categories.forEach(category => {
             if (category in tenantConfig) {
-              tenantConfig[category] = false
+              const updatedConfig: Partial<TenantDebugConfig> = { [category]: false }
+              setTenantDebugConfig(tenantContext.tenantId, updatedConfig)
               changes.push({
                 category,
                 action: 'disabled',
@@ -113,25 +219,23 @@ class RDCPServer {
         status: 'success'
       }
     } catch (error) {
-      return createRDCPError('RDCP_CONTROL_ERROR', `Control operation failed: ${error.message}`)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      return createRDCPError('RDCP_SERVER_ERROR', `Control operation failed: ${errorMessage}`)
     }
   }
 
   /**
    * Handle RDCP status endpoint
    * Returns current debug status with tenant isolation
-   * 
-   * @param {Object} tenantContext - Tenant context
-   * @returns {Object} RDCP status response
    */
-  handleStatus(tenantContext) {
+  handleStatus(tenantContext: RDCPTenantContext): RDCPStatusResponse {
     // Get tenant-specific configuration
     const tenantConfig = getTenantDebugConfig(tenantContext.tenantId)
     
-    const categories = {}
+    const categories: Record<string, CategoryStatus> = {}
     Object.keys(tenantConfig).forEach(category => {
       categories[category] = {
-        enabled: tenantConfig[category],
+        enabled: tenantConfig[category as keyof TenantDebugConfig],
         tenantScope: tenantContext.tenantId
       }
     })
@@ -146,7 +250,7 @@ class RDCPServer {
           cpu: '0.1%',
           memory: '1MB'
         },
-        activeCategories: Object.keys(tenantConfig).filter(cat => tenantConfig[cat]).length
+        activeCategories: Object.keys(tenantConfig).filter(cat => tenantConfig[cat as keyof TenantDebugConfig]).length
       }
     }
   }
@@ -154,10 +258,8 @@ class RDCPServer {
   /**
    * Handle RDCP health endpoint
    * Returns system health status (global, not tenant-specific)
-   * 
-   * @returns {Object} RDCP health response
    */
-  handleHealth() {
+  handleHealth(): RDCPHealthResponse {
     return {
       protocol: 'rdcp/1.0',
       timestamp: new Date().toISOString(),
@@ -171,8 +273,4 @@ class RDCPServer {
       }
     }
   }
-}
-
-module.exports = {
-  RDCPServer
 }

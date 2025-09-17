@@ -56,7 +56,7 @@ export default [
   // Server SDK bundle
   {
     ...baseConfig,
-    input: 'src/server/index.js',
+    input: 'src/server/index.ts',
     output: [
       {
         file: 'dist/server/index.js',
@@ -100,12 +100,11 @@ export default [
     output: { file: 'dist/client/index.d.ts', format: 'es' },
     plugins: [dts()],
   },
-  // Skip server type definitions since it's JavaScript
-  // {
-  //   input: 'src/server/index.ts',
-  //   output: { file: 'dist/server/index.d.ts', format: 'es' },
-  //   plugins: [dts()],
-  // },
+  {
+    input: 'src/server/index.ts',
+    output: { file: 'dist/server/index.d.ts', format: 'es' },
+    plugins: [dts()],
+  },
   {
     input: 'src/auth/index.ts',
     output: { file: 'dist/auth/index.d.ts', format: 'es' },

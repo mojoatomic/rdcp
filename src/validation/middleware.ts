@@ -5,7 +5,7 @@
 
 import { Request, Response, NextFunction } from 'express'
 import { ZodSchema, ZodError } from 'zod'
-import { controlRequestSchema } from './index.js'
+import { controlRequestSchema } from './schemas.js'
 import { createValidationError, createRDCPError, RDCP_ERROR_CODES } from './errors.js'
 
 /**
