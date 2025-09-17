@@ -19,6 +19,16 @@
 import { describe, test, expect, beforeEach, afterEach } from '@jest/globals'
 import { validateRDCPAuth, basicAuthenticator, extractApiKey } from '../src/auth/index.js'
 import type { RDCPAuthResult } from '../src/auth/types.js'
+import type { Request } from 'express'
+
+// Helper to create minimal Express Request mock
+function createMockRequest(headers: Record<string, string>): Request {
+  return {
+    headers,
+    get: (name: string) => headers[name.toLowerCase()],
+    header: (name: string) => headers[name.toLowerCase()]
+  } as Request
+}
 
 describe('RDCP Authentication (TypeScript + Context7)', () => {
   // Following WARP.md security requirements - minimum 32 characters
@@ -45,7 +55,7 @@ describe('RDCP Authentication (TypeScript + Context7)', () => {
     })
 
     test('returns properly typed RDCPAuthResult', () => {
-      const mockRequest = { headers: {} }
+      const mockRequest = createMockRequest({})
       const result = validateRDCPAuth(mockRequest)
       
       // TypeScript interface validation - NO any types
@@ -56,7 +66,7 @@ describe('RDCP Authentication (TypeScript + Context7)', () => {
     })
 
     test('rejects request without required RDCP headers (RDCP v1.0 compliance)', () => {
-      const mockRequest = { headers: {} }
+      const mockRequest = createMockRequest({})
       const result = validateRDCPAuth(mockRequest)
       
       expect(result.valid).toBe(false)
@@ -66,13 +76,11 @@ describe('RDCP Authentication (TypeScript + Context7)', () => {
     })
 
     test('rejects short API key with proper RDCP error format', () => {
-      const mockRequest = { 
-        headers: { 
-          'x-rdcp-auth-method': 'api-key',
-          'x-rdcp-client-id': 'test-client',
-          'x-api-key': shortApiKey 
-        }
-      }
+      const mockRequest = createMockRequest({ 
+        'x-rdcp-auth-method': 'api-key',
+        'x-rdcp-client-id': 'test-client',
+        'x-api-key': shortApiKey 
+      })
       const result = validateRDCPAuth(mockRequest)
       
       expect(result.valid).toBe(false)
@@ -85,14 +93,12 @@ describe('RDCP Authentication (TypeScript + Context7)', () => {
       // Set environment variable to match our test key
       process.env.RDCP_API_KEY = validApiKey
       
-      const mockRequest = {
-        headers: { 
-          'x-rdcp-auth-method': 'api-key',
-          'x-rdcp-client-id': 'test-client',
-          'x-rdcp-request-id': 'test-request-123',
-          'x-api-key': validApiKey 
-        }
-      }
+      const mockRequest = createMockRequest({ 
+        'x-rdcp-auth-method': 'api-key',
+        'x-rdcp-client-id': 'test-client',
+        'x-rdcp-request-id': 'test-request-123',
+        'x-api-key': validApiKey 
+      })
       const result = validateRDCPAuth(mockRequest)
       
       expect(result.valid).toBe(true)
@@ -103,13 +109,11 @@ describe('RDCP Authentication (TypeScript + Context7)', () => {
     test('rejects invalid API key with constant-time security', () => {
       process.env.RDCP_API_KEY = 'different-32-character-key-for-testing'
       
-      const mockRequest = {
-        headers: { 
-          'x-rdcp-auth-method': 'api-key',
-          'x-rdcp-client-id': 'test-client',
-          'x-api-key': validApiKey 
-        }
-      }
+      const mockRequest = createMockRequest({ 
+        'x-rdcp-auth-method': 'api-key',
+        'x-rdcp-client-id': 'test-client',
+        'x-api-key': validApiKey 
+      })
       const result = validateRDCPAuth(mockRequest)
       
       expect(result.valid).toBe(false)
@@ -122,13 +126,11 @@ describe('RDCP Authentication (TypeScript + Context7)', () => {
     test('supports basic security level (API key authentication)', () => {
       process.env.RDCP_API_KEY = validApiKey
       
-      const mockRequest = {
-        headers: { 
-          'x-rdcp-auth-method': 'api-key',
-          'x-rdcp-client-id': 'basic-client',
-          'x-api-key': validApiKey
-        }
-      }
+      const mockRequest = createMockRequest({ 
+        'x-rdcp-auth-method': 'api-key',
+        'x-rdcp-client-id': 'basic-client',
+        'x-api-key': validApiKey
+      })
       const result = validateRDCPAuth(mockRequest)
       
       expect(result.valid).toBe(true)
@@ -139,13 +141,11 @@ describe('RDCP Authentication (TypeScript + Context7)', () => {
     test('supports standard security level (Bearer tokens)', () => {
       process.env.RDCP_API_KEY = validApiKey
       
-      const mockRequest = {
-        headers: { 
-          'x-rdcp-auth-method': 'bearer',
-          'x-rdcp-client-id': 'standard-client',
-          'authorization': `Bearer ${validApiKey}`
-        }
-      }
+      const mockRequest = createMockRequest({ 
+        'x-rdcp-auth-method': 'bearer',
+        'x-rdcp-client-id': 'standard-client',
+        'authorization': `Bearer ${validApiKey}`
+      })
       const result = validateRDCPAuth(mockRequest)
       
       expect(result.valid).toBe(true)
@@ -157,13 +157,11 @@ describe('RDCP Authentication (TypeScript + Context7)', () => {
     test('supports enterprise security level (mTLS preparation)', () => {
       process.env.RDCP_API_KEY = validApiKey
       
-      const mockRequest = {
-        headers: { 
-          'x-rdcp-auth-method': 'mtls',
-          'x-rdcp-client-id': 'enterprise-client',
-          'x-api-key': validApiKey
-        }
-      }
+      const mockRequest = createMockRequest({ 
+        'x-rdcp-auth-method': 'mtls',
+        'x-rdcp-client-id': 'enterprise-client',
+        'x-api-key': validApiKey
+      })
       const result = validateRDCPAuth(mockRequest)
       
       expect(result.valid).toBe(true)
@@ -174,13 +172,11 @@ describe('RDCP Authentication (TypeScript + Context7)', () => {
     test('supports hybrid authentication method', () => {
       process.env.RDCP_API_KEY = validApiKey
       
-      const mockRequest = {
-        headers: { 
-          'x-rdcp-auth-method': 'hybrid',
-          'x-rdcp-client-id': 'hybrid-client',
-          'x-api-key': validApiKey
-        }
-      }
+      const mockRequest = createMockRequest({ 
+        'x-rdcp-auth-method': 'hybrid',
+        'x-rdcp-client-id': 'hybrid-client',
+        'x-api-key': validApiKey
+      })
       const result = validateRDCPAuth(mockRequest)
       
       expect(result.valid).toBe(true)
@@ -198,7 +194,7 @@ describe('RDCP Authentication (TypeScript + Context7)', () => {
 
     test('validates all required RDCP headers are present', () => {
       process.env.RDCP_API_KEY = validApiKey
-      const mockRequest = { headers: validHeaders }
+      const mockRequest = createMockRequest(validHeaders)
       const result = validateRDCPAuth(mockRequest)
       
       expect(result.valid).toBe(true)
@@ -207,12 +203,10 @@ describe('RDCP Authentication (TypeScript + Context7)', () => {
     })
 
     test('rejects missing X-RDCP-Auth-Method (CRITICAL header)', () => {
-      const mockRequest = { 
-        headers: { 
-          'x-rdcp-client-id': 'test-client-123',
-          'x-api-key': validApiKey
-        }
-      }
+      const mockRequest = createMockRequest({ 
+        'x-rdcp-client-id': 'test-client-123',
+        'x-api-key': validApiKey
+      })
       const result = validateRDCPAuth(mockRequest)
       
       expect(result.valid).toBe(false)
@@ -227,13 +221,11 @@ describe('RDCP Authentication (TypeScript + Context7)', () => {
       process.env.RDCP_API_KEY = validApiKey
       
       validMethods.forEach(method => {
-        const mockRequest = { 
-          headers: { 
-            'x-rdcp-auth-method': method,
-            'x-rdcp-client-id': 'test-client-123',
-            'x-api-key': validApiKey
-          }
-        }
+        const mockRequest = createMockRequest({ 
+          'x-rdcp-auth-method': method,
+          'x-rdcp-client-id': 'test-client-123',
+          'x-api-key': validApiKey
+        })
         const result = validateRDCPAuth(mockRequest)
         
         expect(result.valid).toBe(true)
@@ -242,13 +234,11 @@ describe('RDCP Authentication (TypeScript + Context7)', () => {
     })
 
     test('rejects invalid auth method values', () => {
-      const mockRequest = { 
-        headers: { 
-          'x-rdcp-auth-method': 'invalid-method',
-          'x-rdcp-client-id': 'test-client-123',
-          'x-api-key': validApiKey
-        }
-      }
+      const mockRequest = createMockRequest({ 
+        'x-rdcp-auth-method': 'invalid-method',
+        'x-rdcp-client-id': 'test-client-123',
+        'x-api-key': validApiKey
+      })
       const result = validateRDCPAuth(mockRequest)
       
       expect(result.valid).toBe(false)
@@ -264,9 +254,7 @@ describe('RDCP Authentication (TypeScript + Context7)', () => {
     })
 
     test('extracts key from x-api-key header', () => {
-      const mockRequest = {
-        headers: { 'x-api-key': 'test-key' }
-      }
+      const mockRequest = createMockRequest({ 'x-api-key': 'test-key' })
       const result = extractApiKey(mockRequest)
       
       expect(result).toBe('test-key')
@@ -274,16 +262,14 @@ describe('RDCP Authentication (TypeScript + Context7)', () => {
     })
 
     test('extracts key from Authorization Bearer header', () => {
-      const mockRequest = {
-        headers: { 'authorization': 'Bearer test-key' }
-      }
+      const mockRequest = createMockRequest({ 'authorization': 'Bearer test-key' })
       const result = extractApiKey(mockRequest)
       
       expect(result).toBe('test-key')
     })
 
     test('returns undefined when no key present (strict TypeScript)', () => {
-      const mockRequest = { headers: {} }
+      const mockRequest = createMockRequest({})
       const result = extractApiKey(mockRequest)
       
       expect(result).toBeUndefined()
@@ -299,7 +285,7 @@ describe('RDCP Authentication (TypeScript + Context7)', () => {
 
   describe('TypeScript Type Safety (Context7 - NO any types)', () => {
     test('authentication result maintains strict type safety', () => {
-      const mockRequest = { headers: {} }
+      const mockRequest = createMockRequest({})
       const result: RDCPAuthResult = validateRDCPAuth(mockRequest)
       
       // TypeScript compilation passing means types are correct - NO any types used

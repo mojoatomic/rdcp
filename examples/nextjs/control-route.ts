@@ -2,13 +2,27 @@
 // Runtime Control endpoint - copy this to your Next.js app
 // IMPORTANT: Use relative imports, no @/ imports in API routes
 
-import { validateRDCPAuth } from '../../../../src/auth' // Adjust path as needed
-import { enableDebugCategories, disableDebugCategories, DEBUG_CONFIG } from '../../../../src/debug' // Adjust path as needed
-import { controlRequestSchema } from '../../../../src/schemas' // Adjust path as needed
+import { validateRDCPAuth } from '../../src/auth'
+import { enableDebugCategories, disableDebugCategories, DEBUG_CONFIG } from '../../src/debug'
+import { controlRequestSchema } from '../../src/schemas'
+
+// Helper to convert Next.js Web API Request to Express-compatible request
+function createExpressCompatibleRequest(request: Request) {
+  const headers: Record<string, string> = {}
+  request.headers.forEach((value, key) => {
+    headers[key.toLowerCase()] = value
+  })
+  return {
+    headers,
+    get: (name: string) => headers[name.toLowerCase()],
+    header: (name: string) => headers[name.toLowerCase()]
+  } as any // Type assertion needed for Next.js Web API compatibility
+}
 
 export async function POST(request: Request): Promise<Response> {
-  // RDCP authentication
-  const auth = validateRDCPAuth(request)
+  // RDCP authentication - convert Web API Request to Express-compatible format
+  const expressRequest = createExpressCompatibleRequest(request)
+  const auth = validateRDCPAuth(expressRequest)
   if (!auth.valid) {
     return Response.json(
       {
@@ -36,7 +50,7 @@ export async function POST(request: Request): Promise<Response> {
     switch (controlRequest.action) {
       case 'enable':
         enableDebugCategories(categories)
-        changes.push(...categories.map(cat => ({
+        changes.push(...categories.map((cat: string) => ({
           category: cat,
           previousState: false,
           newState: true,
@@ -46,7 +60,7 @@ export async function POST(request: Request): Promise<Response> {
 
       case 'disable':
         disableDebugCategories(categories)
-        changes.push(...categories.map(cat => ({
+        changes.push(...categories.map((cat: string) => ({
           category: cat,
           previousState: true,
           newState: false,

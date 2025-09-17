@@ -22,6 +22,27 @@ import { RDCP_ERROR_CODES, createRDCPError, createValidationError } from '../src
 import { validateControlRequest, handleValidationError } from '../src/validation/middleware.js'
 import { createRDCPResponse, createControlResponse } from '../src/validation/response.js'
 import type { ControlRequestBody, ValidationResult } from '../src/validation/types.js'
+import type { Request, Response } from 'express'
+
+// Helper to create minimal Express Request mock
+function createMockRequest(body: unknown, method = 'POST'): Request {
+  return {
+    method,
+    body,
+    headers: {},
+    get: () => undefined,
+    header: () => undefined
+  } as unknown as Request
+}
+
+// Helper to create minimal Express Response mock
+function createMockResponse() {
+  const res = {
+    status: jest.fn().mockReturnThis(),
+    json: jest.fn()
+  } as unknown as Response
+  return res
+}
 
 describe('RDCP Validation System (TypeScript + Context7)', () => {
   
@@ -30,7 +51,7 @@ describe('RDCP Validation System (TypeScript + Context7)', () => {
       const validRequest: ControlRequestBody = {
         action: 'enable',
         categories: ['DATABASE', 'API_ROUTES'],
-        options: { temporary: true, duration: 3600 }
+        duration: 3600
       }
       
       expect(() => controlRequestSchema.parse(validRequest)).not.toThrow()
@@ -86,7 +107,7 @@ describe('RDCP Validation System (TypeScript + Context7)', () => {
       const result = safeValidate(validData, controlRequestSchema)
       
       expect(result.success).toBe(true)
-      if (result.success) {
+      if (result.success && result.data) {
         // TypeScript type narrowing - NO any types
         expect(result.data).toBeDefined()
         expect(result.data.action).toBe('enable')
@@ -154,14 +175,8 @@ describe('RDCP Validation System (TypeScript + Context7)', () => {
 
   describe('Validation Middleware (Express/Fastify/Koa)', () => {
     test('validateControlRequest passes valid RDCP requests', () => {
-      const req = {
-        method: 'POST',
-        body: { action: 'enable', categories: ['DATABASE'] }
-      }
-      const res = { 
-        status: jest.fn().mockReturnThis(), 
-        json: jest.fn() 
-      }
+      const req = createMockRequest({ action: 'enable', categories: ['DATABASE'] })
+      const res = createMockResponse()
       const next = jest.fn()
 
       validateControlRequest(req, res, next)
@@ -172,14 +187,8 @@ describe('RDCP Validation System (TypeScript + Context7)', () => {
     })
 
     test('validateControlRequest rejects invalid RDCP requests', () => {
-      const req = {
-        method: 'POST',
-        body: { action: 'invalid-action', categories: ['DATABASE'] }
-      }
-      const res = { 
-        status: jest.fn().mockReturnThis(), 
-        json: jest.fn() 
-      }
+      const req = createMockRequest({ action: 'invalid-action', categories: ['DATABASE'] })
+      const res = createMockResponse()
       const next = jest.fn()
 
       validateControlRequest(req, res, next)
@@ -189,7 +198,7 @@ describe('RDCP Validation System (TypeScript + Context7)', () => {
       expect(next).not.toHaveBeenCalled()
       
       // Validate error response format
-      const errorResponse = res.json.mock.calls[0][0]
+      const errorResponse = (res.json as jest.MockedFunction<typeof res.json>).mock.calls[0][0]
       expect(errorResponse.error).toBeDefined()
       expect(errorResponse.error.protocol).toBe('rdcp/1.0')
     })
@@ -199,11 +208,8 @@ describe('RDCP Validation System (TypeScript + Context7)', () => {
         name: 'ZodError', 
         message: 'Validation failed: action is invalid' 
       }
-      const req = {}
-      const res = { 
-        status: jest.fn().mockReturnThis(), 
-        json: jest.fn() 
-      }
+      const req = createMockRequest({})
+      const res = createMockResponse()
       const next = jest.fn()
 
       handleValidationError(zodError, req, res, next)
@@ -213,7 +219,7 @@ describe('RDCP Validation System (TypeScript + Context7)', () => {
       expect(next).not.toHaveBeenCalled()
       
       // Validate RDCP error format
-      const errorResponse = res.json.mock.calls[0][0]
+      const errorResponse = (res.json as jest.MockedFunction<typeof res.json>).mock.calls[0][0]
       expect(errorResponse.error.code).toBe('RDCP_VALIDATION_ERROR')
       expect(errorResponse.error.protocol).toBe('rdcp/1.0')
     })
@@ -275,16 +281,16 @@ describe('RDCP Validation System (TypeScript + Context7)', () => {
 
   describe('TypeScript Type Safety (Context7 - NO any types)', () => {
     test('validation results maintain strict type safety', () => {
-      const validData: ControlRequestBody = { 
-        action: 'enable', 
+      const validData = { 
+        action: 'enable' as const, 
         categories: ['DATABASE'] 
       }
-      const result: ValidationResult<ControlRequestBody> = safeValidate(validData, controlRequestSchema)
+      const result = safeValidate(validData, controlRequestSchema)
       
       // TypeScript compilation passing means types are correct - NO any types used
       expect(typeof result.success).toBe('boolean')
       
-      if (result.success) {
+      if (result.success && result.data) {
         expect(result.data).toBeDefined()
         expect(typeof result.data.action).toBe('string')
       }

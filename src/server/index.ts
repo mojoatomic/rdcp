@@ -154,7 +154,7 @@ export class RDCPServer {
 
     // Include tenant context if provided
     if (tenant) {
-      response.tenant = createTenantResponse(tenant)
+      return createTenantResponse(response, tenant)
     }
 
     return response
@@ -213,13 +213,14 @@ export class RDCPServer {
           return createRDCPError('RDCP_VALIDATION_ERROR', `Unknown action: ${action}`)
       }
 
-      return {
-        protocol: 'rdcp/1.0',
+      const response = {
+        protocol: 'rdcp/1.0' as const,
         timestamp: new Date().toISOString(),
-        tenant: createTenantResponse(tenantContext),
         changes,
-        status: 'success'
+        status: 'success' as const
       }
+
+      return createTenantResponse(response, tenantContext)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       return createRDCPError('RDCP_SERVER_ERROR', `Control operation failed: ${errorMessage}`)
@@ -242,10 +243,9 @@ export class RDCPServer {
       }
     })
 
-    return {
-      protocol: 'rdcp/1.0',
+    const response = {
+      protocol: 'rdcp/1.0' as const,
       timestamp: new Date().toISOString(),
-      tenant: createTenantResponse(tenantContext),
       categories,
       performance: {
         impact: {
@@ -255,6 +255,8 @@ export class RDCPServer {
         activeCategories: Object.keys(tenantConfig).filter(cat => tenantConfig[cat as keyof TenantDebugConfig]).length
       }
     }
+
+    return createTenantResponse(response, tenantContext)
   }
 
   /**
