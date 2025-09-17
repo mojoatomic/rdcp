@@ -26,11 +26,17 @@ export function protocolDiscovery(req: Request, res: Response): void {
 }
 
 export function debugSystemDiscovery(req: Request, res: Response): void {
+  const metrics = getPerformanceMetrics()
+  
   const categories = Object.keys(DEBUG_CONFIG).map(id => ({
     id,
     enabled: DEBUG_CONFIG[id as keyof typeof DEBUG_CONFIG],
     description: `Debug logging for ${id.toLowerCase().replace('_', ' ')}`,
-    tags: ['debug']
+    tags: ['infrastructure'],
+    metrics: {
+      callsTotal: metrics.categoryBreakdown[id] || 0,
+      callsPerSecond: metrics.callsPerSecond || 0
+    }
   }))
   
   res.json({
