@@ -20,6 +20,7 @@ import { describe, test, expect, beforeEach, afterEach } from '@jest/globals'
 import { validateRDCPAuth, basicAuthenticator, extractApiKey } from '../src/auth/index.js'
 import type { RDCPAuthResult } from '../src/auth/types.js'
 import type { Request } from 'express'
+import * as jwt from 'jsonwebtoken'
 
 // Helper to create minimal Express Request mock
 function createMockRequest(headers: Record<string, string>): Request {
@@ -35,10 +36,23 @@ describe('RDCP Authentication (TypeScript + Context7)', () => {
   const validApiKey = 'this-is-a-valid-32-character-key-for-testing'
   const shortApiKey = 'short'
   const envApiKey = process.env.RDCP_API_KEY
+  
+  // JWT test setup using Context7 patterns
+  const jwtSecret = 'test-jwt-secret-for-context7-testing'
+  const createTestJWT = (payload: Record<string, unknown> = {}) => {
+    return jwt.sign({
+      sub: 'test-user',
+      email: 'test@example.com',
+      scopes: ['discovery', 'status', 'control'],
+      exp: Math.floor(Date.now() / 1000) + (60 * 60), // 1 hour
+      ...payload
+    }, jwtSecret)
+  }
 
   beforeEach(() => {
-    // Clean environment for each test
+    // Clean environment for each test - Context7 Jest patterns
     delete process.env.RDCP_API_KEY
+    delete process.env.JWT_SECRET
   })
 
   afterEach(() => {
@@ -139,12 +153,14 @@ describe('RDCP Authentication (TypeScript + Context7)', () => {
     })
 
     test('supports standard security level (Bearer tokens)', () => {
-      process.env.RDCP_API_KEY = validApiKey
+      // Set up JWT environment using Context7 patterns
+      process.env.JWT_SECRET = jwtSecret
+      const testToken = createTestJWT()
       
       const mockRequest = createMockRequest({ 
         'x-rdcp-auth-method': 'bearer',
         'x-rdcp-client-id': 'standard-client',
-        'authorization': `Bearer ${validApiKey}`
+        'authorization': `Bearer ${testToken}`
       })
       const result = validateRDCPAuth(mockRequest)
       

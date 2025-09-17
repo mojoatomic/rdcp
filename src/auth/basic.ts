@@ -2,7 +2,10 @@
 import * as crypto from 'crypto'
 import type { Request } from 'express'
 
-const RDCP_API_KEY = process.env.RDCP_API_KEY || 'dev-key-change-in-production-min-32-chars'
+// Read API key at runtime for testability (Context7 Jest pattern)
+function getRDCPApiKey(): string {
+  return process.env.RDCP_API_KEY || 'dev-key-change-in-production-min-32-chars'
+}
 
 function extractApiKey(request: Request): string | undefined {
   // Framework detection - Next.js has headers.get(), Express has headers[]
@@ -46,6 +49,8 @@ export function validateRDCPAuth(request: Request): RDCPAuthResult {
       error: 'API key must be at least 32 characters'
     }
   }
+  
+  const RDCP_API_KEY = getRDCPApiKey()
   
   if (!RDCP_API_KEY || RDCP_API_KEY.length < 32) {
     console.error('RDCP_API_KEY must be at least 32 characters for security')

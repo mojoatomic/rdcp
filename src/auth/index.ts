@@ -79,14 +79,18 @@ export function validateRDCPAuth(request: Request): RDCPAuthResult {
     }
   }
   
-  // Then validate auth method
-  switch (LEVEL) {
-    case 'enterprise':
+  // Use X-RDCP-Auth-Method header to determine authentication method (per RDCP spec)
+  const authMethod = request.headers['x-rdcp-auth-method'] as string
+  
+  switch (authMethod) {
+    case 'mtls':
       return normalize(validateMtls(request), 'mtls', request)
-    case 'standard':
     case 'bearer':
       return normalize(validateJwt(request), 'bearer', request)
-    case 'basic':
+    case 'hybrid':
+      // For hybrid, try multiple methods - start with API key for now
+      return normalize(validateApiKey(request), 'hybrid', request)
+    case 'api-key':
     default:
       return normalize(validateApiKey(request), 'api-key', request)
   }

@@ -3,7 +3,10 @@ import * as jwt from 'jsonwebtoken'
 import type { Request } from 'express'
 import type { RDCPAuthResult } from './types.js'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'change-in-production'
+// Read JWT secret at runtime for testability (Context7 Jest pattern)
+function getJWTSecret(): string {
+  return process.env.JWT_SECRET || 'change-in-production'
+}
 
 export function validateRDCPAuth(request: Request): RDCPAuthResult {
   const authHeader = (request.headers as unknown as { get?: (name: string) => string }).get 
@@ -21,6 +24,7 @@ export function validateRDCPAuth(request: Request): RDCPAuthResult {
   const token = authHeader.substring(7)
   
   try {
+    const JWT_SECRET = getJWTSecret()
     const decoded = jwt.verify(token, JWT_SECRET) as jwt.JwtPayload
     
     // Return standard auth context
