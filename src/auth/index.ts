@@ -35,7 +35,42 @@ function normalize(result: boolean | AuthResult, method: string): AuthResult {
   }
 }
 
+function validateRDCPHeaders(request: Request): { valid: boolean; error?: string } {
+  // Required headers per RDCP v1.0 specification Section 3.2
+  const authMethod = request.headers['x-rdcp-auth-method']
+  const clientId = request.headers['x-rdcp-client-id']
+  const requestId = request.headers['x-rdcp-request-id']
+  
+  if (!authMethod) {
+    return { valid: false, error: 'Missing required header: X-RDCP-Auth-Method' }
+  }
+  
+  if (!clientId) {
+    return { valid: false, error: 'Missing required header: X-RDCP-Client-ID' }
+  }
+  
+  // X-RDCP-Request-ID is optional but recommended for audit trail
+  
+  const validMethods = ['api-key', 'bearer', 'mtls', 'hybrid']
+  if (!validMethods.includes(authMethod as string)) {
+    return { valid: false, error: `Invalid X-RDCP-Auth-Method: ${authMethod}. Must be one of: ${validMethods.join(', ')}` }
+  }
+  
+  return { valid: true }
+}
+
 export function validateRDCPAuth(request: Request): AuthResult {
+  // First validate RDCP required headers
+  const headerValidation = validateRDCPHeaders(request)
+  if (!headerValidation.valid) {
+    return {
+      valid: false,
+      error: headerValidation.error,
+      method: 'unknown'
+    }
+  }
+  
+  // Then validate auth method
   switch (LEVEL) {
     case 'enterprise':
       return normalize(validateMtls(request), 'mtls')

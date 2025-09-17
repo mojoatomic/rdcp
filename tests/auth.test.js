@@ -14,30 +14,61 @@ describe('RDCP Authentication', () => {
       expect(typeof validateRDCPAuth).toBe('function')
     })
 
-    test('rejects request without API key', () => {
+    test('rejects request without API key (missing RDCP headers)', () => {
       const mockRequest = { headers: {} }
-      expect(validateRDCPAuth(mockRequest)).toBe(false)
+      const result = validateRDCPAuth(mockRequest)
+      expect(result.valid).toBe(false)
+      expect(result.error).toContain('Missing required header: X-RDCP-Auth-Method')
     })
 
-    test('rejects request with short API key', () => {
+    test('rejects request with short API key (missing RDCP headers)', () => {
       const mockRequest = { 
         headers: { 'x-api-key': shortApiKey }
       }
-      expect(validateRDCPAuth(mockRequest)).toBe(false)
+      const result = validateRDCPAuth(mockRequest)
+      expect(result.valid).toBe(false)
+      expect(result.error).toContain('Missing required header: X-RDCP-Auth-Method')
     })
 
-    test('accepts valid API key in x-api-key header', () => {
+    test('rejects short API key when RDCP headers are present', () => {
       const mockRequest = {
-        headers: { 'x-api-key': validApiKey }
+        headers: { 
+          'x-rdcp-auth-method': 'api-key',
+          'x-rdcp-client-id': 'test-client',
+          'x-api-key': shortApiKey 
+        }
       }
-      expect(validateRDCPAuth(mockRequest)).toBe(false) // False because env key doesn't match
+      const result = validateRDCPAuth(mockRequest)
+      expect(result.valid).toBe(false)
+      expect(result.error).toContain('API key must be at least 32 characters')
     })
 
-    test('extracts API key from Authorization header', () => {
+    test('rejects valid length API key that does not match env key', () => {
       const mockRequest = {
-        headers: { 'authorization': `Bearer ${validApiKey}` }
+        headers: { 
+          'x-rdcp-auth-method': 'api-key',
+          'x-rdcp-client-id': 'test-client',
+          'x-api-key': validApiKey 
+        }
       }
-      expect(validateRDCPAuth(mockRequest)).toBe(false) // False because env key doesn't match
+      const result = validateRDCPAuth(mockRequest)
+      expect(result.valid).toBe(false) // False because env key doesn't match
+      expect(result.error).toContain('Invalid API key')
+      expect(result.method).toBe('api-key')
+    })
+
+    test('handles Authorization header with valid RDCP headers', () => {
+      const mockRequest = {
+        headers: { 
+          'x-rdcp-auth-method': 'api-key',
+          'x-rdcp-client-id': 'test-client',
+          'authorization': `Bearer ${validApiKey}` 
+        }
+      }
+      const result = validateRDCPAuth(mockRequest)
+      expect(result.valid).toBe(false) // False because env key doesn't match
+      expect(result.error).toContain('Invalid API key')
+      expect(result.method).toBe('api-key')
     })
   })
 
@@ -79,6 +110,126 @@ describe('RDCP Authentication', () => {
     test('returns undefined when no key present', () => {
       const mockRequest = { headers: {} }
       expect(extractApiKey(mockRequest)).toBeUndefined()
+    })
+  })
+
+  describe('RDCP Header Validation', () => {
+    const validHeaders = {
+      'x-rdcp-auth-method': 'api-key',
+      'x-rdcp-client-id': 'test-client-123',
+      'x-rdcp-request-id': 'req-456',
+      'x-api-key': validApiKey
+    }
+
+    test('validates required RDCP headers are present', () => {
+      const mockRequest = { headers: validHeaders }
+      const result = validateRDCPAuth(mockRequest)
+      expect(result).toHaveProperty('valid')
+      expect(result).toHaveProperty('method')
+    })
+
+    test('rejects request missing X-RDCP-Auth-Method header', () => {
+      const mockRequest = { 
+        headers: { 
+          'x-rdcp-client-id': 'test-client-123',
+          'x-api-key': validApiKey
+        }
+      }
+      const result = validateRDCPAuth(mockRequest)
+      expect(result.valid).toBe(false)
+      expect(result.error).toContain('Missing required header: X-RDCP-Auth-Method')
+    })
+
+    test('rejects request missing X-RDCP-Client-ID header', () => {
+      const mockRequest = { 
+        headers: { 
+          'x-rdcp-auth-method': 'api-key',
+          'x-api-key': validApiKey
+        }
+      }
+      const result = validateRDCPAuth(mockRequest)
+      expect(result.valid).toBe(false)
+      expect(result.error).toContain('Missing required header: X-RDCP-Client-ID')
+    })
+
+    test('rejects invalid X-RDCP-Auth-Method value', () => {
+      const mockRequest = { 
+        headers: { 
+          'x-rdcp-auth-method': 'invalid-method',
+          'x-rdcp-client-id': 'test-client-123',
+          'x-api-key': validApiKey
+        }
+      }
+      const result = validateRDCPAuth(mockRequest)
+      expect(result.valid).toBe(false)
+      expect(result.error).toContain('Invalid X-RDCP-Auth-Method')
+      expect(result.error).toContain('api-key, bearer, mtls, hybrid')
+    })
+
+    test('accepts valid auth methods: api-key', () => {
+      const mockRequest = { 
+        headers: { 
+          'x-rdcp-auth-method': 'api-key',
+          'x-rdcp-client-id': 'test-client-123',
+          'x-api-key': validApiKey
+        }
+      }
+      const result = validateRDCPAuth(mockRequest)
+      expect(result.valid).toBe(false) // Still false due to env key mismatch, but no header error
+      expect(result.error).not.toContain('Missing required header')
+    })
+
+    test('accepts valid auth methods: bearer', () => {
+      const mockRequest = { 
+        headers: { 
+          'x-rdcp-auth-method': 'bearer',
+          'x-rdcp-client-id': 'test-client-123',
+          'x-api-key': validApiKey
+        }
+      }
+      const result = validateRDCPAuth(mockRequest)
+      expect(result.valid).toBe(false) // Still false due to env key mismatch, but no header error
+      expect(result.error).not.toContain('Invalid X-RDCP-Auth-Method')
+    })
+
+    test('accepts valid auth methods: mtls', () => {
+      const mockRequest = { 
+        headers: { 
+          'x-rdcp-auth-method': 'mtls',
+          'x-rdcp-client-id': 'test-client-123',
+          'x-api-key': validApiKey
+        }
+      }
+      const result = validateRDCPAuth(mockRequest)
+      expect(result.valid).toBe(false) // Still false due to env key mismatch, but no header error
+      expect(result.error).not.toContain('Invalid X-RDCP-Auth-Method')
+    })
+
+    test('accepts valid auth methods: hybrid', () => {
+      const mockRequest = { 
+        headers: { 
+          'x-rdcp-auth-method': 'hybrid',
+          'x-rdcp-client-id': 'test-client-123',
+          'x-api-key': validApiKey
+        }
+      }
+      const result = validateRDCPAuth(mockRequest)
+      expect(result.valid).toBe(false) // Still false due to env key mismatch, but no header error
+      expect(result.error).not.toContain('Invalid X-RDCP-Auth-Method')
+    })
+
+    test('X-RDCP-Request-ID is optional', () => {
+      const mockRequest = { 
+        headers: { 
+          'x-rdcp-auth-method': 'api-key',
+          'x-rdcp-client-id': 'test-client-123',
+          'x-api-key': validApiKey
+          // No X-RDCP-Request-ID header
+        }
+      }
+      const result = validateRDCPAuth(mockRequest)
+      expect(result.valid).toBe(false) // Still false due to env key mismatch, but no header error
+      expect(result.error).not.toContain('Missing required header: X-RDCP-Request-ID')
     })
   })
 })

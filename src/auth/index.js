@@ -27,31 +27,87 @@ function extractApiKey(request) {
 }
 
 /**
+ * Validate required RDCP headers
+ * Returns object with valid boolean and optional error message
+ */
+function validateRDCPHeaders(request) {
+  // Required headers per RDCP v1.0 specification Section 3.2
+  const authMethod = request.headers['x-rdcp-auth-method']
+  const clientId = request.headers['x-rdcp-client-id']
+  const requestId = request.headers['x-rdcp-request-id']
+  
+  if (!authMethod) {
+    return { valid: false, error: 'Missing required header: X-RDCP-Auth-Method' }
+  }
+  
+  if (!clientId) {
+    return { valid: false, error: 'Missing required header: X-RDCP-Client-ID' }
+  }
+  
+  // X-RDCP-Request-ID is optional but recommended for audit trail
+  
+  const validMethods = ['api-key', 'bearer', 'mtls', 'hybrid']
+  if (!validMethods.includes(authMethod)) {
+    return { valid: false, error: `Invalid X-RDCP-Auth-Method: ${authMethod}. Must be one of: ${validMethods.join(', ')}` }
+  }
+  
+  return { valid: true }
+}
+
+/**
  * Validate RDCP authentication using API key
- * Returns boolean for simple usage
+ * Now returns AuthResult object instead of boolean for RDCP compliance
  */
 function validateRDCPAuth(request) {
+  // First validate RDCP required headers
+  const headerValidation = validateRDCPHeaders(request)
+  if (!headerValidation.valid) {
+    return {
+      valid: false,
+      error: headerValidation.error,
+      method: 'unknown'
+    }
+  }
+  
   const providedKey = extractApiKey(request)
   
   // Basic security checks
   if (!providedKey || providedKey.length < 32) {
-    return false
+    return {
+      valid: false,
+      error: 'API key must be at least 32 characters',
+      method: 'api-key'
+    }
   }
   
   if (!RDCP_API_KEY || RDCP_API_KEY.length < 32) {
     console.error('RDCP_API_KEY must be at least 32 characters for security')
-    return false
+    return {
+      valid: false,
+      error: 'Server configuration error',
+      method: 'api-key'
+    }
   }
   
   try {
     // Constant-time comparison to prevent timing attacks
-    return crypto.timingSafeEqual(
+    const isValid = crypto.timingSafeEqual(
       Buffer.from(RDCP_API_KEY),
       Buffer.from(providedKey)
     )
+    return {
+      valid: isValid,
+      method: 'api-key',
+      scopes: ['discovery', 'status', 'control', 'health'],
+      error: isValid ? undefined : 'Invalid API key'
+    }
   } catch (error) {
     // Keys are different lengths - return false without revealing why
-    return false
+    return {
+      valid: false,
+      error: 'Invalid API key format',
+      method: 'api-key'
+    }
   }
 }
 
