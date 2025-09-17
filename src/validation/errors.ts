@@ -3,8 +3,13 @@
  * Standard error response creation following RDCP v1.0 protocol
  */
 
-// Standard RDCP v1.0 error codes
-const RDCP_ERROR_CODES = {
+import { RDCPError } from '../utils/types.js'
+
+/**
+ * Standard RDCP v1.0 error codes
+ * Must match protocol specification exactly
+ */
+export const RDCP_ERROR_CODES = {
   // Authentication errors (4xx)
   RDCP_AUTH_REQUIRED: 'RDCP_AUTH_REQUIRED',
   RDCP_INVALID_TOKEN: 'RDCP_INVALID_TOKEN',
@@ -29,10 +34,17 @@ const RDCP_ERROR_CODES = {
   // Protocol errors
   RDCP_UNSUPPORTED_VERSION: 'RDCP_UNSUPPORTED_VERSION',
   RDCP_MALFORMED_REQUEST: 'RDCP_MALFORMED_REQUEST'
-}
+} as const
 
-// Error code to HTTP status mapping
-const ERROR_STATUS_MAP = {
+/**
+ * RDCP error code type
+ */
+export type RDCPErrorCode = typeof RDCP_ERROR_CODES[keyof typeof RDCP_ERROR_CODES]
+
+/**
+ * Error code to HTTP status mapping
+ */
+export const ERROR_STATUS_MAP: Record<RDCPErrorCode, number> = {
   [RDCP_ERROR_CODES.RDCP_AUTH_REQUIRED]: 401,
   [RDCP_ERROR_CODES.RDCP_INVALID_TOKEN]: 401,
   [RDCP_ERROR_CODES.RDCP_TOKEN_EXPIRED]: 401,
@@ -55,8 +67,11 @@ const ERROR_STATUS_MAP = {
 /**
  * RDCP Error class with status code mapping
  */
-class RDCPError extends Error {
-  constructor(code, message, statusCode) {
+export class RDCPErrorClass extends Error {
+  public readonly code: RDCPErrorCode
+  public readonly statusCode: number
+
+  constructor(code: RDCPErrorCode, message: string, statusCode?: number) {
     super(message)
     this.name = 'RDCPError'
     this.code = code
@@ -65,29 +80,33 @@ class RDCPError extends Error {
 }
 
 /**
- * Creates RDCP standard error response
- * @param {string} code - RDCP error code
- * @param {string} message - Human-readable error message
- * @returns {Object} RDCP standard error response
+ * Error response with status code
  */
-function createRDCPError(code, message) {
+export interface RDCPErrorWithStatus {
+  error: RDCPError['error']
+  statusCode: number
+}
+
+/**
+ * Creates RDCP standard error response
+ */
+export function createRDCPError(code: RDCPErrorCode, message: string): RDCPError {
   return {
     error: {
       code,
       message,
       protocol: 'rdcp/1.0',
-      timestamp: new Date().toISOString()
+      details: {
+        timestamp: new Date().toISOString()
+      }
     }
   }
 }
 
 /**
  * Creates RDCP error with automatic status code mapping
- * @param {string} code - RDCP error code from RDCP_ERROR_CODES
- * @param {string} message - Human-readable error message
- * @returns {Object} Error response with status code
  */
-function createRDCPErrorWithStatus(code, message) {
+export function createRDCPErrorWithStatus(code: RDCPErrorCode, message: string): RDCPErrorWithStatus {
   return {
     error: createRDCPError(code, message).error,
     statusCode: ERROR_STATUS_MAP[code] || 500
@@ -96,19 +115,15 @@ function createRDCPErrorWithStatus(code, message) {
 
 /**
  * Validates if error code is a standard RDCP code
- * @param {string} code - Error code to validate
- * @returns {boolean} True if valid RDCP error code
  */
-function isValidRDCPErrorCode(code) {
-  return Object.values(RDCP_ERROR_CODES).includes(code)
+export function isValidRDCPErrorCode(code: string): code is RDCPErrorCode {
+  return Object.values(RDCP_ERROR_CODES).includes(code as RDCPErrorCode)
 }
 
 /**
  * Creates validation error for invalid request data
- * @param {string} details - Validation error details
- * @returns {Object} RDCP validation error response
  */
-function createValidationError(details) {
+export function createValidationError(details: string): RDCPError {
   return createRDCPError(
     RDCP_ERROR_CODES.RDCP_VALIDATION_ERROR,
     `Request validation failed: ${details}`
@@ -117,25 +132,13 @@ function createValidationError(details) {
 
 /**
  * Creates authentication error
- * @param {string} reason - Authentication failure reason
- * @returns {Object} RDCP authentication error response
  */
-function createAuthError(reason) {
+export function createAuthError(reason: string): RDCPError {
   return createRDCPError(
     RDCP_ERROR_CODES.RDCP_AUTH_REQUIRED,
     `Authentication required: ${reason}`
   )
 }
 
-module.exports = {
-  RDCP_ERROR_CODES,
-  ERROR_STATUS_MAP,
-  RDCPError,
-  createRDCPError,
-  createRDCPErrorWithStatus,
-  isValidRDCPErrorCode,
-  createValidationError,
-  createAuthError,
-  // Legacy export for backward compatibility
-  RDCPAuthError: RDCPError
-}
+// Legacy export for backward compatibility
+export { RDCPErrorClass as RDCPAuthError }
