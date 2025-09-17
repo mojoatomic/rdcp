@@ -12,18 +12,27 @@ This file provides development guidelines and rules for the RDCP (Runtime Debug 
 ## RDCP-Specific Rules (CRITICAL)
 
 ### RDCP Protocol Compliance (MANDATORY)
-- **ALWAYS** implement exact endpoint specifications from protocol docs
+- **ALWAYS** implement exact endpoint specifications from `/docs/rdcp-protocol-specification.md`
 - **NEVER** deviate from RDCP v1.0 protocol specification
 - **MUST** include `protocol: "rdcp/1.0"` in all responses
 - **REQUIRED** endpoints: `/.well-known/rdcp`, `/rdcp/v1/discovery`, `/rdcp/v1/control`, `/rdcp/v1/status`, `/rdcp/v1/health`
-- **ENFORCE** standard error codes: `RDCP_AUTH_REQUIRED`, `RDCP_FORBIDDEN`, `RDCP_VALIDATION_ERROR`, etc.
+- **ENFORCE** standard error codes: `RDCP_AUTH_REQUIRED`, `RDCP_FORBIDDEN`, `RDCP_NOT_FOUND`, `RDCP_VALIDATION_ERROR`, `RDCP_CATEGORY_NOT_FOUND`, `RDCP_RATE_LIMITED`, `RDCP_INTERNAL_ERROR`
 
 ### Authentication Security Levels (NO VIOLATIONS)
-- **Basic**: API key authentication (32+ character minimum)
-- **Standard**: JWT Bearer tokens with scopes validation  
-- **Enterprise**: mTLS + token hybrid authentication
-- **CRITICAL**: Use constant-time comparison for API keys to prevent timing attacks
-- **MANDATORY**: Support all three security levels with adapters
+Implementations MUST declare their security level and support appropriate methods per `/docs/rdcp-protocol-specification.md`:
+
+| Level | Use Case | Required Methods | Features |
+|-------|----------|------------------|----------|
+| `basic` | Development/Internal | API Key (32+ chars) | Simple shared secrets with constant-time comparison |
+| `standard` | Production SaaS | Bearer Token (JWT/OAuth2) | User identity, expiration, scopes validation |
+| `enterprise` | Regulated Industries | mTLS + Token | Certificate validation, full audit trail |
+
+**CRITICAL**: All auth methods MUST include these headers:
+```http
+X-RDCP-Auth-Method: api-key | bearer | mtls | hybrid
+X-RDCP-Client-ID: <client-identifier>
+X-RDCP-Request-ID: <unique-request-id>
+```
 
 ### SDK Architecture Rules (ENFORCED)
 - **Client SDK**: Consume RDCP endpoints from external services
@@ -47,9 +56,33 @@ const DEBUG_CATEGORIES = {
 ```
 
 ### Multi-Tenancy Support (RDCP Standard)
-- **MUST** support tenant context headers: `X-RDCP-Tenant-ID`, `X-RDCP-Isolation-Level`
-- **ISOLATION LEVELS**: `global`, `process`, `namespace`, `organization`
-- **TENANT RESPONSES**: Include tenant context in all multi-tenant responses
+When multi-tenancy is supported, implementations MUST accept per `/docs/rdcp-protocol-specification.md`:
+
+```http
+X-RDCP-Tenant-ID: <tenant-identifier>
+X-RDCP-Isolation-Level: global|process|namespace|organization
+X-RDCP-Tenant-Name: <human-readable-name>  # OPTIONAL
+```
+
+**ISOLATION LEVELS**:
+| Level | Description | Scope |
+|-------|-------------|-------|
+| `global` | No isolation | All tenants share configuration |
+| `process` | Process isolation | Configuration per process |
+| `namespace` | Namespace isolation | Configuration per namespace |
+| `organization` | Full isolation | Complete tenant separation |
+
+**TENANT RESPONSES**: All responses in multi-tenant mode MUST include:
+```json
+{
+  "protocol": "rdcp/1.0",
+  "tenant": {
+    "id": "<tenant-id>",
+    "isolationLevel": "<level>",
+    "scope": "global|tenant-isolated"
+  }
+}
+```
 
 ## Essential Development Commands Pattern
 
@@ -141,24 +174,47 @@ if (!result.valid) {
 
 ## RDCP Response Format Standards (ENFORCED)
 
-**✅ SUCCESS Response Format:**
-```javascript
-// RDCP standard success response
-return {
-  protocol: 'rdcp/1.0',
-  timestamp: new Date().toISOString(),
+**✅ Protocol Discovery Response (/.well-known/rdcp):**
+```json
+{
+  "protocol": "rdcp/1.0",
+  "endpoints": {
+    "discovery": "/rdcp/v1/discovery",
+    "control": "/rdcp/v1/control",
+    "status": "/rdcp/v1/status",
+    "health": "/rdcp/v1/health"
+  },
+  "capabilities": {
+    "multiTenancy": true|false,
+    "performanceMetrics": true|false,
+    "temporaryControls": true|false,
+    "auditTrail": true|false
+  },
+  "security": {
+    "level": "basic" | "standard" | "enterprise",
+    "methods": ["api-key", "bearer", "mtls"],
+    "required": true|false
+  }
+}
+```
+
+**✅ Standard SUCCESS Response Format:**
+```json
+{
+  "protocol": "rdcp/1.0",
+  "timestamp": "2025-09-17T10:30:00Z",
   // ... endpoint-specific data
 }
 ```
 
-**✅ ERROR Response Format:**
-```javascript
-// RDCP standard error response
-return {
-  error: {
-    code: 'RDCP_ERROR_CODE',
-    message: 'Human-readable message',
-    protocol: 'rdcp/1.0'
+**✅ Standard ERROR Response Format:**
+```json
+{
+  "error": {
+    "code": "RDCP_ERROR_CODE",
+    "message": "Human-readable message",
+    "details": {},
+    "protocol": "rdcp/1.0"
   }
 }
 ```
@@ -187,12 +243,126 @@ return {
 - Performance metric discrepancies
 - Debug category enablement problems
 
+## RDCP Endpoint Requirements (MANDATORY)
+
+Per `/docs/rdcp-protocol-specification.md`, all endpoints MUST follow exact specifications:
+
+### Required Endpoints Response Formats:
+
+**GET /.well-known/rdcp** - Protocol Discovery
+```json
+{
+  "protocol": "rdcp/1.0",
+  "endpoints": { "discovery": "/rdcp/v1/discovery", "control": "/rdcp/v1/control", "status": "/rdcp/v1/status", "health": "/rdcp/v1/health" },
+  "capabilities": { "multiTenancy": true|false, "performanceMetrics": true|false, "temporaryControls": true|false },
+  "security": { "level": "basic|standard|enterprise", "methods": ["api-key", "bearer", "mtls"], "required": true|false }
+}
+```
+
+**GET /rdcp/v1/discovery** - Debug System Discovery
+```json
+{
+  "protocol": "rdcp/1.0",
+  "timestamp": "2025-09-17T10:30:00Z",
+  "categories": [{
+    "id": "DATABASE",
+    "enabled": true|false,
+    "description": "Database operations",
+    "tags": ["infrastructure"],
+    "metrics": { "callsTotal": 1234, "callsPerSecond": 2.3 }
+  }],
+  "performance": {
+    "overhead": {
+      "cpu": { "value": 0.1, "unit": "percent", "measured": true|false },
+      "memory": { "value": 1048576, "unit": "bytes", "measured": true|false }
+    }
+  }
+}
+```
+
+**POST /rdcp/v1/control** - Runtime Control
+```json
+{
+  "protocol": "rdcp/1.0",
+  "requestId": "<request-id>",
+  "success": true|false,
+  "changes": [{
+    "category": "DATABASE",
+    "previousState": false,
+    "newState": true,
+    "effectiveAt": "2025-09-17T10:30:00Z"
+  }],
+  "audit": {
+    "timestamp": "2025-09-17T10:30:00Z",
+    "action": "enable",
+    "operator": "user@example.com",
+    "method": "bearer"
+  }
+}
+```
+
+**GET /rdcp/v1/status** - Status Monitoring
+```json
+{
+  "protocol": "rdcp/1.0",
+  "timestamp": "2025-09-17T10:30:00Z",
+  "categories": {
+    "DATABASE": {
+      "enabled": true,
+      "metrics": { "callsLastMinute": 123, "callsTotal": 45678, "lastActivity": "2025-09-17T10:29:55Z" }
+    }
+  }
+}
+```
+
+**GET /rdcp/v1/health** - Health Check
+```json
+{
+  "protocol": "rdcp/1.0",
+  "status": "healthy|degraded|unhealthy",
+  "timestamp": "2025-09-17T10:30:00Z",
+  "components": {
+    "debugSystem": "operational|degraded|failed",
+    "persistence": "operational|degraded|failed"
+  }
+}
+```
+
 ## RDCP Security Requirements (NO VIOLATIONS)
 - **API Keys**: Minimum 32 characters, constant-time comparison
 - **JWT Tokens**: Proper signature validation, expiration checking
 - **mTLS**: Certificate validation, subject/issuer verification
 - **Rate Limiting**: Control endpoints limited to prevent abuse
 - **Audit Trail**: All control operations logged for compliance levels
+
+## RDCP Compliance Levels (PROTOCOL STANDARD)
+
+Per `/docs/rdcp-protocol-specification.md`, implementations MUST declare compliance level:
+
+### Level 1: Basic
+- Implements all required endpoints
+- Security level: `basic` (API key authentication)
+- Returns proper error codes
+- Single-tenant or global configuration
+- Optional audit logging
+
+### Level 2: Standard  
+- All Level 1 requirements
+- Security level: `standard` (Bearer tokens with scopes)
+- Multi-tenancy support with isolation
+- Performance metrics (may use placeholders)
+- User identity in audit trail
+- Key rotation support
+
+### Level 3: Enterprise
+- All Level 2 requirements
+- Security level: `enterprise` (mTLS + tokens)
+- Real performance metrics (measured, not estimated)
+- Temporary controls with automatic expiration
+- Rate limiting with configurable thresholds
+- Full audit trail with compliance metadata
+- Token refresh capability
+- Multiple active keys per client
 
 ## RDCP Testing Strategy
 
@@ -300,8 +470,26 @@ src/
 
 ---
 
+## RDCP Protocol References (MANDATORY READING)
+
+**Primary Sources (ALWAYS AUTHORITATIVE):**
+- `/docs/rdcp-protocol-specification.md` - Complete RDCP v1.0 Protocol Specification
+- `/docs/rdcp-implementation-guide.md` - Step-by-step Implementation Guide
+
+**Implementation Validation:**
+```bash
+# Test against official protocol requirements
+curl -s http://localhost:3000/.well-known/rdcp | jq '.protocol' # Must be "rdcp/1.0"
+curl -s http://localhost:3000/rdcp/v1/discovery | jq '.timestamp' # Must be ISO-8601
+curl -s http://localhost:3000/rdcp/v1/health | jq '.status' # Must be healthy|degraded|unhealthy
+```
+
+**CRITICAL**: Any deviation from `/docs/` specifications breaks RDCP v1.0 compliance.
+
+---
+
 **Implementation Philosophy**: Strict protocol compliance over clever extensions  
 **Enhancement Philosophy**: Add features only after protocol compliance  
-**Goal**: Production-ready RDCP SDK that works across all JavaScript environments  
+**Goal**: Production-ready RDCP v1.0 compliant SDK that works across all JavaScript environments  
 
 *This guide ensures RDCP protocol compliance while following WARP development standards.*

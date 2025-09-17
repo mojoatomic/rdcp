@@ -10,10 +10,10 @@ const LEVEL = (process.env.RDCP_AUTH_LEVEL || 'basic').toLowerCase()
 
 interface AuthResult {
   valid: boolean
-  method: string
+  method?: string
   userId?: string
   tenantId?: string
-  scopes: string[]
+  scopes?: string[]
   sessionId?: string
   expiresAt?: string
   error?: string
@@ -22,7 +22,11 @@ interface AuthResult {
 
 function normalize(result: boolean | AuthResult, method: string): AuthResult {
   if (result && typeof result === 'object' && 'valid' in result) {
-    return result as AuthResult
+    return {
+      ...result,
+      method: result.method || method,
+      scopes: result.scopes || ['discovery', 'status', 'control', 'health']
+    }
   }
   return {
     valid: !!result,

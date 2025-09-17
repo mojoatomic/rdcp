@@ -24,11 +24,13 @@ function extractTenantFromCN(cn?: string): string {
 
 export function validateRDCPAuth(request: Request): AuthResult {
   // Extract client certificate from request
-  const headers = (request.headers as unknown as { get?: (name: string) => string }).get 
-    ? (request.headers as unknown as { get: (name: string) => string | undefined })
-    : request.headers
+  const hasGetMethod = typeof (request.headers as unknown as { get?: (name: string) => string }).get === 'function'
   
-  const certHeader = headers.get ? headers.get('x-client-cert') : request.headers['x-client-cert']
+  const certHeader = hasGetMethod
+    ? (request.headers as unknown as { get: (name: string) => string | undefined }).get('x-client-cert')
+    : (Array.isArray(request.headers['x-client-cert']) 
+       ? request.headers['x-client-cert'][0] 
+       : request.headers['x-client-cert'])
   
   if (!certHeader) {
     return {
@@ -43,7 +45,10 @@ export function validateRDCPAuth(request: Request): AuthResult {
     
     // Check certificate validity
     const now = new Date()
-    if (now < cert.validFrom || now > cert.validTo) {
+    const validFrom = new Date(cert.validFrom)
+    const validTo = new Date(cert.validTo)
+    
+    if (now < validFrom || now > validTo) {
       return {
         valid: false,
         error: 'Certificate expired or not yet valid'
@@ -55,7 +60,11 @@ export function validateRDCPAuth(request: Request): AuthResult {
     const cn = subject.match(/CN=([^,]+)/)?.[1]
     
     // Also check for JWT token for additional context
-    const authHeader = headers.get ? headers.get('authorization') : request.headers['authorization']
+    const authHeader = hasGetMethod
+      ? (request.headers as unknown as { get: (name: string) => string | undefined }).get('authorization')
+      : (Array.isArray(request.headers['authorization']) 
+         ? request.headers['authorization'][0] 
+         : request.headers['authorization'])
     let tokenContext = {}
     
     if (authHeader?.startsWith('Bearer ')) {

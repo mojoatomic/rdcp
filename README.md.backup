@@ -1,0 +1,275 @@
+# RDCP SDK
+
+JavaScript/TypeScript SDK for implementing Runtime Debug Control Protocol v1.0 endpoints.
+
+## Installation
+
+```bash
+npm install @rdcp/server
+```
+
+## Quick Start
+
+### Express
+
+```javascript
+const express = require('express')
+const { basicApiKeyAuth } = require('@rdcp/server/auth')
+const { createRDCPMiddleware } = require('@rdcp/server/adapters/express')
+
+const app = express()
+app.use(express.json())
+
+const authenticator = basicApiKeyAuth({
+  apiKey: process.env.RDCP_API_KEY // 32+ characters required
+})
+
+const rdcpMiddleware = createRDCPMiddleware({
+  authenticator,
+  debugConfig: {
+    categories: ['DATABASE', 'API_ROUTES', 'QUERIES'],
+    enabled: true
+  }
+})
+
+app.use(rdcpMiddleware)
+app.listen(3000)
+```
+
+### Next.js
+
+```typescript
+// app/api/rdcp/[...slug]/route.ts
+import { validateRDCPAuth } from '@rdcp/server/auth/basic'
+import { protocolDiscovery } from '@rdcp/server/endpoints/discovery'
+
+export async function GET(request: Request) {
+  if (!validateRDCPAuth(request)) {
+    return Response.json(
+      { error: { code: 'RDCP_AUTH_REQUIRED', protocol: 'rdcp/1.0' } }, 
+      { status: 401 }
+    )
+  }
+  
+  return protocolDiscovery(request)
+}
+```
+
+### Fastify
+
+```javascript
+const { createRDCPPlugin } = require('@rdcp/server/adapters/fastify')
+const { basicApiKeyAuth } = require('@rdcp/server/auth')
+
+const authenticator = (request) => {
+  return basicApiKeyAuth({ apiKey: process.env.RDCP_API_KEY })(request)
+}
+
+await fastify.register(createRDCPPlugin({
+  authenticator,
+  debugConfig: { categories: ['CACHE', 'INTEGRATIONS'], enabled: true }
+}))
+```
+
+### Koa
+
+```javascript
+const { createRDCPMiddleware } = require('@rdcp/server/adapters/koa')
+const { basicApiKeyAuth } = require('@rdcp/server/auth')
+
+const authenticator = (ctx) => {
+  const requestLike = { headers: ctx.headers, get: (h) => ctx.get(h) }
+  return basicApiKeyAuth({ apiKey: process.env.RDCP_API_KEY })(requestLike)
+}
+
+app.use(createRDCPMiddleware({ authenticator }))
+```
+
+## Authentication
+
+### API Key Authentication
+
+```javascript
+const { basicApiKeyAuth } = require('@rdcp/server/auth')
+
+const authenticator = basicApiKeyAuth({
+  apiKey: process.env.RDCP_API_KEY // Must be 32+ characters
+})
+
+// Works with X-API-Key header or Authorization: Bearer <key>
+```
+
+### Environment Setup
+
+```bash
+export RDCP_API_KEY="your-32-character-minimum-api-key-here123"
+```
+
+## Multi-Tenancy
+
+The SDK supports multi-tenant debug configuration using standard headers:
+
+```javascript
+// Request headers
+X-RDCP-Tenant-ID: org_123
+X-RDCP-Isolation-Level: organization
+X-RDCP-Tenant-Name: Acme Corp
+```
+
+Each tenant gets isolated debug configuration automatically.
+
+## RDCP Endpoints
+
+The SDK implements these RDCP v1.0 endpoints:
+
+- `/.well-known/rdcp` - Protocol discovery (no auth)
+- `/rdcp/v1/discovery` - Debug system discovery  
+- `/rdcp/v1/control` - Enable/disable debug categories
+- `/rdcp/v1/status` - Current debug status
+- `/rdcp/v1/health` - System health
+
+## Debug Categories
+
+Standard debug categories supported:
+
+- `DATABASE` - Database operations and connections
+- `API_ROUTES` - HTTP request/response handling
+- `QUERIES` - SQL and data query execution  
+- `REPORTS` - Report generation and processing
+- `CACHE` - Cache operations and performance
+- `AUTH` - Authentication and authorization
+- `INTEGRATIONS` - Third-party service integrations
+
+## Migration Guide
+
+### From Manual RDCP Implementation
+
+If you have existing manual RDCP endpoints, migrate by replacing:
+
+**Before:**
+```javascript
+// Manual endpoint
+app.get('/.well-known/rdcp', (req, res) => {
+  res.json({
+    protocol: 'rdcp/1.0',
+    endpoints: { /* manual setup */ }
+  })
+})
+```
+
+**After:**
+```javascript
+const { createRDCPMiddleware } = require('@rdcp/server/adapters/express')
+app.use(createRDCPMiddleware({ authenticator }))
+```
+
+**Before:**
+```javascript
+// Manual authentication
+function checkAuth(req) {
+  const key = req.headers['x-api-key']
+  return key === process.env.API_KEY // Timing attack vulnerable
+}
+```
+
+**After:**
+```javascript
+const { basicApiKeyAuth } = require('@rdcp/server/auth')
+const authenticator = basicApiKeyAuth({ apiKey: process.env.RDCP_API_KEY })
+// Uses constant-time comparison
+```
+
+**Before:**
+```javascript
+// Manual debug control
+let debugEnabled = { DATABASE: false, API_ROUTES: false }
+app.post('/debug/control', (req, res) => {
+  // Custom implementation
+})
+```
+
+**After:**
+```javascript
+// Automatic with middleware - includes tenant isolation
+app.use(rdcpMiddleware)
+// Control endpoint automatically available at /rdcp/v1/control
+```
+
+### Migration Steps
+
+1. **Install SDK**: `npm install @rdcp/server`
+2. **Replace auth**: Use `basicApiKeyAuth` for security
+3. **Add middleware**: Replace manual endpoints with framework adapter
+4. **Update client**: Use standard RDCP endpoints
+5. **Test**: Verify `/.well-known/rdcp` returns protocol info
+
+## API Reference
+
+### Framework Adapters
+
+- `createRDCPMiddleware(options)` - Express/Koa middleware
+- `createRDCPPlugin(options)` - Fastify plugin
+- `createRDCPRouter(options)` - Express router
+
+### Authentication
+
+- `basicApiKeyAuth(options)` - API key validator with timing attack protection
+- `validateRDCPAuth(request)` - Direct validation function
+
+### Tenant Context
+
+- `extractTenantContext(request)` - Extract tenant from headers
+- `getTenantDebugConfig(tenantId)` - Get tenant debug config
+- `createTenantResponse(context)` - Create RDCP tenant response
+
+### Endpoints (Direct Use)
+
+- `protocolDiscovery(req, res)` - Protocol info endpoint
+- `debugSystemDiscovery(req, res)` - Debug capabilities
+- `runtimeControl(req, res)` - Debug control operations
+
+## Error Handling
+
+All errors follow RDCP v1.0 format:
+
+```json
+{
+  "error": {
+    "code": "RDCP_AUTH_REQUIRED",
+    "message": "Authentication required", 
+    "protocol": "rdcp/1.0"
+  }
+}
+```
+
+Standard error codes:
+- `RDCP_AUTH_REQUIRED` - Missing authentication
+- `RDCP_AUTH_ERROR` - Authentication failed
+- `RDCP_VALIDATION_ERROR` - Invalid request
+- `RDCP_METHOD_NOT_ALLOWED` - Wrong HTTP method
+- `RDCP_NOT_FOUND` - Endpoint not found
+
+## Testing
+
+```bash
+# Run tests
+npm test
+
+# Test with coverage  
+npm run test:coverage
+
+# Test specific functionality
+npm test auth-basic.test.ts
+npm test middleware.test.ts
+```
+
+## Requirements
+
+- Node.js 16+
+- Express 4+ (for Express adapter)
+- Fastify 4+ (for Fastify adapter) 
+- Koa 2+ (for Koa adapter)
+
+## License
+
+MIT

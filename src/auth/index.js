@@ -1,31 +1,36 @@
-// File: src/auth/basic.ts - Basic Level (API Key) from implementation guide
-import crypto from 'crypto'
-import { Request } from 'express'
+/**
+ * @fileoverview JavaScript Authentication Module for RDCP SDK
+ * Provides basic API key authentication for JavaScript usage
+ */
+
+const crypto = require('crypto')
 
 const RDCP_API_KEY = process.env.RDCP_API_KEY || 'dev-key-change-in-production-min-32-chars'
 
-function extractApiKey(request: Request): string | undefined {
+/**
+ * Extract API key from request headers
+ * Supports both Express and Next.js request formats
+ */
+function extractApiKey(request) {
   // Framework detection - Next.js has headers.get(), Express has headers[]
-  if (typeof (request.headers as unknown as { get?: (name: string) => string }).get === 'function') {
+  if (typeof request.headers?.get === 'function') {
     // Next.js Request object
-    const headers = request.headers as unknown as { get: (name: string) => string | undefined }
-    const authHeader = headers.get('authorization')
-    const apiKeyHeader = headers.get('x-api-key')
+    const authHeader = request.headers.get('authorization')
+    const apiKeyHeader = request.headers.get('x-api-key')
     return authHeader?.replace('Bearer ', '') || apiKeyHeader
   } else {
     // Express/Node.js request object
     const authHeader = request.headers['authorization']
     const apiKeyHeader = request.headers['x-api-key']
-    
-    // Handle potential string array from Express headers
-    const authValue = Array.isArray(authHeader) ? authHeader[0] : authHeader
-    const apiKeyValue = Array.isArray(apiKeyHeader) ? apiKeyHeader[0] : apiKeyHeader
-    
-    return authValue?.replace('Bearer ', '') || apiKeyValue
+    return authHeader?.replace('Bearer ', '') || apiKeyHeader
   }
 }
 
-export function validateRDCPAuth(request: Request): boolean {
+/**
+ * Validate RDCP authentication using API key
+ * Returns boolean for simple usage
+ */
+function validateRDCPAuth(request) {
   const providedKey = extractApiKey(request)
   
   // Basic security checks
@@ -48,4 +53,15 @@ export function validateRDCPAuth(request: Request): boolean {
     // Keys are different lengths - return false without revealing why
     return false
   }
+}
+
+/**
+ * Simple authenticator function for middleware usage
+ */
+const basicAuthenticator = validateRDCPAuth
+
+module.exports = {
+  validateRDCPAuth,
+  basicAuthenticator,
+  extractApiKey
 }

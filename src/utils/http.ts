@@ -168,7 +168,7 @@ export class RDCPHttpClient {
           method,
           headers,
           timeout: this.timeout,
-          ...(body && { body: JSON.stringify(body) }),
+          ...(body ? { body: JSON.stringify(body) } : {}),
         }
 
         const response = await fetch(url, config)

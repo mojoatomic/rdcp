@@ -13,7 +13,7 @@ export const DEBUG_CONFIG = {
 const metrics = {
   callCount: 0,
   startTime: Date.now(),
-  categoryStats: {}
+  categoryStats: {} as Record<string, number>
 }
 
 // 3. Performance tracking function
