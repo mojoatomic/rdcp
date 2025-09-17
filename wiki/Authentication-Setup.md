@@ -27,11 +27,18 @@ export RDCP_AUTH_LEVEL="basic"
 ### Implementation
 
 ```javascript
-const { adapters, auth } = require('@rdcp/server')
+// ESM import (currently working)
+import { adapters, auth } from '@rdcp/server'
 
 // Use built-in API key authentication
 const rdcpMiddleware = adapters.express.createRDCPMiddleware({
   authenticator: auth.validateRDCPAuth  // Uses basic auth by default
+})
+
+// CommonJS (currently broken - use dynamic import as workaround)
+const rdcp = await import('@rdcp/server')
+const rdcpMiddleware = rdcp.adapters.express.createRDCPMiddleware({
+  authenticator: rdcp.auth.validateRDCPAuth
 })
 ```
 

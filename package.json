@@ -1,7 +1,6 @@
 {
   "name": "@rdcp/server",
   "version": "1.0.0",
-  "type": "module",
   "description": "JavaScript/TypeScript SDK for Runtime Debug Control Protocol v1.0 endpoints",
   "keywords": [
     "rdcp",
@@ -31,44 +30,37 @@
   "bugs": {
     "url": "https://github.com/rdcp/sdk/issues"
   },
-  "main": "src/index.js",
-  "types": "src/index.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "files": [
-    "src",
-    "tests",
-    "examples",
+    "dist",
     "README.md",
-    "TESTING-SUMMARY.md",
-    "jest.config.js"
+    "LICENSE"
   ],
   "exports": {
     ".": {
-      "require": "./src/index.js",
-      "types": "./src/index.ts"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.esm.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./auth": {
-      "require": "./src/auth/index.js",
-      "types": "./src/auth/index.ts"
+      "types": "./dist/auth/index.d.ts",
+      "import": "./dist/auth/index.esm.js",
+      "require": "./dist/auth/index.js",
+      "default": "./dist/auth/index.js"
     },
-    "./server/adapters/express": {
-      "require": "./src/server/adapters/express.js"
+    "./server": {
+      "types": "./dist/server/index.d.ts",
+      "import": "./dist/server/index.esm.js",
+      "require": "./dist/server/index.js",
+      "default": "./dist/server/index.js"
     },
-    "./server/adapters/fastify": {
-      "require": "./src/server/adapters/fastify.js"
-    },
-    "./server/adapters/koa": {
-      "require": "./src/server/adapters/koa.js"
-    },
-    "./endpoints/discovery": {
-      "require": "./src/endpoints/discovery.js",
-      "types": "./src/endpoints/discovery.ts"
-    },
-    "./endpoints/control": {
-      "require": "./src/endpoints/control.js",
-      "types": "./src/endpoints/control.ts"
-    },
-    "./utils/tenant": {
-      "require": "./src/utils/tenant.js"
+    "./client": {
+      "types": "./dist/client/index.d.ts",
+      "import": "./dist/client/index.esm.js",
+      "require": "./dist/client/index.js",
+      "default": "./dist/client/index.js"
     }
   },
   "scripts": {
