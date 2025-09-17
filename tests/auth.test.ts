@@ -48,6 +48,24 @@ describe('RDCP Authentication (TypeScript + Context7)', () => {
       ...payload
     }, jwtSecret)
   }
+  
+  // mTLS test setup using Context7 Node.js crypto patterns
+  const createTestCertificate = () => {
+    // Context7 pattern: Mock base64-encoded certificate for testing
+    // In production, this would be a real X.509 certificate
+    const mockCertData = Buffer.from(JSON.stringify({
+      subject: 'CN=client.tenant123.rdcp.internal,O=Test Corp,C=US',
+      validFrom: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
+      validTo: new Date(Date.now() + 86400000).toISOString(), // 1 day from now
+      keyUsage: ['digitalSignature', 'keyEncipherment'],
+      fingerprint256: 'a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456'
+    })).toString('base64')
+    
+    return {
+      cert: mockCertData,
+      subject: 'CN=client.tenant123.rdcp.internal,O=Test Corp,C=US'
+    }
+  }
 
   beforeEach(() => {
     // Clean environment for each test - Context7 Jest patterns
@@ -171,12 +189,14 @@ describe('RDCP Authentication (TypeScript + Context7)', () => {
     })
 
     test('supports enterprise security level (mTLS preparation)', () => {
-      process.env.RDCP_API_KEY = validApiKey
+      // Set up mTLS environment using Context7 patterns
+      const testCert = createTestCertificate()
       
       const mockRequest = createMockRequest({ 
         'x-rdcp-auth-method': 'mtls',
         'x-rdcp-client-id': 'enterprise-client',
-        'x-api-key': validApiKey
+        'x-client-cert': testCert.cert,
+        'x-rdcp-cert-subject': testCert.subject
       })
       const result = validateRDCPAuth(mockRequest)
       
@@ -235,13 +255,26 @@ describe('RDCP Authentication (TypeScript + Context7)', () => {
       ]
       
       process.env.RDCP_API_KEY = validApiKey
+      process.env.JWT_SECRET = jwtSecret
       
       validMethods.forEach(method => {
-        const mockRequest = createMockRequest({ 
+        let headers: Record<string, string> = {
           'x-rdcp-auth-method': method,
-          'x-rdcp-client-id': 'test-client-123',
-          'x-api-key': validApiKey
-        })
+          'x-rdcp-client-id': 'test-client-123'
+        }
+        
+        // Add method-specific headers
+        if (method === 'api-key' || method === 'hybrid') {
+          headers['x-api-key'] = validApiKey
+        } else if (method === 'bearer') {
+          headers['authorization'] = `Bearer ${createTestJWT()}`
+        } else if (method === 'mtls') {
+          const testCert = createTestCertificate()
+          headers['x-client-cert'] = testCert.cert
+          headers['x-rdcp-cert-subject'] = testCert.subject
+        }
+        
+        const mockRequest = createMockRequest(headers)
         const result = validateRDCPAuth(mockRequest)
         
         expect(result.valid).toBe(true)

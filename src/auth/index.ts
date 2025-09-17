@@ -16,7 +16,7 @@ function normalize(result: boolean | RDCPAuthResult, method: string, request: Re
   if (result && typeof result === 'object' && 'valid' in result) {
     return {
       ...result,
-      method: result.method || method,
+      method: method, // Always use the passed method parameter
       clientId: result.clientId || (request.headers['x-rdcp-client-id'] as string),
       scopes: result.scopes || ['discovery', 'status', 'control', 'health']
     }
@@ -89,7 +89,8 @@ export function validateRDCPAuth(request: Request): RDCPAuthResult {
       return normalize(validateJwt(request), 'bearer', request)
     case 'hybrid':
       // For hybrid, try multiple methods - start with API key for now
-      return normalize(validateApiKey(request), 'hybrid', request)
+      const hybridResult = validateApiKey(request)
+      return normalize(hybridResult, 'hybrid', request)
     case 'api-key':
     default:
       return normalize(validateApiKey(request), 'api-key', request)

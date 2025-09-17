@@ -119,10 +119,10 @@ export type ProtocolDiscoveryResponse = z.infer<typeof protocolDiscoverySchema>
 export type ErrorResponse = z.infer<typeof errorResponseSchema>
 
 // Safe validation helper
-export function safeValidate<T>(data: unknown, schema: z.ZodSchema<T>): { success: boolean; data?: T; error?: string } {
+export function safeValidate<T>(data: unknown, schema: z.ZodSchema<T>): { success: boolean; data?: T; error?: z.ZodError } {
   try {
     return { success: true, data: schema.parse(data) }
   } catch (error) {
-    return { success: false, error: error instanceof Error ? error.message : 'Validation failed' }
+    return { success: false, error: error as z.ZodError }
   }
 }

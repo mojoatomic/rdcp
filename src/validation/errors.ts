@@ -130,10 +130,15 @@ export function isValidRDCPErrorCode(code: string): code is RDCPErrorCode {
  * Creates validation error for invalid request data
  */
 export function createValidationError(details: string): RDCPError {
-  return createRDCPError(
-    RDCP_ERROR_CODES.RDCP_VALIDATION_ERROR,
-    `Request validation failed: ${details}`
-  )
+  return {
+    error: {
+      code: RDCP_ERROR_CODES.RDCP_VALIDATION_ERROR,
+      message: `Request validation failed: ${details}`,
+      details: { validation: details },
+      protocol: 'rdcp/1.0',
+      timestamp: new Date().toISOString()
+    }
+  }
 }
 
 /**
