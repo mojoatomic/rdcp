@@ -39,6 +39,10 @@ interface RequestWithTenant extends Request {
  * Following Context7 Express middleware patterns
  */
 export function createRDCPMiddleware(options: RDCPMiddlewareOptions) {
+  if (!options) {
+    throw new Error('authenticator function is required')
+  }
+  
   const {
     authenticator,
     debugConfig = {},

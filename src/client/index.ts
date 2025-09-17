@@ -19,8 +19,8 @@ import {
 export class RDCPClient {
   private httpClient: RDCPHttpClient
   private config: RDCPClientConfig
-  private discoveryCache?: RDCPDiscoveryResponse
-  private cacheExpiry?: number
+  private discoveryCache?: RDCPDiscoveryResponse | undefined
+  private cacheExpiry?: number | undefined
 
   constructor(config: RDCPClientConfig) {
     this.config = config
@@ -30,8 +30,8 @@ export class RDCPClient {
       config.baseUrl,
       config.auth,
       {
-        timeout: config.timeout,
-        retries: config.retries,
+        ...(config.timeout !== undefined && { timeout: config.timeout }),
+        ...(config.retries !== undefined && { retries: config.retries }),
       }
     )
   }

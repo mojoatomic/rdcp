@@ -11,6 +11,50 @@ This file provides development guidelines and rules for the RDCP (Runtime Debug 
 
 ## RDCP-Specific Rules (CRITICAL)
 
+### TypeScript Mandate (NEVER VIOLATE)
+**CRITICAL**: The RDCP SDK MUST use TypeScript (.ts files) - NEVER suggest converting to JavaScript
+
+**Why TypeScript for the RDCP SDK:**
+- **Type Safety for Protocol Compliance** - RDCP has specific JSON schemas for requests/responses. TypeScript ensures implementations match the protocol exactly, preventing runtime errors from malformed data.
+- **Developer Experience** - SDK users get autocompletion, compile-time error checking, and IntelliSense for all RDCP interfaces. This directly supports the "30-minute integration" goal.
+- **Multi-Framework Support** - When building adapters for Express, Next.js, Fastify, etc., TypeScript provides consistent interfaces across all frameworks while catching framework-specific type mismatches.
+- **WARP Compliance** - The WARP.md specifically forbids `any` types and requires strict typing. TypeScript enforces these rules at compile time.
+- **Enterprise Adoption** - The RDCP target market includes enterprise and government-ready applications. TypeScript's static analysis aligns with enterprise development standards.
+- **Protocol Evolution** - As RDCP evolves (v1.1, v2.0), TypeScript makes it easier to manage breaking changes and maintain backward compatibility through versioned type definitions.
+
+**FORBIDDEN**: Converting .ts files to .js files
+**REQUIRED**: All RDCP SDK code must be TypeScript
+**ENFORCED**: Hours were spent converting FROM JavaScript TO TypeScript - never reverse this
+
+### JavaScript vs TypeScript Context Boundaries (CRITICAL)
+**The confusion is understandable because the RDCP project has multiple contexts where JS vs TS requirements differ:**
+
+**Where JavaScript is Required:**
+- Package.json and build configs - These are Node.js runtime files that expect JavaScript
+- Documentation examples - The implementation guide uses JS for maximum compatibility across different project types
+- Legacy integration examples - Showing how to integrate with existing JavaScript codebases
+- Configuration files (jest.config.js, rollup.config.js, etc.)
+
+**Where TypeScript is Required:**
+- SDK core implementation - The actual @rdcp/server package needs full type safety
+- Protocol type definitions - All RDCP request/response schemas need TypeScript interfaces
+- Framework adapters - Express/Next.js/Fastify integrations need proper typing
+- Public API surface - Anything users import from the SDK must be typed
+- All source files in `src/` directory
+
+**The Core Issue:**
+WARP should never convert documentation examples to TypeScript when they should stay as JavaScript examples. The implementation guide's JS examples are intentionally generic - they're meant to be copied into any project type.
+
+**Clear Boundaries:**
+- SDK source code (`src/`): **Pure TypeScript**
+- Documentation examples (`docs/`, `examples/`): **JavaScript for compatibility**
+- Build/config files: **JavaScript (Node.js standard)**
+- Type definitions (`.d.ts`): **TypeScript definitions for JS users**
+
+**WARP Rule: Only convert files in `src/` to TypeScript, and leave everything in `docs/`, `examples/`, and config files as JavaScript. The examples are templates, not implementation code.**
+
+**The RDCP spec itself is language-agnostic** - the confusion comes from mixing SDK development (needs TS) with documentation examples (should stay JS for broader compatibility).
+
 ### RDCP Protocol Compliance (MANDATORY)
 - **ALWAYS** implement exact endpoint specifications from `/docs/rdcp-protocol-specification.md`
 - **NEVER** deviate from RDCP v1.0 protocol specification

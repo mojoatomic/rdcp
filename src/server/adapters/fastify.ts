@@ -56,6 +56,10 @@ type RDCPFastifyRequest = FastifyRequest<RDCPRouteGeneric> & {
  * Following Context7 Fastify patterns
  */
 export function createRDCPMiddleware(options: RDCPFastifyMiddlewareOptions) {
+  if (!options) {
+    throw new Error('authenticator function is required')
+  }
+  
   const {
     authenticator,
     debugConfig = {},
@@ -161,14 +165,20 @@ export interface RDCPFastifyPluginOptions extends RDCPFastifyMiddlewareOptions {
  * Following Context7 Fastify plugin patterns with proper typing
  */
 export function createRDCPPlugin(options: RDCPFastifyPluginOptions): FastifyPluginCallback<RDCPFastifyPluginOptions> {
-  const rdcpPlugin: FastifyPluginCallback<RDCPFastifyPluginOptions> = async (fastify: FastifyInstance, opts) => {
-    const middleware = createRDCPMiddleware(options)
-    
-    // Register as preHandler for all RDCP routes using Context7 async pattern
-    await fastify.addHook('preHandler', middleware)
-    
-    // Decorate fastify instance with RDCP utilities if needed
-    fastify.decorate('rdcpServer', new RDCPServer(options))
+  const rdcpPlugin: FastifyPluginCallback<RDCPFastifyPluginOptions> = (fastify: FastifyInstance, opts, done) => {
+    try {
+      const middleware = createRDCPMiddleware(options)
+      
+      // Register as preHandler for all RDCP routes using Context7 pattern
+      fastify.addHook('preHandler', middleware)
+      
+      // Decorate fastify instance with RDCP utilities if needed
+      fastify.decorate('rdcpServer', new RDCPServer(options))
+      
+      done()
+    } catch (error) {
+      done(error instanceof Error ? error : new Error(String(error)))
+    }
   }
 
   // Use fastify-plugin for proper encapsulation

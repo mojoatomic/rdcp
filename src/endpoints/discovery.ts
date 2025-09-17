@@ -1,5 +1,6 @@
-import { Request, Response } from 'express'
+import type { Request, Response } from 'express'
 import { DEBUG_CONFIG, getPerformanceMetrics } from '../debug'
+import { extractTenantContext, createTenantResponse, getTenantDebugConfig } from '../utils/tenant.js'
 
 export function protocolDiscovery(req: Request, res: Response): void {
   res.json({
@@ -11,7 +12,7 @@ export function protocolDiscovery(req: Request, res: Response): void {
       health: '/rdcp/v1/health'
     },
     capabilities: {
-      multiTenancy: false,
+      multiTenancy: true,
       performanceMetrics: true,
       temporaryControls: false,
       auditTrail: false
@@ -26,11 +27,13 @@ export function protocolDiscovery(req: Request, res: Response): void {
 }
 
 export function debugSystemDiscovery(req: Request, res: Response): void {
+  const tenantContext = extractTenantContext(req)
+  const debugConfig = tenantContext ? getTenantDebugConfig(tenantContext.tenantId) : DEBUG_CONFIG
   const metrics = getPerformanceMetrics()
   
-  const categories = Object.keys(DEBUG_CONFIG).map(id => ({
+  const categories = Object.keys(debugConfig).map(id => ({
     id,
-    enabled: DEBUG_CONFIG[id as keyof typeof DEBUG_CONFIG],
+    enabled: debugConfig[id as keyof typeof debugConfig],
     description: `Debug logging for ${id.toLowerCase().replace('_', ' ')}`,
     tags: ['infrastructure'],
     metrics: {
@@ -39,8 +42,8 @@ export function debugSystemDiscovery(req: Request, res: Response): void {
     }
   }))
   
-  res.json({
-    protocol: 'rdcp/1.0',
+  const response = {
+    protocol: 'rdcp/1.0' as const,
     timestamp: new Date().toISOString(),
     categories,
     performance: {
@@ -49,5 +52,7 @@ export function debugSystemDiscovery(req: Request, res: Response): void {
         memory: { value: 1048576, unit: 'bytes', measured: false }
       }
     }
-  })
+  }
+
+  res.json(tenantContext ? createTenantResponse(response, tenantContext) : response)
 }

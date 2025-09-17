@@ -93,17 +93,35 @@ export function setTenantDebugConfig(tenantId: string, config: Partial<TenantDeb
 }
 
 /**
- * Create RDCP standard tenant response object
- * Used in all RDCP endpoint responses
+ * Set individual tenant debug category
+ * Used by runtime control operations
  */
-export function createTenantResponse(tenantContext: RDCPTenantContext): TenantContext {
+export function setTenantDebugCategory(tenantId: string, category: string, enabled: boolean): void {
+  const currentConfig = getTenantDebugConfig(tenantId)
+  if (category in currentConfig) {
+    currentConfig[category as keyof TenantDebugConfig] = enabled
+    TENANT_DEBUG_CONFIGS.set(tenantId, currentConfig)
+  }
+}
+
+/**
+ * Create RDCP standard tenant response object
+ * Wraps response with tenant context when multi-tenancy is active
+ */
+export function createTenantResponse<T extends Record<string, any>>(
+  response: T, 
+  tenantContext: RDCPTenantContext
+): T & { tenant: TenantContext } {
   const scope = tenantContext.isolationLevel === 'global' ? 'global' : 'tenant-isolated'
   
   return {
-    id: tenantContext.tenantId,
-    isolationLevel: tenantContext.isolationLevel,
-    scope,
-    name: tenantContext.tenantName
+    ...response,
+    tenant: {
+      id: tenantContext.tenantId,
+      isolationLevel: tenantContext.isolationLevel,
+      scope,
+      name: tenantContext.tenantName
+    }
   }
 }
 

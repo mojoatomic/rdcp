@@ -46,18 +46,26 @@ export const debug = {
   )
 }
 
-// 5. Runtime control functions
-export const enableDebugCategories = (categories: string[]): void => {
+// 5. Runtime control functions (tenant-aware)
+export const enableDebugCategories = (categories: string[], tenantId?: string): void => {
   categories.forEach(category => {
-    if (category in DEBUG_CONFIG) {
+    if (tenantId) {
+      // For tenant-specific debug control, use tenant utilities
+      const { setTenantDebugCategory } = require('./utils/tenant.js')
+      setTenantDebugCategory(tenantId, category, true)
+    } else if (category in DEBUG_CONFIG) {
       DEBUG_CONFIG[category as keyof typeof DEBUG_CONFIG] = true
     }
   })
 }
 
-export const disableDebugCategories = (categories: string[]): void => {
+export const disableDebugCategories = (categories: string[], tenantId?: string): void => {
   categories.forEach(category => {
-    if (category in DEBUG_CONFIG) {
+    if (tenantId) {
+      // For tenant-specific debug control, use tenant utilities
+      const { setTenantDebugCategory } = require('./utils/tenant.js')
+      setTenantDebugCategory(tenantId, category, false)
+    } else if (category in DEBUG_CONFIG) {
       DEBUG_CONFIG[category as keyof typeof DEBUG_CONFIG] = false
     }
   })

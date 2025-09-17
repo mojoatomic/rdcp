@@ -97,6 +97,10 @@ function extractTenantContextFromKoa(ctx: Context): RDCPTenantContext {
  * Following Context7 Koa middleware patterns
  */
 export function createRDCPMiddleware(options: RDCPKoaMiddlewareOptions) {
+  if (!options) {
+    throw new Error('authenticator function is required')
+  }
+  
   const {
     authenticator,
     debugConfig = {},

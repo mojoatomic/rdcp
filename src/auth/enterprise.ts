@@ -1,7 +1,7 @@
 // File: src/auth/enterprise.ts - Enterprise Level (mTLS) Authentication
 // RDCP v1.0 compliant enterprise authentication using certificate-validator.js
 
-import jwt from 'jsonwebtoken';
+import * as jwt from 'jsonwebtoken';
 import { Request } from 'express';
 import type { RDCPAuthResult } from './types.js';
 import { verifyCertificateChain, parseCertificateFromHeader, extractTenantFromCN } from './certificate-validator.js';

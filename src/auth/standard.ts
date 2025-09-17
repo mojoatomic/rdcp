@@ -1,21 +1,11 @@
 // File: src/auth/standard.ts - Standard Level (JWT Bearer Token) from implementation guide
-import jwt from 'jsonwebtoken'
-import { Request } from 'express'
+import * as jwt from 'jsonwebtoken'
+import type { Request } from 'express'
+import type { RDCPAuthResult } from './types.js'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'change-in-production'
 
-interface AuthResult {
-  valid: boolean
-  method?: string
-  userId?: string
-  tenantId?: string
-  scopes?: string[]
-  sessionId?: string
-  expiresAt?: string
-  error?: string
-}
-
-export function validateRDCPAuth(request: Request): AuthResult {
+export function validateRDCPAuth(request: Request): RDCPAuthResult {
   const authHeader = (request.headers as unknown as { get?: (name: string) => string }).get 
     ? (request.headers as unknown as { get: (name: string) => string | undefined }).get('authorization')
     : request.headers['authorization']
@@ -23,6 +13,7 @@ export function validateRDCPAuth(request: Request): AuthResult {
   if (!authHeader?.startsWith('Bearer ')) {
     return {
       valid: false,
+      method: 'bearer',
       error: 'Missing Bearer token'
     }
   }
@@ -45,6 +36,7 @@ export function validateRDCPAuth(request: Request): AuthResult {
   } catch (error) {
     return {
       valid: false,
+      method: 'bearer',
       error: error instanceof Error ? error.message : 'Token validation failed'
     }
   }

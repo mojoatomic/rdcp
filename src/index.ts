@@ -120,6 +120,67 @@ export interface FrameworkAdapters {
   koa?: unknown      // Will be typed properly when converted
 }
 
+// Framework Adapters - properly imported using named imports following Context7 TypeScript ESM patterns
+// Using .js extensions as required for TypeScript ESM (imports from compiled .js output)
+import { 
+  createRDCPMiddleware as createExpressMiddleware, 
+  createRDCPRouter, 
+  createRDCPErrorHandler 
+} from './server/adapters/express.js'
+import { 
+  createRDCPMiddleware as createFastifyMiddleware, 
+  createRDCPPlugin 
+} from './server/adapters/fastify.js'
+import { 
+  createRDCPMiddleware as createKoaMiddleware, 
+  createRDCPMiddlewareWithErrorBoundary 
+} from './server/adapters/koa.js'
+
+/**
+ * Framework adapters organized by framework following Context7 patterns
+ * Each adapter exports its specific functions with proper TypeScript types
+ */
+export const adapters = {
+  express: {
+    createRDCPMiddleware: createExpressMiddleware,
+    createRDCPRouter,
+    createRDCPErrorHandler
+  },
+  fastify: {
+    createRDCPMiddleware: createFastifyMiddleware,
+    createRDCPPlugin
+  },
+  koa: {
+    createRDCPMiddleware: createKoaMiddleware,
+    createRDCPMiddlewareWithErrorBoundary
+  }
+}
+
+/**
+ * Auth utilities organized following Context7 patterns
+ */
+export const auth = {
+  validateRDCPAuth,
+  basicAuthenticator: validateRDCPAuth,
+  extractApiKey: (req: unknown) => {
+    // Extract API key from request headers - implementation from auth/index.ts
+    const headers = (req as { headers: Record<string, string> }).headers
+    const authHeader = headers?.['authorization']
+    const apiKeyHeader = headers?.['x-api-key']
+    return authHeader?.replace('Bearer ', '') || apiKeyHeader
+  }
+}
+
+/**
+ * Utilities organized following Context7 patterns
+ */
+export const utils = {
+  RDCPHttpClient,
+  extractTenantContext,
+  createTenantResponse,
+  createRDCPError
+}
+
 /**
  * Legacy compatibility object for JavaScript consumers
  * Provides CommonJS-style exports for backward compatibility
@@ -134,8 +195,10 @@ export const rdcpSdk = {
   extractTenantContext,
   createTenantResponse,
   
-  // Will be populated when adapters are converted to TypeScript
-  adapters: {} as FrameworkAdapters
+  // Organized exports
+  adapters,
+  auth,
+  utils
 }
 
 // Export rdcpSdk as the main export (no default export to avoid mixed exports warning)

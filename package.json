@@ -72,16 +72,17 @@
     }
   },
   "scripts": {
-    "dev": "tsx watch examples/express/server.js",
+    "dev": "tsx watch examples/express-server.ts",
     "dev:background": "nohup npm run dev > dev.log 2>&1 &",
     "dev:full-clean": "rm -rf node_modules package-lock.json && npm install && npm run dev",
     "cleanup": "pkill -f 'tsx watch' || true",
-    "build": "rollup -c",
-    "lint": "eslint src --ext .js,.ts --fix",
+    "build": "tsc && rollup -c",
+    "lint": "eslint src examples --ext .js,.ts --fix",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "type-check": "tsc --noEmit",
+    "type-check:examples": "tsc --noEmit --project tsconfig.json examples/express-server.ts",
     "clean": "rm -rf dist coverage .nyc_output"
   },
   "dependencies": {
@@ -114,6 +115,7 @@
     "rollup-plugin-dts": "^6.1.0",
     "supertest": "^6.3.4",
     "ts-jest": "^29.1.0",
+    "ts-node": "^10.9.2",
     "tslib": "^2.8.1",
     "tsx": "^4.6.2",
     "typescript": "^5.3.3"

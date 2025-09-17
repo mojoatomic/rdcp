@@ -1,6 +1,6 @@
 // File: src/auth/basic.ts - Basic Level (API Key) from implementation guide
-import crypto from 'crypto'
-import { Request } from 'express'
+import * as crypto from 'crypto'
+import type { Request } from 'express'
 
 const RDCP_API_KEY = process.env.RDCP_API_KEY || 'dev-key-change-in-production-min-32-chars'
 
@@ -25,27 +25,55 @@ function extractApiKey(request: Request): string | undefined {
   }
 }
 
-export function validateRDCPAuth(request: Request): boolean {
+import type { RDCPAuthResult } from './types.js'
+
+export function validateRDCPAuth(request: Request): RDCPAuthResult {
   const providedKey = extractApiKey(request)
   
   // Basic security checks
-  if (!providedKey || providedKey.length < 32) {
-    return false
+  if (!providedKey) {
+    return {
+      valid: false,
+      method: 'api-key',
+      error: 'No API key provided'
+    }
+  }
+  
+  if (providedKey.length < 32) {
+    return {
+      valid: false,
+      method: 'api-key', 
+      error: 'API key must be at least 32 characters'
+    }
   }
   
   if (!RDCP_API_KEY || RDCP_API_KEY.length < 32) {
     console.error('RDCP_API_KEY must be at least 32 characters for security')
-    return false
+    return {
+      valid: false,
+      method: 'api-key',
+      error: 'Server configuration error'
+    }
   }
   
   try {
     // Constant-time comparison to prevent timing attacks
-    return crypto.timingSafeEqual(
+    const isValid = crypto.timingSafeEqual(
       Buffer.from(RDCP_API_KEY),
       Buffer.from(providedKey)
     )
+    
+    return {
+      valid: isValid,
+      method: 'api-key',
+      error: isValid ? undefined : 'Invalid API key'
+    }
   } catch (error) {
     // Keys are different lengths - return false without revealing why
-    return false
+    return {
+      valid: false,
+      method: 'api-key',
+      error: 'Invalid API key'
+    }
   }
 }

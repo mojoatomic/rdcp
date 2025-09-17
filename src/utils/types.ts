@@ -11,6 +11,7 @@ export interface RDCPError {
     code: string
     message: string
     protocol: 'rdcp/1.0'
+    timestamp?: string
     details?: Record<string, unknown>
   }
 }
@@ -77,11 +78,11 @@ export interface ControlRequest {
   action: 'enable' | 'disable' | 'toggle' | 'reset'
   categories: string[] | string
   options?: {
-    temporary?: boolean
-    duration?: number
-    reason?: string
-  }
-  requestId?: string
+    temporary?: boolean | undefined
+    duration?: number | undefined
+    reason?: string | undefined
+  } | undefined
+  requestId?: string | undefined
 }
 
 export interface ControlChange {
@@ -145,7 +146,7 @@ export interface TenantContext {
   id: string
   isolationLevel: 'global' | 'process' | 'namespace' | 'organization'
   scope: 'global' | 'tenant-isolated'
-  name?: string
+  name?: string | undefined
 }
 
 // Authentication Types

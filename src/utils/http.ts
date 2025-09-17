@@ -1,4 +1,5 @@
-import fetch from 'node-fetch'
+// Using native Node.js fetch (Node.js 18+) following Context7 patterns
+// No import needed - fetch is globally available in Node.js 18+
 import { AuthConfig, AuthHeaders, RDCPError, RDCP_ERROR_CODES } from './types.js'
 
 // RDCP HTTP Client - Protocol compliant request handling

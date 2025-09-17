@@ -16,6 +16,7 @@
 
 ### 📦 Development
 - [Implementation Status](Implementation-Status) ⚠️
+- [JavaScript vs TypeScript Boundaries](JavaScript-vs-TypeScript-Boundaries) 🔥
 - [Publishing Setup](Publishing-Setup)
 - [Contributing](Contributing)
 - [API Reference](API-Reference)
