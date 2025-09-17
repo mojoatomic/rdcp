@@ -5,7 +5,7 @@ export const protocolVersionSchema = z.literal('rdcp/1.0')
 
 // Control endpoint schemas
 export const controlRequestSchema = z.object({
-  action: z.enum(['enable', 'disable', 'toggle', 'reset']),
+  action: z.enum(['enable', 'disable', 'toggle', 'status']),
   categories: z.union([z.string(), z.array(z.string())]),
   options: z.object({
     temporary: z.boolean().optional(),

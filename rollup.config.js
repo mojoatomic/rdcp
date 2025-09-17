@@ -12,7 +12,11 @@ const baseConfig = {
     resolve({ preferBuiltins: true }),
     commonjs(),
     json(),
-    typescript({ tsconfig: './tsconfig.json', declaration: false }),
+    typescript({ 
+      tsconfig: './tsconfig.json', 
+      declaration: false,
+      declarationMap: false 
+    }),
   ],
 }
 
