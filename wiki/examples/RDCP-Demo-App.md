@@ -74,6 +74,13 @@ packages/rdcp-demo-app/
 
 ## Running the app
 
+Metrics:
+- Endpoint: GET /metrics
+- Includes:
+  - rdcp_demo_requests_total{route,method,status}
+  - rdcp_demo_request_duration_seconds{route,method,status}
+- Default process metrics via prom-client
+
 Prerequisites:
 - Node.js 18+ (tested on Node v24)
 - Optional: Docker (for Jaeger)
@@ -231,6 +238,7 @@ Example curl (mTLS + JWT hybrid):
 - Enterprise (mTLS + optional JWT) demo added with base64 JSON cert helper and e2e tests
 - Multi-tenancy isolation e2e added: per-tenant category enable/disable and verification
 - Rate limiting for POST /rdcp/v1/control (configurable) with audit trail logging and e2e tests
+- Prometheus /metrics endpoint with request counters and histograms (e2e)
 
 ## Roadmap – What to add next (app improvements)
 
