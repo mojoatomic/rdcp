@@ -222,10 +222,10 @@ Once installation is complete:
 1. **[Basic Usage](Basic-Usage)** - Add RDCP endpoints to your application
 2. **[Authentication Setup](Authentication-Setup)** - Configure security for your endpoints
 3. **Framework Integration** - Choose your framework-specific guide:
-   - **[Express.js Integration](Express-Integration)**
-   - **[Fastify Integration](Fastify-Integration)** 
-   - **[Koa Integration](Koa-Integration)**
-   - **[Next.js Integration](NextJS-Integration)**
+   - **[Express.js Integration](Basic-Usage#express-js)**
+   - **[Fastify Integration](Basic-Usage#fastify)** 
+   - **[Koa Integration](Basic-Usage#koa)**
+   - **[Next.js Integration](Basic-Usage#next-js)**
 
 Also helpful:
 - Quick local demo with Jaeger Dependencies graph: [RDCP Demo App](examples/RDCP-Demo-App)

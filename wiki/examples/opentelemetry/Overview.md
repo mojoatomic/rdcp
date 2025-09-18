@@ -238,7 +238,7 @@ rdcp.debug.database('Slow query detected', {
 1. **[Quick Framework Setup](Framework-Examples)** - Copy-paste examples for your framework
 2. **[Backend Configuration](Backend-Configurations)** - Connect to your observability platform  
 3. **[Migration Guide](Migration-Guides)** - Step-by-step migration from current logging
-4. **[OpenTelemetry Roadmap](../OpenTelemetry-Integration-Roadmap)** - See what's coming next
+4. **[OpenTelemetry Roadmap](../../OpenTelemetry-Integration-Roadmap)** - See what's coming next
 
 ---
 

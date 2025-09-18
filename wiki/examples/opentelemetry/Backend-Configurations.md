@@ -628,7 +628,7 @@ function enhancedDebug(rdcp, category, message, data = {}) {
     deployment: process.env.DEPLOYMENT_ID
   }
   
-  rdcp.debug[category](message, enhancedData)
+  rdcp.debug[category] (message, enhancedData)
   
   // Also track as Honeycomb event for high-cardinality analysis
   trackBusinessEvent(`debug.${category}`, {

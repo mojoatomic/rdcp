@@ -343,11 +343,11 @@ Standard error codes:
 ## Next Steps
 
 - **[Authentication Setup](Authentication-Setup)** - Configure security levels and multi-tenancy
-- **[Express Integration](Express-Integration)** - Advanced Express.js configuration
-- **[Fastify Integration](Fastify-Integration)** - Advanced Fastify configuration  
-- **[Koa Integration](Koa-Integration)** - Advanced Koa configuration
-- **[Next.js Integration](NextJS-Integration)** - Advanced Next.js configuration
-- **[Client SDK](Client-SDK)** - Use the client SDK to consume RDCP endpoints
+- **[Express Integration](Basic-Usage#express-js)** - Advanced Express.js configuration
+- **[Fastify Integration](Basic-Usage#fastify)** - Advanced Fastify configuration  
+- **[Koa Integration](Basic-Usage#koa)** - Advanced Koa configuration
+- **[Next.js Integration](Basic-Usage#next-js)** - Advanced Next.js configuration
+- **[Client SDK](AI-Agent-Quick-Reference)** - Use the client SDK to consume RDCP endpoints
 
 Also see:
 - **[RDCP Demo App](examples/RDCP-Demo-App)** - One-command local demo (in-memory Jaeger)

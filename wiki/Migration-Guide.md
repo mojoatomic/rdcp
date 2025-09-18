@@ -643,5 +643,5 @@ Expected: Same functionality with enhanced response format and audit trail.
 
 - **[Authentication Setup](Authentication-Setup)** - Configure security levels
 - **[Basic Usage](Basic-Usage)** - Framework integration examples
-- **[Client SDK](Client-SDK)** - Update client applications
-- **[API Reference](API-Reference)** - Complete endpoint documentation
+- **[Client SDK](AI-Agent-Quick-Reference)** - Update client applications
+- **[API Reference](../docs/rdcp-implementation-guide.md)** - Complete endpoint documentation

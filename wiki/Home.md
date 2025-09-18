@@ -87,10 +87,10 @@ app.listen(3000)
 - **[Basic Usage](Basic-Usage)** - Quick integration examples for all supported frameworks
 
 ### Framework Integration
-- **[Express.js Integration](Express-Integration)** - Complete Express.js middleware setup
-- **[Fastify Integration](Fastify-Integration)** - Fastify plugin and middleware patterns  
-- **[Koa Integration](Koa-Integration)** - Koa middleware integration
-- **[Next.js Integration](NextJS-Integration)** - Next.js App Router implementation
+- **[Express.js Integration](Basic-Usage#express-js)** - Complete Express.js middleware setup
+- **[Fastify Integration](Basic-Usage#fastify)** - Fastify plugin and middleware patterns  
+- **[Koa Integration](Basic-Usage#koa)** - Koa middleware integration
+- **[Next.js Integration](Basic-Usage#next-js)** - Next.js App Router implementation
 
 ### OpenTelemetry Integration
 - [Trace Propagation Demo](examples/Trace-Propagation-Demo) — upstream → rdcp-demo-app with cross-service tracing
@@ -109,16 +109,16 @@ app.listen(3000)
 
 ### Authentication & Security
 - **[Authentication Setup](Authentication-Setup)** - All 3 security levels: Basic, Standard, Enterprise
-- **[Multi-Tenancy](Multi-Tenancy)** - Tenant isolation and context management
+- **[Multi-Tenancy](Authentication-Setup#multi-tenancy-support)** - Tenant isolation and context management
 
 ### Migration & Advanced
 - **[Migration Guide](Migration-Guide)** - Migrate from manual RDCP implementation to SDK
-- **[Client SDK](Client-SDK)** - Use the client SDK to consume RDCP endpoints
-- **[Protocol Compliance](Protocol-Compliance)** - RDCP v1.0 protocol compliance details
+- **[Client SDK](AI-Agent-Quick-Reference)** - Use the client SDK to consume RDCP endpoints
+- **[Protocol Compliance](../PROTOCOL-COMPLIANCE-REPORT.md)** - RDCP v1.0 protocol compliance details
 
 ### API Reference
-- **[API Documentation](API-Reference)** - Complete API reference and endpoint specifications
-- **[Error Handling](Error-Handling)** - Standard error codes and response formats
+- **[API Documentation](../docs/rdcp-implementation-guide.md)** - Complete API reference and endpoint specifications
+- **[Error Handling](Authentication-Setup#error-responses)** - Standard error codes and response formats
 
 ### Protocol Reference (Advanced)
 - Primary spec: [rdcp-protocol-specification.md](../docs/rdcp-protocol-specification.md)
@@ -128,8 +128,8 @@ Notes:
 - These are authoritative but dense. Most users should start with the Quick Reference and Demo App pages above.
 
 ### Development
-- **[Testing](Testing)** - Run and develop tests for the SDK
-- **[Contributing](Contributing)** - Development setup and contribution guidelines
+- **[Testing](../TESTING-SUMMARY.md)** - Run and develop tests for the SDK
+- **[Contributing](Home#how-to-contribute-to-the-docs)** - Development setup and contribution guidelines
 
 ## Features
 

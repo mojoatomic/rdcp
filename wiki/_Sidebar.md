@@ -20,8 +20,8 @@
 - [Implementation Status](Implementation-Status) ⚠️
 - [JavaScript vs TypeScript Boundaries](JavaScript-vs-TypeScript-Boundaries) 🔥
 - [Publishing Setup](Publishing-Setup)
-- [Contributing](Contributing)
-- [API Reference](API-Reference)
+- [Contributing](Home#how-to-contribute-to-the-docs)
+- [API Reference](../docs/rdcp-implementation-guide.md)
 
 ### 🛠️ Framework Support
 - [Express.js](Basic-Usage#express-js)
@@ -36,10 +36,10 @@
 ### 📋 Protocol Reference
 - [Protocol Specification (docs)](../docs/rdcp-protocol-specification.md)
 - [Implementation Guide (docs)](../docs/rdcp-implementation-guide.md)
-- [Client SDK](Client-SDK)
+- [Client SDK](AI-Agent-Quick-Reference)
 
 ### 🔍 Troubleshooting
-- [Common Issues](Troubleshooting)
+- [Common Issues](Basic-Usage#debug-categories)
 - [Debug Configuration](Basic-Usage#debug-categories)
 - [Error Codes](Authentication-Setup#error-responses)
 

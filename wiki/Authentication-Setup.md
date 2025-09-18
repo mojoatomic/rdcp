@@ -497,7 +497,7 @@ curl -H "X-API-Key: short" \
 
 ## Next Steps
 
-- **[Multi-Tenancy](Multi-Tenancy)** - Advanced tenant isolation and context management
-- **[Client SDK](Client-SDK)** - Use the client SDK with authentication
-- **[Express Integration](Express-Integration)** - Framework-specific authentication setup
-- **[API Reference](API-Reference)** - Complete endpoint and authentication documentation
+- **[Multi-Tenancy](Authentication-Setup#multi-tenancy-support)** - Advanced tenant isolation and context management
+- **[Client SDK](AI-Agent-Quick-Reference)** - Use the client SDK with authentication
+- **[Express Integration](Basic-Usage#express-js)** - Framework-specific authentication setup
+- **[API Reference](../docs/rdcp-implementation-guide.md)** - Complete endpoint and authentication documentation

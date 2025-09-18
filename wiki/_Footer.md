@@ -6,7 +6,7 @@
 
 **Migration**: [From Manual Implementation](Migration-Guide) • [Framework Examples](Basic-Usage) • [Publishing Guide](Publishing-Setup)
 
-**Protocol**: [RDCP v1.0 Specification](docs/rdcp-protocol-specification.md) • [Implementation Guide](docs/rdcp-implementation-guide.md) • [API Reference](API-Reference)
+**Protocol**: [RDCP v1.0 Specification](../docs/rdcp-protocol-specification.md) • [Implementation Guide](../docs/rdcp-implementation-guide.md) • [API Reference](../docs/rdcp-implementation-guide.md)
 
 ---
 
