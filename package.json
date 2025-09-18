@@ -28,12 +28,9 @@
     "url": "https://github.com/mojoatomic/rdcp"
   },
   "bugs": {
-    "url": "https://github.com/mojoatomic/rdcp/issues"
-  },
-  "homepage": "https://rdcp.dev",
-  "bugs": {
     "url": "https://github.com/rdcp/sdk/issues"
   },
+  "homepage": "https://rdcp.dev",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -75,7 +72,7 @@
     "dev:full-clean": "rm -rf node_modules package-lock.json && npm install && npm run dev",
     "cleanup": "pkill -f 'tsx watch' || true",
     "build": "tsc && rollup -c",
-    "lint": "eslint src examples --ext .js,.ts --fix",
+    "lint": "eslint src examples --no-error-on-unmatched-pattern --ext .js,.ts --fix",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
@@ -136,5 +133,6 @@
   },
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "typescript": "5.3.3"
 }
