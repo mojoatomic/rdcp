@@ -37,7 +37,7 @@ export interface TenantDebugConfig {
 interface RequestWithHeaders {
   headers: {
     get?: (name: string) => string | null | undefined
-    [key: string]: any
+    [key: string]: unknown
   }
 }
 
@@ -45,16 +45,20 @@ interface RequestWithHeaders {
  * RDCP Standard: Extract tenant context from standard headers
  * Follows the exact pattern from the implementation guide
  */
-export function extractTenantContext(request: RequestWithHeaders): RDCPTenantContext {
+export function extractTenantContext(
+  request: RequestWithHeaders
+): RDCPTenantContext {
   return {
-    tenantId: request.headers.get?.('x-rdcp-tenant-id') || 
-              request.headers['x-rdcp-tenant-id'] || 
-              'default',
-    isolationLevel: (request.headers.get?.('x-rdcp-isolation-level') || 
-                    request.headers['x-rdcp-isolation-level'] || 
-                    'global') as 'global' | 'process' | 'namespace' | 'organization',
-    tenantName: request.headers.get?.('x-rdcp-tenant-name') || 
-                request.headers['x-rdcp-tenant-name']
+    tenantId:
+      request.headers.get?.('x-rdcp-tenant-id') ||
+      request.headers['x-rdcp-tenant-id'] ||
+      'default',
+    isolationLevel: (request.headers.get?.('x-rdcp-isolation-level') ||
+      request.headers['x-rdcp-isolation-level'] ||
+      'global') as 'global' | 'process' | 'namespace' | 'organization',
+    tenantName:
+      request.headers.get?.('x-rdcp-tenant-name') ||
+      request.headers['x-rdcp-tenant-name'],
   }
 }
 
@@ -77,7 +81,7 @@ export function getTenantDebugConfig(tenantId: string): TenantDebugConfig {
       REPORTS: false,
       CACHE: false,
       AUTH: false,
-      INTEGRATIONS: false
+      INTEGRATIONS: false,
     })
   }
   return TENANT_DEBUG_CONFIGS.get(tenantId)!
@@ -87,7 +91,10 @@ export function getTenantDebugConfig(tenantId: string): TenantDebugConfig {
  * Set tenant-specific debug configuration
  * Updates existing configuration or creates new one
  */
-export function setTenantDebugConfig(tenantId: string, config: Partial<TenantDebugConfig>): void {
+export function setTenantDebugConfig(
+  tenantId: string,
+  config: Partial<TenantDebugConfig>
+): void {
   const currentConfig = getTenantDebugConfig(tenantId)
   TENANT_DEBUG_CONFIGS.set(tenantId, { ...currentConfig, ...config })
 }
@@ -96,7 +103,11 @@ export function setTenantDebugConfig(tenantId: string, config: Partial<TenantDeb
  * Set individual tenant debug category
  * Used by runtime control operations
  */
-export function setTenantDebugCategory(tenantId: string, category: string, enabled: boolean): void {
+export function setTenantDebugCategory(
+  tenantId: string,
+  category: string,
+  enabled: boolean
+): void {
   const currentConfig = getTenantDebugConfig(tenantId)
   if (category in currentConfig) {
     currentConfig[category as keyof TenantDebugConfig] = enabled
@@ -108,20 +119,21 @@ export function setTenantDebugCategory(tenantId: string, category: string, enabl
  * Create RDCP standard tenant response object
  * Wraps response with tenant context when multi-tenancy is active
  */
-export function createTenantResponse<T extends Record<string, any>>(
-  response: T, 
+export function createTenantResponse<T extends Record<string, unknown>>(
+  response: T,
   tenantContext: RDCPTenantContext
 ): T & { tenant: TenantContext } {
-  const scope = tenantContext.isolationLevel === 'global' ? 'global' : 'tenant-isolated'
-  
+  const scope =
+    tenantContext.isolationLevel === 'global' ? 'global' : 'tenant-isolated'
+
   return {
     ...response,
     tenant: {
       id: tenantContext.tenantId,
       isolationLevel: tenantContext.isolationLevel,
       scope,
-      name: tenantContext.tenantName
-    }
+      name: tenantContext.tenantName,
+    },
   }
 }
 
@@ -144,7 +156,7 @@ export function getAllTenantConfigs(): TenantConfigInfo[] {
     configs.push({
       tenantId,
       config,
-      isolationLevel: 'organization' // Default for stored tenants
+      isolationLevel: 'organization', // Default for stored tenants
     })
   }
   return configs

@@ -1,7 +1,17 @@
 import { Request, Response } from 'express'
-import { enableDebugCategories, disableDebugCategories, DEBUG_CONFIG } from '../debug'
+import {
+  enableDebugCategories,
+  disableDebugCategories,
+  DEBUG_CONFIG,
+} from '../debug'
 import { controlRequestSchema } from '../schemas'
-import { extractTenantContext, createTenantResponse, getTenantDebugConfig } from '../utils/tenant.js'
+import {
+  extractTenantContext,
+  createTenantResponse,
+  getTenantDebugConfig,
+} from '../utils/tenant.js'
+
+type RequestWithRDCPAuth = Request & { rdcpAuth?: { user?: string; method?: string } }
 
 export function runtimeControl(req: Request, res: Response): void {
   try {
@@ -10,42 +20,53 @@ export function runtimeControl(req: Request, res: Response): void {
     const requestId = `req_${Date.now()}`
     const timestamp = new Date().toISOString()
     const changes = []
-    
-    const categories = Array.isArray(request.categories) ? request.categories : [request.categories]
-    
+
+    const categories = Array.isArray(request.categories)
+      ? request.categories
+      : [request.categories]
+
     switch (request.action) {
       case 'enable':
         enableDebugCategories(categories, tenantContext?.tenantId)
-        changes.push(...categories.map(cat => ({
-          category: cat,
-          previousState: false,
-          newState: true,
-          effectiveAt: timestamp
-        })))
+        changes.push(
+          ...categories.map(cat => ({
+            category: cat,
+            previousState: false,
+            newState: true,
+            effectiveAt: timestamp,
+          }))
+        )
         break
-        
+
       case 'disable':
         disableDebugCategories(categories, tenantContext?.tenantId)
-        changes.push(...categories.map(cat => ({
-          category: cat,
-          previousState: true,
-          newState: false,
-          effectiveAt: timestamp
-        })))
+        changes.push(
+          ...categories.map(cat => ({
+            category: cat,
+            previousState: true,
+            newState: false,
+            effectiveAt: timestamp,
+          }))
+        )
         break
-        
+
       case 'reset':
-        const debugConfig = tenantContext ? getTenantDebugConfig(tenantContext.tenantId) : DEBUG_CONFIG
-        disableDebugCategories(Object.keys(debugConfig), tenantContext?.tenantId)
+        const debugConfig = tenantContext
+          ? getTenantDebugConfig(tenantContext.tenantId)
+          : DEBUG_CONFIG
+        disableDebugCategories(
+          Object.keys(debugConfig),
+          tenantContext?.tenantId
+        )
         changes.push({
           category: 'ALL',
           previousState: true,
           newState: false,
-          effectiveAt: timestamp
+          effectiveAt: timestamp,
         })
         break
     }
-    
+
     const response = {
       protocol: 'rdcp/1.0' as const,
       requestId,
@@ -54,19 +75,21 @@ export function runtimeControl(req: Request, res: Response): void {
       audit: {
         timestamp,
         action: request.action,
-        operator: (req as any).rdcpAuth?.user || 'system',
-        method: (req as any).rdcpAuth?.method || 'unknown'
-      }
+        operator: (req as RequestWithRDCPAuth).rdcpAuth?.user ?? 'system',
+        method: (req as RequestWithRDCPAuth).rdcpAuth?.method ?? 'unknown',
+      },
     }
-    
-    res.json(tenantContext ? createTenantResponse(response, tenantContext) : response)
+
+    res.json(
+      tenantContext ? createTenantResponse(response, tenantContext) : response
+    )
   } catch (error) {
     res.status(400).json({
       error: {
         code: 'RDCP_VALIDATION_ERROR',
         message: 'Request validation failed',
-        protocol: 'rdcp/1.0'
-      }
+        protocol: 'rdcp/1.0',
+      },
     })
   }
 }
