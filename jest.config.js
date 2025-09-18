@@ -4,7 +4,7 @@
  * Context7 Compliance: Uses ts-jest ESM patterns
  */
 
-export default {
+module.exports = {
   testEnvironment: 'node',
   roots: ['<rootDir>/src', '<rootDir>/tests'],
   testMatch: ['**/__tests__/**/*.(js|ts)', '**/?(*.)+(spec|test).(js|ts)'],
