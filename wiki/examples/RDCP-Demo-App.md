@@ -74,6 +74,21 @@ packages/rdcp-demo-app/
 
 ## Running the app
 
+### Quick Local (In-Memory) Jaeger Demo (Recommended)
+Use this for the Dependencies graph and clean resets each run.
+
+```bash
+# Start Jaeger (in-memory), run both services locally with correct OTEL settings,
+# seed cross-service traces, and print Jaeger service list.
+./packages/rdcp-demo-app/scripts/run-inmemory-demo.sh
+
+# When finished, clean up everything
+./packages/rdcp-demo-app/scripts/stop-inmemory-demo.sh
+```
+
+Jaeger UI: http://localhost:16686
+Dependencies graph: http://localhost:16686/dependencies (refresh after a few seconds)
+
 Metrics:
 - Endpoint: GET /metrics
 - Includes:
