@@ -23,10 +23,17 @@ const sdk = new NodeSDK({
   instrumentations: [getNodeAutoInstrumentations()]
 })
 
-sdk.start().then(() => {
-  // Integrate RDCP trace correlation
+const started = sdk.start()
+if (started && typeof started.then === 'function') {
+  started.then(() => {
+    // Integrate RDCP trace correlation
+    setupRDCPWithOpenTelemetry({ enableTraceCorrelation: true })
+    console.info(`OpenTelemetry started for ${serviceName} -> ${otlpEndpoint}`)
+  }).catch(err => {
+    console.error('Failed to start OpenTelemetry:', err)
+  })
+} else {
+  // Some SDK versions start synchronously
   setupRDCPWithOpenTelemetry({ enableTraceCorrelation: true })
-  console.info(`OpenTelemetry started for ${serviceName} -> ${otlpEndpoint}`)
-}).catch(err => {
-  console.error('Failed to start OpenTelemetry:', err)
-})
+  console.info(`OpenTelemetry started (sync) for ${serviceName} -> ${otlpEndpoint}`)
+}
