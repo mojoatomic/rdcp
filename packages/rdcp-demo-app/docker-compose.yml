@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  # Official Jaeger all-in-one (pulls latest from Docker Hub)
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: rdcp-jaeger
+    ports:
+      - "16686:16686"   # Jaeger UI
+      - "4318:4318"     # OTLP HTTP receiver
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - SPAN_STORAGE_TYPE=memory
+    networks:
+      - rdcp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:16686"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # RDCP Demo App (downstream service)
+  rdcp-demo-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rdcp-demo-app
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
+      - OTEL_SERVICE_NAME=rdcp-demo-app
+      - RDCP_API_KEY=demo-key-32-characters-minimum-required
+    depends_on:
+      jaeger:
+        condition: service_healthy
+    networks:
+      - rdcp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/.well-known/rdcp"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    command: ["node", "--require", "./src/opentelemetry.js", "src/server.js"]
+
+  # Upstream Service (demonstrates trace propagation)
+  upstream-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rdcp-upstream-service
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
+      - OTEL_SERVICE_NAME=upstream-service
+      - DOWNSTREAM_URL=http://rdcp-demo-app:3000
+      - RDCP_API_KEY=demo-key-32-characters-minimum-required
+    depends_on:
+      jaeger:
+        condition: service_healthy
+      rdcp-demo-app:
+        condition: service_healthy
+    networks:
+      - rdcp-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    command: ["node", "--require", "./src/opentelemetry.js", "./src/upstream-service.js"]
+
+networks:
+  rdcp-network:
+    driver: bridge

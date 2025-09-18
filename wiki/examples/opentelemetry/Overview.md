@@ -66,6 +66,13 @@ rdcp.debug.cache('Cache miss', { key: 'user:123', ttl: 3600 })
 
 ### Step 4: Connect Your Backend (5 minutes)
 Choose your observability backend:
+
+- For a simple demo with Dependencies graph, use the in-memory Jaeger helper:
+  ```bash
+  ./packages/rdcp-demo-app/scripts/run-inmemory-demo.sh
+  # Cleanup:
+  ./packages/rdcp-demo-app/scripts/stop-inmemory-demo.sh
+  ```
 - **[Jaeger (Local Dev)](Backend-Configurations#jaeger-local-development)**
 - **[DataDog (Production)](Backend-Configurations#datadog-apm)**  
 - **[New Relic (Enterprise)](Backend-Configurations#new-relic)**

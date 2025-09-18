@@ -1,0 +1,38 @@
+{
+  "name": "@rdcp/demo-app",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Comprehensive RDCP + OpenTelemetry demonstration app with Express and Jaeger",
+  "scripts": {
+    "dev": "node src/server.js",
+    "start": "NODE_ENV=production node src/server.js",
+    "otel": "node --require ./src/opentelemetry.js src/server.js",
+    "dev:upstream": "OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318 OTEL_SERVICE_NAME=upstream-service node --require ./src/opentelemetry.js ./src/upstream-service.js",
+    "benchmark": "node scripts/benchmark.js",
+    "examples": "node scripts/test-examples.js",
+    "test": "jest",
+    "build": "echo 'No build step needed (pure JS demo)'",
+    "gen:mtls-cert": "node scripts/gen-mtls-cert.js",
+    "gen:jwt": "node scripts/mint-jwt.js",
+    "demo:start:memory": "./scripts/run-inmemory-demo.sh",
+    "demo:stop:memory": "./scripts/stop-inmemory-demo.sh"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "morgan": "^1.10.0",
+    "uuid": "^9.0.1",
+    "prom-client": "^15.1.3",
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/sdk-node": "^0.52.1",
+    "@opentelemetry/auto-instrumentations-node": "^0.53.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.52.1",
+    "@opentelemetry/resources": "^1.9.0",
+    "@opentelemetry/semantic-conventions": "^1.23.0",
+    "@rdcp/server": "file:../..",
+    "@rdcp/otel-plugin": "file:../otel-plugin"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.4"
+  }
+}
