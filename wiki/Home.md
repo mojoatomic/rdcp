@@ -83,8 +83,8 @@ app.listen(3000)
 - [Implementation Status](Implementation-Status.md) — current state, demos, and observability
 
 ### Getting Started
-- **[Installation](Installation)** - Install and setup the RDCP SDK
-- **[Basic Usage](Basic-Usage)** - Quick integration examples for all supported frameworks
+- **[Installation](Installation.md)** - Install and setup the RDCP SDK
+- **[Basic Usage](Basic-Usage.md)** - Quick integration examples for all supported frameworks
 
 ### Framework Integration
 - **[Express.js Integration](Basic-Usage#express-js)** - Complete Express.js middleware setup
@@ -179,3 +179,5 @@ MIT License - see [LICENSE](https://github.com/mojoatomic/rdcp/blob/main/LICENSE
 - Integrate: [Installation](Installation.md) → [Basic Usage](Basic-Usage.md)
 - Explore: [Trace Propagation Demo](examples/Trace-Propagation-Demo.md)
 - Deep dive: Protocol references in docs/ (advanced)
+  - [Protocol specification](https://github.com/mojoatomic/rdcp/blob/main/docs/rdcp-protocol-specification.md)
+  - [Implementation guide](https://github.com/mojoatomic/rdcp/blob/main/docs/rdcp-implementation-guide.md)
