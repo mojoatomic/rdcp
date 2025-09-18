@@ -10,7 +10,8 @@
     "benchmark": "node scripts/benchmark.js",
     "examples": "node scripts/test-examples.js",
     "test": "jest",
-    "build": "echo 'No build step needed (pure JS demo)'"
+    "build": "echo 'No build step needed (pure JS demo)'",
+    "gen:mtls-cert": "node scripts/gen-mtls-cert.js"
   },
   "dependencies": {
     "express": "^4.19.2",
