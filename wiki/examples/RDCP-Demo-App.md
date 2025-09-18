@@ -109,6 +109,29 @@ Examples & Benchmarks:
 
 ## Authentication
 
+### Basic (API Key) - Enforced in Demo
+
+- The demo mounts the RDCP middleware with an authenticator that wraps `validateRDCPAuth`.
+- All RDCP endpoints except `/.well-known/rdcp` require authentication.
+- Required headers per RDCP spec:
+  - `X-RDCP-Auth-Method: api-key`
+  - `X-RDCP-Client-ID: <client-id>`
+  - `Authorization: Bearer <32+ char API key>`
+
+Supertest e2e coverage (passing):
+- Allows `/.well-known/rdcp` without auth
+- Rejects `/rdcp/v1/discovery` without headers
+- Rejects invalid/short API key
+- Accepts valid API key with required headers
+- `POST /rdcp/v1/control`: 405 on GET, 401 without headers, 200 with valid headers
+
+Sample commands (basic mode):
+- export RDCP_API_KEY='dev-key-change-in-production-min-32-chars'
+- curl -H 'X-RDCP-Auth-Method: api-key' \
+       -H 'X-RDCP-Client-ID: demo-client' \
+       -H "Authorization: Bearer $RDCP_API_KEY" \
+       http://localhost:3000/rdcp/v1/status | jq
+
 Current state:
 - The app wires up RDCP authentication utilities and middleware scaffolding; full strict enforcement (headers & modes) will be enabled as we add the complete demo flows below.
 
@@ -140,8 +163,29 @@ Sample commands (standard JWT mode):
        http://localhost:3000/rdcp/v1/status | jq
 
 Enterprise (mTLS + token) – demo strategy:
-- For local testing (without TLS termination): SDK accepts a base64-encoded JSON test certificate via 'X-Client-Cert' header (for demo only).
-- We will add a helper script to generate a mock JSON certificate and send it as base64 with X-Client-Cert, plus optional JWT for hybrid mode.
+- SDK supports a base64-encoded JSON test certificate via `X-Client-Cert` for local/demo scenarios (in addition to real X.509 parsing).
+- A helper script is provided to generate a valid mock certificate and print base64 to stdout.
+- Optional Bearer token can be provided; validator verifies `sub` matches the certificate CN when present.
+
+Helper script (generate base64 cert):
+- npm run gen:mtls-cert --prefix packages/rdcp-demo-app -- client.tenant123.rdcp.internal
+
+Example curl (mTLS-only):
+- CERT=$(npm run -s gen:mtls-cert --prefix packages/rdcp-demo-app -- client.tenant123.rdcp.internal)
+- curl -H 'X-RDCP-Auth-Method: mtls' \
+       -H 'X-RDCP-Client-ID: demo-client' \
+       -H "X-Client-Cert: $CERT" \
+       http://localhost:3000/rdcp/v1/status | jq
+
+Example curl (mTLS + JWT hybrid):
+- export JWT_SECRET='change-in-production'
+- TOKEN=$(node -e "console.log(require('jsonwebtoken').sign({ sub: 'client.tenant123.rdcp.internal', scopes:['discovery','status','control'] }, process.env.JWT_SECRET, { algorithm:'HS256', expiresIn:'1h' }))")
+- CERT=$(npm run -s gen:mtls-cert --prefix packages/rdcp-demo-app -- client.tenant123.rdcp.internal)
+- curl -H 'X-RDCP-Auth-Method: mtls' \
+       -H 'X-RDCP-Client-ID: demo-client' \
+       -H "X-Client-Cert: $CERT" \
+       -H "Authorization: Bearer $TOKEN" \
+       http://localhost:3000/rdcp/v1/status | jq
 
 ---
 
