@@ -224,6 +224,14 @@ Example curl (mTLS + JWT hybrid):
 
 ---
 
+## Recent Progress
+
+- Basic (API key) enforcement added with e2e tests
+- Standard (JWT Bearer) demo added with mint helper and e2e tests
+- Enterprise (mTLS + optional JWT) demo added with base64 JSON cert helper and e2e tests
+- Multi-tenancy isolation e2e added: per-tenant category enable/disable and verification
+- Rate limiting for POST /rdcp/v1/control (configurable) with audit trail logging and e2e tests
+
 ## Roadmap – What to add next (app improvements)
 
 Authentication & security:
