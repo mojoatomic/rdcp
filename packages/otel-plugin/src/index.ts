@@ -6,7 +6,7 @@
  * OpenTelemetry Provider that implements RDCP TraceProvider interface
  * Context7: Following OpenTelemetry provider export patterns
  */
-export { OpenTelemetryProvider } from './provider.js'
+export { OpenTelemetryProvider } from './provider'
 
 /**
  * Easy setup functions for enterprise customers
@@ -18,7 +18,7 @@ export {
   isRDCPOpenTelemetryActive,
   createOpenTelemetryProvider,
   type RDCPOpenTelemetryConfig
-} from './setup.js'
+} from './setup'
 
 // Re-export types from @rdcp/server for convenience
 // Context7: Common pattern in OpenTelemetry plugins
@@ -34,6 +34,14 @@ export const RDCP_OTEL_PLUGIN_NAME = '@rdcp/otel-plugin'
  * Default export for convenience
  * Context7: Following OpenTelemetry plugin patterns
  */
+import { OpenTelemetryProvider } from './provider'
+import {
+  setupRDCPWithOpenTelemetry,
+  disableRDCPOpenTelemetry,
+  isRDCPOpenTelemetryActive,
+  createOpenTelemetryProvider
+} from './setup'
+
 export default {
   OpenTelemetryProvider,
   setupRDCPWithOpenTelemetry,

@@ -2,22 +2,22 @@
 // WARP: TypeScript-first, under 300 lines, comprehensive coverage
 
 import { trace, propagation, context } from '@opentelemetry/api'
-import { OpenTelemetryProvider } from '../src/provider.js'
+import { OpenTelemetryProvider } from '../src/provider'
 import {
   setupRDCPWithOpenTelemetry,
   disableRDCPOpenTelemetry,
   isRDCPOpenTelemetryActive,
   createOpenTelemetryProvider
-} from '../src/setup.js'
+} from '../src/setup'
 
 // Mock @rdcp/server - Context7: Common pattern in OpenTelemetry plugin tests
-const mockSetTraceProvider = jest.fn()
-const mockGetTraceProviderStatus = jest.fn()
-
 jest.mock('@rdcp/server', () => ({
-  setTraceProvider: mockSetTraceProvider,
-  getTraceProviderStatus: mockGetTraceProviderStatus
+  setTraceProvider: jest.fn(),
+  getTraceProviderStatus: jest.fn(() => ({ enabled: true, provider: 'opentelemetry' }))
 }))
+
+// Get mocked functions
+const { setTraceProvider: mockSetTraceProvider, getTraceProviderStatus: mockGetTraceProviderStatus } = require('@rdcp/server')
 
 // Mock OpenTelemetry API - Context7: Following OpenTelemetry test patterns
 const mockActiveSpan = {
@@ -55,6 +55,10 @@ describe('RDCP OpenTelemetry Plugin (Context7 + WARP)', () => {
     mockIsSpanContextValid.mockReturnValue(true)
     mockGetActiveBaggage.mockReturnValue(mockBaggage)
     mockGetTraceProviderStatus.mockReturnValue({ enabled: true, provider: 'opentelemetry' })
+    
+    // Reset the setTraceProvider mock to default behavior
+    mockSetTraceProvider.mockReset()
+    mockSetTraceProvider.mockImplementation(() => {})
   })
 
   describe('OpenTelemetryProvider (Context7 patterns)', () => {
@@ -119,7 +123,7 @@ describe('RDCP OpenTelemetry Plugin (Context7 + WARP)', () => {
     })
 
     it('handles missing baggage gracefully', () => {
-      mockGetActiveBaggage.mockReturnValue(null)
+      mockGetActiveBaggage.mockReturnValue(null as any)
       
       const provider = new OpenTelemetryProvider()
       const context = provider.getCurrentTraceContext()
@@ -176,7 +180,10 @@ describe('RDCP OpenTelemetry Plugin (Context7 + WARP)', () => {
     })
 
     it('handles setup errors gracefully', () => {
-      mockSetTraceProvider.mockImplementation(() => {
+      // Create a temporary mock implementation for this test only
+      const originalImpl = mockSetTraceProvider.getMockImplementation()
+      
+      mockSetTraceProvider.mockImplementationOnce(() => {
         throw new Error('RDCP setup error')
       })
       
@@ -184,8 +191,9 @@ describe('RDCP OpenTelemetry Plugin (Context7 + WARP)', () => {
         setupRDCPWithOpenTelemetry()
       }).not.toThrow()
       
-      // Should set provider to null on error
-      expect(mockSetTraceProvider).toHaveBeenCalledWith(null)
+      // Should set provider to null on error (called twice: first throws, second sets null)
+      expect(mockSetTraceProvider).toHaveBeenCalledTimes(2)
+      expect(mockSetTraceProvider).toHaveBeenLastCalledWith(null)
     })
 
     it('disables OpenTelemetry integration', () => {

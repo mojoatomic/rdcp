@@ -3,7 +3,7 @@
 // WARP: TypeScript-first, no any types, under 150 lines (validation file limit)
 
 import { setTraceProvider } from '@rdcp/server'
-import { OpenTelemetryProvider } from './provider.js'
+import { OpenTelemetryProvider } from './provider'
 import type { TraceProvider } from '@rdcp/server'
 
 /**
