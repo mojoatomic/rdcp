@@ -67,11 +67,18 @@ npm run dev:upstream --prefix packages/rdcp-demo-app # upstream on :3001
 
 Verify propagation:
 ```bash
+# Unauthenticated path: health/status may be 401 depending on auth config
 curl -s http://localhost:3001/api/demo/rdcp-discovery | jq
 curl -s http://localhost:3001/api/demo/multi-call | jq
+
+# Authorized path: adds RDCP headers so all calls should be 200
+RDCP_API_KEY=${RDCP_API_KEY:-dev-key-change-in-production-min-32-chars} \
+  curl -s http://localhost:3001/api/demo/multi-call-auth | jq
 ```
 
 View traces in Jaeger:
-- http://localhost:16686 (service names: rdcp-demo-app, upstream-service)
+- http://localhost:16686
+- Filter by Services: upstream-service and rdcp-demo-app
+- Expectation: upstream-service spans are parents; rdcp-demo-app spans are children
 
 Note: Requires an OTLP collector at http://localhost:4318 (Jaeger all-in-one via docker compose covers this).

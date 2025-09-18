@@ -6,6 +6,7 @@ const { trace, context, propagation } = require('@opentelemetry/api')
 
 const app = express()
 const PORT = process.env.UPSTREAM_PORT || 3001
+const DOWNSTREAM = process.env.DOWNSTREAM_URL || 'http://localhost:3000'
 const tracer = trace.getTracer('upstream-service', '1.0.0')
 
 // Extract incoming context and start a server span per request
@@ -22,13 +23,14 @@ app.use((req, res, next) => {
 })
 
 // Minimal downstream caller to rdcp-demo-app (preserves W3C context)
-function downstream(path, ctx) {
+function downstream(path, ctx, extraHeaders = {}) {
   return new Promise((resolve, reject) => {
-    const span = tracer.startSpan(`GET ${path}`, { kind: 3, attributes: { 'http.url': `http://localhost:3000${path}` } }, ctx)
+    const url = new URL(path, DOWNSTREAM)
+    const span = tracer.startSpan(`GET ${path}`, { kind: 3, attributes: { 'http.url': url.toString() } }, ctx)
     const headers = {}
     propagation.inject(trace.setSpan(ctx, span), headers)
 
-    const req = http.request({ hostname: 'localhost', port: 3000, path, method: 'GET', headers: { ...headers, 'User-Agent': 'upstream-service/1.0.0', 'Accept': 'application/json' } },
+    const req = http.request({ hostname: url.hostname, port: url.port || (url.protocol === 'https:' ? 443 : 80), path: url.pathname + url.search, method: 'GET', headers: { ...headers, ...extraHeaders, 'User-Agent': 'upstream-service/1.0.0', 'Accept': 'application/json' } },
       res => {
         let data = ''
         res.on('data', d => (data += d))
@@ -45,6 +47,15 @@ function downstream(path, ctx) {
     req.on('error', err => { span.end(); reject(err) })
     req.end()
   })
+}
+
+function rdcpAuthHeaders() {
+  const key = process.env.RDCP_API_KEY || 'dev-key-change-in-production-min-32-chars'
+  return {
+    'X-RDCP-Auth-Method': 'api-key',
+    'X-RDCP-Client-ID': 'upstream-demo',
+    'Authorization': `Bearer ${key}`
+  }
 }
 
 // Health check
@@ -85,6 +96,26 @@ app.get('/api/demo/multi-call', async (req, res) => {
   } catch (e) {
     req.span.end()
     res.status(500).json({ error: 'Multi-call operation failed', message: e.message })
+  }
+})
+
+// Authorized multi-call variant (adds RDCP auth headers)
+app.get('/api/demo/multi-call-auth', async (req, res) => {
+  try {
+    req.span.setAttributes({ endpoint: 'multi-call-auth', 'demo.type': 'trace-propagation-auth' })
+    const auth = rdcpAuthHeaders()
+    const discovery = await downstream('/.well-known/rdcp', req.ctx) // discovery is open
+    const health = await downstream('/rdcp/v1/health', req.ctx, auth)
+    const status = await downstream('/rdcp/v1/status', req.ctx, auth)
+    req.span.end()
+    res.json({ upstream: 'upstream-service', operation: 'multi-call-auth', calls: [
+      { endpoint: '/.well-known/rdcp', status: discovery.statusCode },
+      { endpoint: '/rdcp/v1/health', status: health.statusCode },
+      { endpoint: '/rdcp/v1/status', status: status.statusCode }
+    ], jaegerUrl: 'http://localhost:16686' })
+  } catch (e) {
+    req.span.end()
+    res.status(500).json({ error: 'Multi-call-auth operation failed', message: e.message })
   }
 })
 
