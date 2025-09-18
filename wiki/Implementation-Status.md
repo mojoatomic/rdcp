@@ -1,6 +1,21 @@
 # Implementation Status
 
-**CURRENT STATUS**: The RDCP SDK is now production-ready with comprehensive functionality.
+Last updated: 2025-09-18
+
+## Current Snapshot (Demo + Observability)
+- ✅ In-memory Jaeger demo validated (Dependencies graph visible)
+  - Edge confirmed: upstream-service → rdcp-demo-app
+  - Helper scripts: `run-inmemory-demo.sh` (start/seed) and `stop-inmemory-demo.sh` (cleanup)
+- ✅ OpenTelemetry integration (Node) via `@rdcp/otel-plugin`
+  - Auto-instrumentations enabled; trace correlation in RDCP debug logs
+  - Verified export to Jaeger OTLP HTTP
+- ✅ Docker Compose adjusted to use `SPAN_STORAGE_TYPE=memory` for all-in-one
+- ♻️ Database demo removed (no native modules; simpler, fully resettable demo)
+- 📘 Wiki/README updated with quick local in-memory instructions
+
+---
+
+**CURRENT STATUS (SDK)**: The RDCP SDK is production-ready across core functionality (see details below).
 
 ✅ **Authentication**: All 3 security levels implemented (basic, standard, enterprise + hybrid)  
 ✅ **Package imports**: Both CommonJS and ESM working correctly  
