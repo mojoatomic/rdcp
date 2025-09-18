@@ -111,6 +111,26 @@ Examples & Benchmarks:
 
 ### Basic (API Key) - Enforced in Demo
 
+### Standard (JWT Bearer) - Demo
+
+- Helper script to mint JWTs for testing: `npm run gen:jwt --prefix packages/rdcp-demo-app -- user@example.com discovery,status,control 1h`
+- Required headers per RDCP spec for Standard:
+  - `X-RDCP-Auth-Method: bearer`
+  - `X-RDCP-Client-ID: <client-id>`
+  - `Authorization: Bearer <token>`
+- Supertest e2e coverage (passing):
+  - Rejects missing/invalid tokens
+  - Accepts valid token
+  - POST control works with valid token
+
+Sample commands:
+- export JWT_SECRET='change-in-production'
+- TOKEN=$(npm run -s gen:jwt --prefix packages/rdcp-demo-app -- user@example.com discovery,status,control 1h)
+- curl -H 'X-RDCP-Auth-Method: bearer' \
+       -H 'X-RDCP-Client-ID: demo-client' \
+       -H "Authorization: Bearer $TOKEN" \
+       http://localhost:3000/rdcp/v1/status | jq
+
 - The demo mounts the RDCP middleware with an authenticator that wraps `validateRDCPAuth`.
 - All RDCP endpoints except `/.well-known/rdcp` require authentication.
 - Required headers per RDCP spec:
