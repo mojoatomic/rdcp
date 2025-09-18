@@ -1,10 +1,14 @@
 import { Request, Response } from 'express'
+import { getTraceProviderStatus } from '../debug.js'
 
 /**
  * Protocol Discovery Endpoint - /.well-known/rdcp
  * Per RDCP v1.0 Protocol Specification Section 5.1
+ * Enhanced with OpenTelemetry integration status
  */
 export function protocolDiscovery(req: Request, res: Response): void {
+  const traceStatus = getTraceProviderStatus()
+  
   const response = {
     protocol: 'rdcp/1.0',
     endpoints: {
@@ -26,6 +30,13 @@ export function protocolDiscovery(req: Request, res: Response): void {
       required: true,               // Authentication is required
       keyRotation: false,           // Not implemented yet
       tokenRefresh: false           // Not implemented yet
+    },
+    integrations: {
+      opentelemetry: {
+        enabled: traceStatus.enabled,
+        correlationSupport: true,
+        provider: traceStatus.provider
+      }
     }
   }
 
