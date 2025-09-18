@@ -4,7 +4,7 @@
 
 [![npm version](https://badge.fury.io/js/@rdcp%2Fserver.svg)](https://badge.fury.io/js/@rdcp%2Fserver)
 [![CI](https://img.shields.io/badge/CI-GitHub%20Actions-inactive)](../TESTING-SUMMARY.md)
-[![Protocol Compliance](https://img.shields.io/badge/RDCP-v1.0%20Compliant-green)](../PROTOCOL-COMPLIANCE-REPORT.md)
+[![Protocol Compliance](https://img.shields.io/badge/RDCP-v1.0%20Compliant-green)](https://github.com/mojoatomic/rdcp/blob/main/PROTOCOL-COMPLIANCE-REPORT.md)
 
 ## What is RDCP SDK?
 
@@ -117,18 +117,18 @@ app.listen(3000)
 - **[Protocol Compliance](../PROTOCOL-COMPLIANCE-REPORT.md)** - RDCP v1.0 protocol compliance details
 
 ### API Reference
-- **[API Documentation](../docs/rdcp-implementation-guide.md)** - Complete API reference and endpoint specifications
+- **[API Documentation](https://github.com/mojoatomic/rdcp/blob/main/docs/rdcp-implementation-guide.md)** - Complete API reference and endpoint specifications
 - **[Error Handling](Authentication-Setup#error-responses)** - Standard error codes and response formats
 
 ### Protocol Reference (Advanced)
-- Primary spec: [rdcp-protocol-specification.md](../docs/rdcp-protocol-specification.md)
-- Implementation guide: [rdcp-implementation-guide.md](../docs/rdcp-implementation-guide.md)
+- Primary spec: [rdcp-protocol-specification.md](https://github.com/mojoatomic/rdcp/blob/main/docs/rdcp-protocol-specification.md)
+- Implementation guide: [rdcp-implementation-guide.md](https://github.com/mojoatomic/rdcp/blob/main/docs/rdcp-implementation-guide.md)
 
 Notes:
 - These are authoritative but dense. Most users should start with the Quick Reference and Demo App pages above.
 
 ### Development
-- **[Testing](../TESTING-SUMMARY.md)** - Run and develop tests for the SDK
+- **[Testing](https://github.com/mojoatomic/rdcp/blob/main/TESTING-SUMMARY.md)** - Run and develop tests for the SDK
 - **[Contributing](Home#how-to-contribute-to-the-docs)** - Development setup and contribution guidelines
 
 ## Features
@@ -152,7 +152,7 @@ This SDK achieves **Level 2: Standard compliance** with RDCP v1.0 Protocol Speci
 - ✅ 73 passing tests across 7 test suites
 - ✅ Production-ready with security hardening
 
-See [Protocol Compliance Report](../PROTOCOL-COMPLIANCE-REPORT.md) for detailed analysis.
+See [Protocol Compliance Report](https://github.com/mojoatomic/rdcp/blob/main/PROTOCOL-COMPLIANCE-REPORT.md) for detailed analysis.
 
 ## Requirements
 
@@ -161,7 +161,7 @@ See [Protocol Compliance Report](../PROTOCOL-COMPLIANCE-REPORT.md) for detailed 
 
 ## License
 
-MIT License - see [LICENSE](../LICENSE) file for details.
+MIT License - see [LICENSE](https://github.com/mojoatomic/rdcp/blob/main/LICENSE) file for details.
 
 ---
 

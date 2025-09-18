@@ -37,20 +37,17 @@ sdk.start()
 
 // Now import your application code
 const express = require('express')
-const { RDCPClient } = require('@rdcp/server')
+const { debug, enableDebugCategories } = require('@rdcp/server')
 const { setupRDCPWithOpenTelemetry } = require('@rdcp/otel-plugin')
 
 const app = express()
 app.use(express.json())
 
-// Initialize RDCP with OpenTelemetry correlation
-const rdcp = new RDCPClient({
-  apiKey: process.env.RDCP_API_KEY || 'dev-key-32-characters-minimum-length',
-  endpoint: process.env.RDCP_ENDPOINT
-})
+// Enable categories in development
+enableDebugCategories(['API_ROUTES', 'DATABASE'])
 
 // ✨ Magic: One line enables trace correlation
-setupRDCPWithOpenTelemetry(rdcp)
+setupRDCPWithOpenTelemetry()
 
 // Simulated database
 const users = [
@@ -60,7 +57,7 @@ const users = [
 
 // Example endpoints with RDCP debug logging
 app.get('/users', async (req, res) => {
-  rdcp.debug.api('Users list requested', { 
+debug.api('Users list requested', { 
     userAgent: req.headers['user-agent'],
     ip: req.ip 
   })
@@ -68,7 +65,7 @@ app.get('/users', async (req, res) => {
   // Simulate some processing time
   await new Promise(resolve => setTimeout(resolve, 50))
   
-  rdcp.debug.database('Users query executed', { 
+debug.database('Users query executed', { 
     table: 'users',
     count: users.length,
     duration: '50ms' 
@@ -80,7 +77,7 @@ app.get('/users', async (req, res) => {
 app.get('/users/:id', async (req, res) => {
   const userId = parseInt(req.params.id)
   
-  rdcp.debug.api('User detail requested', { userId, requestId: req.id })
+debug.api('User detail requested', {
   
   const user = users.find(u => u.id === userId)
   
@@ -89,13 +86,13 @@ app.get('/users/:id', async (req, res) => {
     return res.status(404).json({ error: 'User not found' })
   }
   
-  rdcp.debug.cache('User cache checked', { 
+debug.cache('User cache checked', { 
     userId, 
     cacheHit: false,
     ttl: 3600 
   })
   
-  rdcp.debug.database('User retrieved', { 
+debug.database('User retrieved', { 
     userId: user.id,
     found: true,
     query: `SELECT * FROM users WHERE id = ${userId}` 
@@ -110,14 +107,14 @@ app.post('/users', async (req, res) => {
     ...req.body 
   }
   
-  rdcp.debug.api('User creation requested', { 
+debug.api('User creation requested', { 
     userData: newUser,
     validation: 'passed' 
   })
   
   // Simulate validation
   if (!newUser.name || !newUser.email) {
-    rdcp.debug.validation('User validation failed', { 
+debug.validation('User validation failed', { 
       missing: !newUser.name ? ['name'] : [] + !newUser.email ? ['email'] : [],
       provided: Object.keys(req.body)
     })
@@ -126,13 +123,13 @@ app.post('/users', async (req, res) => {
   
   users.push(newUser)
   
-  rdcp.debug.database('User created', { 
+debug.database('User created', { 
     userId: newUser.id,
     table: 'users',
     operation: 'INSERT' 
   })
   
-  rdcp.debug.integration('User created notification sent', {
+debug.integration('User created notification sent', {
     userId: newUser.id,
     webhook: 'user-service',
     status: 'success'
@@ -143,7 +140,7 @@ app.post('/users', async (req, res) => {
 
 // Error handling with RDCP debugging
 app.use((err, req, res, next) => {
-  rdcp.debug.api('Request error occurred', {
+debug.api('Request error occurred', {
     error: err.message,
     stack: err.stack,
     url: req.url,
@@ -256,24 +253,21 @@ export async function register() {
 
 **📁 File: `lib/rdcp.js` (RDCP Client Setup)**
 ```javascript
-import { RDCPClient } from '@rdcp/server'
+import { debug, enableDebugCategories } from '@rdcp/server'
 import { setupRDCPWithOpenTelemetry } from '@rdcp/otel-plugin'
 
-// Initialize RDCP client with OpenTelemetry
-const rdcp = new RDCPClient({
-  apiKey: process.env.RDCP_API_KEY || 'dev-key-32-characters-minimum-length',
-  endpoint: process.env.RDCP_ENDPOINT
-})
+// Enable categories in development
+enableDebugCategories(['API_ROUTES', 'DATABASE'])
 
 // Enable trace correlation
-setupRDCPWithOpenTelemetry(rdcp)
+setupRDCPWithOpenTelemetry()
 
-export { rdcp }
+export { debug }
 ```
 
 **📁 File: `app/api/users/route.js` (API Routes)**
 ```javascript
-import { rdcp } from '../../../lib/rdcp'
+import { debug } from '../../../lib/rdcp-debug'
 import { NextResponse } from 'next/server'
 
 // Simulated user data
@@ -296,7 +290,7 @@ export async function GET(request) {
     const user = users.find(u => u.id === parseInt(userId))
     
     if (!user) {
-      rdcp.debug.api('User not found in Next.js API', { 
+debug.api('User not found', {
         userId,
         availableIds: users.map(u => u.id)
       })
@@ -516,16 +510,14 @@ sdk.start()
 
 // Now import application code
 const fastify = require('fastify')({ logger: true })
-const { RDCPClient } = require('@rdcp/server')
+const { debug, enableDebugCategories } = require('@rdcp/server')
 const { setupRDCPWithOpenTelemetry } = require('@rdcp/otel-plugin')
 
 // Initialize RDCP with OpenTelemetry
-const rdcp = new RDCPClient({
-  apiKey: process.env.RDCP_API_KEY || 'dev-key-32-characters-minimum-length',
-  endpoint: process.env.RDCP_ENDPOINT
-})
+// Enable categories in development
+enableDebugCategories(['API_ROUTES', 'DATABASE'])
 
-setupRDCPWithOpenTelemetry(rdcp)
+setupRDCPWithOpenTelemetry()
 
 // User data
 const users = [
@@ -557,7 +549,7 @@ const getUsersSchema = {
 
 // Routes with RDCP debugging
 fastify.get('/users', { schema: getUsersSchema }, async (request, reply) => {
-  rdcp.debug.api('Fastify users list requested', {
+debug.api('Fastify users list requested', {
     requestId: request.id,
     ip: request.ip,
     userAgent: request.headers['user-agent']
@@ -566,14 +558,14 @@ fastify.get('/users', { schema: getUsersSchema }, async (request, reply) => {
   // Simulate database query delay
   await new Promise(resolve => setTimeout(resolve, 30))
   
-  rdcp.debug.database('Fastify users query executed', {
+debug.database('Fastify users query executed', {
     table: 'users',
     count: users.length,
     duration: '30ms',
     query: 'SELECT * FROM users'
   })
   
-  rdcp.debug.cache('Users cache status checked', {
+debug.cache('Users cache status checked', {
     cacheKey: 'users:all',
     hit: false,
     ttl: 300
@@ -585,7 +577,7 @@ fastify.get('/users', { schema: getUsersSchema }, async (request, reply) => {
 fastify.get('/users/:id', async (request, reply) => {
   const userId = parseInt(request.params.id)
   
-  rdcp.debug.api('Fastify user detail requested', { 
+debug.api('Fastify user detail requested', {
     userId,
     requestId: request.id,
     route: '/users/:id'
@@ -594,7 +586,7 @@ fastify.get('/users/:id', async (request, reply) => {
   const user = users.find(u => u.id === userId)
   
   if (!user) {
-    rdcp.debug.api('Fastify user not found', {
+debug.api('Fastify user not found', {
       userId,
       available: users.map(u => u.id),
       searched: 'memory_store'
@@ -603,7 +595,7 @@ fastify.get('/users/:id', async (request, reply) => {
     return reply.status(404).send({ error: 'User not found' })
   }
   
-  rdcp.debug.database('Fastify user retrieved', {
+debug.database('Fastify user retrieved', {
     userId: user.id,
     found: true,
     query: `SELECT * FROM users WHERE id = ${userId}`,
@@ -621,13 +613,13 @@ fastify.post('/users', {
     ...request.body
   }
   
-  rdcp.debug.api('Fastify user creation requested', {
+debug.api('Fastify user creation requested', {
     userData: newUser,
     validation: 'schema_validated',
     requestId: request.id
   })
   
-  rdcp.debug.validation('Fastify user validation passed', {
+debug.validation('Fastify user validation passed', {
     fields: Object.keys(request.body),
     schema: 'userSchema',
     valid: true
@@ -635,14 +627,14 @@ fastify.post('/users', {
   
   users.push(newUser)
   
-  rdcp.debug.database('Fastify user created', {
+debug.database('Fastify user created', {
     userId: newUser.id,
     operation: 'INSERT',
     table: 'users',
     duration: '25ms'
   })
   
-  rdcp.debug.integration('Fastify user webhook dispatched', {
+debug.integration('Fastify user webhook dispatched', {
     userId: newUser.id,
     webhook: 'user-created-webhook',
     status: 'queued',
@@ -654,7 +646,7 @@ fastify.post('/users', {
 
 // Error handler with RDCP debugging
 fastify.setErrorHandler((error, request, reply) => {
-  rdcp.debug.api('Fastify error occurred', {
+debug.api('Fastify error occurred', {
     error: error.message,
     statusCode: error.statusCode || 500,
     requestId: request.id,
@@ -714,19 +706,17 @@ sdk.start()
 const Koa = require('koa')
 const Router = require('@koa/router')
 const bodyParser = require('koa-bodyparser')
-const { RDCPClient } = require('@rdcp/server')
+const { debug, enableDebugCategories } = require('@rdcp/server')
 const { setupRDCPWithOpenTelemetry } = require('@rdcp/otel-plugin')
 
 const app = new Koa()
 const router = new Router()
 
 // RDCP setup
-const rdcp = new RDCPClient({
-  apiKey: process.env.RDCP_API_KEY || 'dev-key-32-characters-minimum-length',
-  endpoint: process.env.RDCP_ENDPOINT
-})
+// Enable categories in development
+enableDebugCategories(['API_ROUTES', 'DATABASE'])
 
-setupRDCPWithOpenTelemetry(rdcp)
+setupRDCPWithOpenTelemetry()
 
 // Sample data
 const users = [
@@ -738,7 +728,7 @@ const users = [
 app.use(async (ctx, next) => {
   const start = Date.now()
   
-  rdcp.debug.api('Koa request started', {
+debug.api('Koa request started', {
     method: ctx.method,
     url: ctx.url,
     userAgent: ctx.headers['user-agent'],
@@ -749,7 +739,7 @@ app.use(async (ctx, next) => {
   
   const duration = Date.now() - start
   
-  rdcp.debug.api('Koa request completed', {
+debug.api('Koa request completed', {
     method: ctx.method,
     url: ctx.url,
     status: ctx.status,
@@ -767,14 +757,14 @@ router.get('/users', async (ctx) => {
   // Simulate database operation
   await new Promise(resolve => setTimeout(resolve, 40))
   
-  rdcp.debug.database('Koa users query completed', {
+debug.database('Koa users query completed', {
     table: 'users',
     operation: 'SELECT',
     count: users.length,
     duration: '40ms'
   })
   
-  rdcp.debug.cache('Koa users cache checked', {
+debug.cache('Koa users cache checked', {
     key: 'users:list',
     hit: false,
     reason: 'expired'
@@ -786,7 +776,7 @@ router.get('/users', async (ctx) => {
 router.get('/users/:id', async (ctx) => {
   const userId = parseInt(ctx.params.id)
   
-  rdcp.debug.api('Koa user detail requested', {
+debug.api('Koa user detail requested', {
     userId,
     params: ctx.params
   })
@@ -794,7 +784,7 @@ router.get('/users/:id', async (ctx) => {
   const user = users.find(u => u.id === userId)
   
   if (!user) {
-    rdcp.debug.api('Koa user not found', {
+debug.api('Koa user not found', {
       userId,
       available: users.map(u => u.id)
     })
@@ -804,7 +794,7 @@ router.get('/users/:id', async (ctx) => {
     return
   }
   
-  rdcp.debug.database('Koa user retrieved', {
+debug.database('Koa user retrieved', {
     userId: user.id,
     query: `SELECT * FROM users WHERE id = ${userId}`,
     found: true
@@ -870,7 +860,7 @@ app.use(async (ctx, next) => {
   try {
     await next()
   } catch (err) {
-    rdcp.debug.api('Koa error occurred', {
+debug.api('Koa error occurred', {
       error: err.message,
       stack: err.stack,
       url: ctx.url,

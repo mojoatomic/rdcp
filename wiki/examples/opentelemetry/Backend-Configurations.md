@@ -112,20 +112,19 @@ const sdk = new NodeSDK({
 sdk.start()
 
 // RDCP setup with OpenTelemetry correlation
-const { RDCPClient } = require('@rdcp/server')
+const { debug, enableDebugCategories } = require('@rdcp/server')
 const { setupRDCPWithOpenTelemetry } = require('@rdcp/otel-plugin')
 
-const rdcp = new RDCPClient({
-  apiKey: process.env.RDCP_API_KEY || 'dev-key-32-characters-minimum-length'
-})
+// Enable categories in development
+enableDebugCategories(['API_ROUTES', 'DATABASE'])
 
-setupRDCPWithOpenTelemetry(rdcp)
+setupRDCPWithOpenTelemetry()
 
 console.log('🚀 Jaeger + RDCP setup complete!')
 console.log('📊 Jaeger UI: http://localhost:16686')
 console.log('🔧 RDCP debug logs will include trace correlation')
 
-module.exports = { rdcp, sdk }
+module.exports = { sdk }
 ```
 
 **🚀 Quick Start:**
@@ -220,26 +219,19 @@ const sdk = new NodeSDK({
 sdk.start()
 
 // RDCP setup with DataDog correlation
-const { RDCPClient } = require('@rdcp/server')
+const { debug, enableDebugCategories } = require('@rdcp/server')
 const { setupRDCPWithOpenTelemetry } = require('@rdcp/otel-plugin')
 
-const rdcp = new RDCPClient({
-  apiKey: process.env.RDCP_API_KEY,
-  endpoint: process.env.RDCP_ENDPOINT,
-  tags: {
-    environment: process.env.NODE_ENV,
-    service: process.env.SERVICE_NAME,
-    version: process.env.SERVICE_VERSION
-  }
-})
+// Enable categories in development
+enableDebugCategories(['API_ROUTES', 'DATABASE'])
 
-setupRDCPWithOpenTelemetry(rdcp)
+setupRDCPWithOpenTelemetry()
 
 console.log('🚀 DataDog APM + RDCP setup complete!')
 console.log('📊 Service:', process.env.SERVICE_NAME)
 console.log('🔧 Debug logs will correlate with DataDog traces')
 
-module.exports = { rdcp, sdk }
+module.exports = { sdk }
 ```
 
 **📁 File: `.env.production`**

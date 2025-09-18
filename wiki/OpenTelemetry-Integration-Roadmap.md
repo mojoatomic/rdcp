@@ -101,8 +101,9 @@ export class OpenTelemetryProvider implements TraceProvider {
 }
 
 // Easy setup function
-export function setupRDCPWithOpenTelemetry(rdcpClient: RDCPClient) {
-  rdcpClient.setTraceProvider(new OpenTelemetryProvider())
+export function setupRDCPWithOpenTelemetry() {
+  // Internally sets the OpenTelemetry provider for RDCP debug system
+  setTraceProvider(new OpenTelemetryProvider())
 }
 ```
 
