@@ -82,3 +82,35 @@ View traces in Jaeger:
 - Expectation: upstream-service spans are parents; rdcp-demo-app spans are children
 
 Note: Requires an OTLP collector at http://localhost:4318 (Jaeger all-in-one via docker compose covers this).
+
+## Docker Distribution (Recommended)
+
+For the complete distributable experience with Jaeger included:
+
+### One-Command Setup
+```bash
+# Start everything with Docker Compose
+./scripts/start-demo.sh
+```
+
+### Manual Docker Setup
+```bash
+# Build and start all services
+docker compose up --build
+
+# Run automated tests
+./scripts/test-traces.sh
+```
+
+**Services:**
+- **Jaeger UI**: http://localhost:16686 (pulls `jaegertracing/all-in-one:latest`)
+- **RDCP Demo App**: http://localhost:3000
+- **Upstream Service**: http://localhost:3001
+
+**Features:**
+- ✅ **Latest Jaeger** pulled from Docker Hub (no bundled code)
+- ✅ **Health checks** and proper startup ordering
+- ✅ **Automated testing** with status validation
+- ✅ **Production-ready** configuration
+
+See [DOCKER-SETUP.md](./DOCKER-SETUP.md) for complete Docker distribution guide.
