@@ -9,6 +9,7 @@
     "otel": "node --require ./src/opentelemetry.js src/server.js",
     "benchmark": "node scripts/benchmark.js",
     "examples": "node scripts/test-examples.js",
+    "test": "jest",
     "build": "echo 'No build step needed (pure JS demo)'"
   },
   "dependencies": {
@@ -23,5 +24,9 @@
     "@opentelemetry/semantic-conventions": "^1.23.0",
     "@rdcp/server": "file:../..",
     "@rdcp/otel-plugin": "file:../otel-plugin"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.4"
   }
 }
