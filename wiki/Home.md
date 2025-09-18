@@ -77,6 +77,11 @@ app.listen(3000)
 
 ## Documentation
 
+### Start Here
+- [AI Agent Quick Reference](AI-Agent-Quick-Reference) — copy/paste setup for agents and automation
+- [RDCP Demo App (In-Memory Jaeger)](examples/RDCP-Demo-App) — one-command local demo with Dependencies graph
+- [Implementation Status](Implementation-Status) — current state, demos, and observability
+
 ### Getting Started
 - **[Installation](Installation)** - Install and setup the RDCP SDK
 - **[Basic Usage](Basic-Usage)** - Quick integration examples for all supported frameworks
@@ -88,6 +93,7 @@ app.listen(3000)
 - **[Next.js Integration](NextJS-Integration)** - Next.js App Router implementation
 
 ### OpenTelemetry Integration
+- [Trace Propagation Demo](examples/Trace-Propagation-Demo) — upstream → rdcp-demo-app with cross-service tracing
 - **[OpenTelemetry Overview](examples/opentelemetry/Overview)** - Enterprise-grade trace correlation with RDCP debug logs
 - **[Framework Examples](examples/opentelemetry/Framework-Examples)** - Production-ready integrations for Express, Next.js, Fastify, Koa
 - **[Migration Guides](examples/opentelemetry/Migration-Guides)** - Step-by-step migration from existing logging to RDCP + OpenTelemetry
@@ -113,6 +119,13 @@ app.listen(3000)
 ### API Reference
 - **[API Documentation](API-Reference)** - Complete API reference and endpoint specifications
 - **[Error Handling](Error-Handling)** - Standard error codes and response formats
+
+### Protocol Reference (Advanced)
+- Primary spec: [rdcp-protocol-specification.md](../docs/rdcp-protocol-specification.md)
+- Implementation guide: [rdcp-implementation-guide.md](../docs/rdcp-implementation-guide.md)
+
+Notes:
+- These are authoritative but dense. Most users should start with the Quick Reference and Demo App pages above.
 
 ### Development
 - **[Testing](Testing)** - Run and develop tests for the SDK

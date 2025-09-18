@@ -2,6 +2,8 @@
 
 ### 🚀 Getting Started
 - [Home](Home)
+- [AI Agent Quick Reference](AI-Agent-Quick-Reference)
+- [RDCP Demo App (In-Memory Jaeger)](examples/RDCP-Demo-App)
 - [Installation](Installation)
 - [Basic Usage](Basic-Usage)
 
@@ -27,9 +29,13 @@
 - [Koa](Basic-Usage#koa)
 - [Next.js](Basic-Usage#next-js)
 
+### 📚 Examples
+- [Trace Propagation Demo](examples/Trace-Propagation-Demo)
+- [RDCP Demo App](examples/RDCP-Demo-App)
+
 ### 📋 Protocol Reference
-- [RDCP v1.0 Specification](RDCP-Protocol-Specification)
-- [Implementation Guide](RDCP-Implementation-Guide)
+- [Protocol Specification (docs)](../docs/rdcp-protocol-specification.md)
+- [Implementation Guide (docs)](../docs/rdcp-implementation-guide.md)
 - [Client SDK](Client-SDK)
 
 ### 🔍 Troubleshooting
