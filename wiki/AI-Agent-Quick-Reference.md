@@ -250,7 +250,21 @@ function handleControl(req, res) {
   if (!ok) {
     return res.status(400).json(createRDCPError('RDCP_VALIDATION_ERROR', 'Invalid control payload'))
   }
-  res.json({ protocol: 'rdcp/1.0', success: true, timestamp: new Date().toISOString() })
+res.json({ protocol: 'rdcp/1.0', success: true, timestamp: new Date().toISOString() })
+}
+```
+
+### Error handling with RDCPClient
+
+```javascript
+try {
+  await client.getStatus()
+} catch (err) {
+  if (err && err.name === 'RDCPClientError') {
+    console.error('RDCP error:', { code: err.code, status: err.statusCode, message: err.message })
+  } else {
+    console.error('Unexpected error:', err)
+  }
 }
 ```
 
