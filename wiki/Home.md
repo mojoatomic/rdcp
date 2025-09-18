@@ -78,9 +78,9 @@ app.listen(3000)
 ## Documentation
 
 ### Start Here
-- [AI Agent Quick Reference](AI-Agent-Quick-Reference) — copy/paste setup for agents and automation
-- [RDCP Demo App (In-Memory Jaeger)](examples/RDCP-Demo-App) — one-command local demo with Dependencies graph
-- [Implementation Status](Implementation-Status) — current state, demos, and observability
+- [AI Agent Quick Reference](AI-Agent-Quick-Reference.md) — copy/paste setup for agents and automation
+- [RDCP Demo App (In-Memory Jaeger)](examples/RDCP-Demo-App.md) — one-command local demo with Dependencies graph
+- [Implementation Status](Implementation-Status.md) — current state, demos, and observability
 
 ### Getting Started
 - **[Installation](Installation)** - Install and setup the RDCP SDK
@@ -93,32 +93,32 @@ app.listen(3000)
 - **[Next.js Integration](Basic-Usage#next-js)** - Next.js App Router implementation
 
 ### OpenTelemetry Integration
-- [Trace Propagation Demo](examples/Trace-Propagation-Demo) — upstream → rdcp-demo-app with cross-service tracing
-- **[OpenTelemetry Overview](examples/opentelemetry/Overview)** - Enterprise-grade trace correlation with RDCP debug logs
-- **[Framework Examples](examples/opentelemetry/Framework-Examples)** - Production-ready integrations for Express, Next.js, Fastify, Koa
-- **[Migration Guides](examples/opentelemetry/Migration-Guides)** - Step-by-step migration from existing logging to RDCP + OpenTelemetry
-- **[Backend Configurations](examples/opentelemetry/Backend-Configurations)** - Working examples for Jaeger, DataDog, New Relic, and more
-- **[DataDog Quickstart](examples/opentelemetry/DataDog-Quickstart)** - 10-minute path to Datadog APM + RDCP correlation
-- **[New Relic Quickstart](examples/opentelemetry/NewRelic-Quickstart)** - 10-minute path to New Relic + RDCP correlation
-- **[Performance Analysis](examples/opentelemetry/Performance-Analysis)** - Benchmarks, overhead measurement, and production tuning
+- [Trace Propagation Demo](examples/Trace-Propagation-Demo.md) — upstream → rdcp-demo-app with cross-service tracing
+- **[OpenTelemetry Overview](examples/opentelemetry/Overview.md)** - Enterprise-grade trace correlation with RDCP debug logs
+- **[Framework Examples](examples/opentelemetry/Framework-Examples.md)** - Production-ready integrations for Express, Next.js, Fastify, Koa
+- **[Migration Guides](examples/opentelemetry/Migration-Guides.md)** - Step-by-step migration from existing logging to RDCP + OpenTelemetry
+- **[Backend Configurations](examples/opentelemetry/Backend-Configurations.md)** - Working examples for Jaeger, DataDog, New Relic, and more
+- **[DataDog Quickstart](examples/opentelemetry/DataDog-Quickstart.md)** - 10-minute path to Datadog APM + RDCP correlation
+- **[New Relic Quickstart](examples/opentelemetry/NewRelic-Quickstart.md)** - 10-minute path to New Relic + RDCP correlation
+- **[Performance Analysis](examples/opentelemetry/Performance-Analysis.md)** - Benchmarks, overhead measurement, and production tuning
 
 ### Enterprise Deployment
-- **[Security and Compliance](enterprise/Security-and-Compliance)** - Data protection, audit trails, retention, and regulatory mapping
-- **[Operational Production Guide](enterprise/Operational-Production-Guide)** - Authentication at scale, rate limiting, multi-tenancy
-- **[Enterprise Deployment Patterns](enterprise/Enterprise-Deployment-Patterns)** - Kubernetes, service mesh, and collector architectures
+- **[Security and Compliance](enterprise/Security-and-Compliance.md)** - Data protection, audit trails, retention, and regulatory mapping
+- **[Operational Production Guide](enterprise/Operational-Production-Guide.md)** - Authentication at scale, rate limiting, multi-tenancy
+- **[Enterprise Deployment Patterns](enterprise/Enterprise-Deployment-Patterns.md)** - Kubernetes, service mesh, and collector architectures
 
 ### Authentication & Security
-- **[Authentication Setup](Authentication-Setup)** - All 3 security levels: Basic, Standard, Enterprise
-- **[Multi-Tenancy](Authentication-Setup#multi-tenancy-support)** - Tenant isolation and context management
+- **[Authentication Setup](Authentication-Setup.md)** - All 3 security levels: Basic, Standard, Enterprise
+- **[Multi-Tenancy](Authentication-Setup.md#multi-tenancy-support)** - Tenant isolation and context management
 
 ### Migration & Advanced
-- **[Migration Guide](Migration-Guide)** - Migrate from manual RDCP implementation to SDK
-- **[Client SDK](AI-Agent-Quick-Reference)** - Use the client SDK to consume RDCP endpoints
+- **[Migration Guide](Migration-Guide.md)** - Migrate from manual RDCP implementation to SDK
+- **[Client SDK](AI-Agent-Quick-Reference.md)** - Use the client SDK to consume RDCP endpoints
 - **[Protocol Compliance](../PROTOCOL-COMPLIANCE-REPORT.md)** - RDCP v1.0 protocol compliance details
 
 ### API Reference
 - **[API Documentation](https://github.com/mojoatomic/rdcp/blob/main/docs/rdcp-implementation-guide.md)** - Complete API reference and endpoint specifications
-- **[Error Handling](Authentication-Setup#error-responses)** - Standard error codes and response formats
+- **[Error Handling](Authentication-Setup.md#error-responses)** - Standard error codes and response formats
 
 ### Protocol Reference (Advanced)
 - Primary spec: [rdcp-protocol-specification.md](https://github.com/mojoatomic/rdcp/blob/main/docs/rdcp-protocol-specification.md)
@@ -174,8 +174,8 @@ MIT License - see [LICENSE](https://github.com/mojoatomic/rdcp/blob/main/LICENSE
 
 ## Next steps
 
-- Read: [AI Agent Quick Reference](AI-Agent-Quick-Reference)
-- Try: [RDCP Demo App (In-Memory Jaeger)](examples/RDCP-Demo-App)
-- Integrate: [Installation](Installation) → [Basic Usage](Basic-Usage)
-- Explore: [Trace Propagation Demo](examples/Trace-Propagation-Demo)
+- Read: [AI Agent Quick Reference](AI-Agent-Quick-Reference.md)
+- Try: [RDCP Demo App (In-Memory Jaeger)](examples/RDCP-Demo-App.md)
+- Integrate: [Installation](Installation.md) → [Basic Usage](Basic-Usage.md)
+- Explore: [Trace Propagation Demo](examples/Trace-Propagation-Demo.md)
 - Deep dive: Protocol references in docs/ (advanced)
