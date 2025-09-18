@@ -13,7 +13,9 @@
     "test": "jest",
     "build": "echo 'No build step needed (pure JS demo)'",
     "gen:mtls-cert": "node scripts/gen-mtls-cert.js",
-    "gen:jwt": "node scripts/mint-jwt.js"
+    "gen:jwt": "node scripts/mint-jwt.js",
+    "demo:start:memory": "./scripts/run-inmemory-demo.sh",
+    "demo:stop:memory": "./scripts/stop-inmemory-demo.sh"
   },
   "dependencies": {
     "express": "^4.19.2",
