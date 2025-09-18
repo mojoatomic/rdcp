@@ -428,6 +428,28 @@ Authentication failures return standard RDCP error format:
 }
 ```
 
+### Standard Error Codes
+
+- `RDCP_AUTH_REQUIRED`
+- `RDCP_FORBIDDEN`
+- `RDCP_NOT_FOUND`
+- `RDCP_VALIDATION_ERROR`
+- `RDCP_CATEGORY_NOT_FOUND`
+- `RDCP_RATE_LIMITED`
+- `RDCP_INTERNAL_ERROR`
+
+### Client-side Error Shape (RDCPClientError)
+
+```json
+{
+  "name": "RDCPClientError",
+  "code": "RDCP_VALIDATION_ERROR",
+  "message": "Request validation failed",
+  "status": 400,
+  "details": {}
+}
+```
+
 ## Security Best Practices
 
 ### API Key Security

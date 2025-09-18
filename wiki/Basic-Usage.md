@@ -31,7 +31,13 @@ console.log('  GET  /rdcp/v1/health')
 
 ## Framework Examples
 
+<a id="express-js"></a>
+
 ### Express.js
+
+Notes:
+- What this does: Registers RDCP middleware for Express using adapters.express.createRDCPMiddleware.
+- Required env: RDCP_API_KEY (32+ chars). Optional: RDCP_AUTH_LEVEL; JWT_SECRET for 'standard'; client certs (and optionally JWT_SECRET) for 'enterprise'.
 
 ```javascript
 const express = require('express')
@@ -64,7 +70,13 @@ app.listen(3000, () => {
 })
 ```
 
+<a id="fastify"></a>
+
 ### Fastify
+
+Notes:
+- What this does: Registers RDCP in Fastify via adapters.fastify.createRDCPPlugin (or createRDCPMiddleware).
+- Required env: RDCP_API_KEY (32+ chars). Optional: RDCP_AUTH_LEVEL; JWT_SECRET for 'standard'; client certs (and optionally JWT_SECRET) for 'enterprise'.
 
 ```javascript
 const Fastify = require('fastify')
@@ -99,7 +111,13 @@ const start = async () => {
 start()
 ```
 
+<a id="koa"></a>
+
 ### Koa
+
+Notes:
+- What this does: Adds RDCP Koa middleware via adapters.koa.createRDCPMiddleware.
+- Required env: RDCP_API_KEY (32+ chars). Optional: RDCP_AUTH_LEVEL; JWT_SECRET for 'standard'; client certs (and optionally JWT_SECRET) for 'enterprise'.
 
 ```javascript
 const Koa = require('koa')
@@ -135,7 +153,13 @@ app.listen(3000, () => {
 })
 ```
 
+<a id="next-js"></a>
+
 ### Next.js (App Router)
+
+Notes:
+- What this does: Uses the Express adapter in Next.js route handlers to serve RDCP endpoints.
+- Required env: RDCP_API_KEY (32+ chars). Optional: RDCP_AUTH_LEVEL; JWT_SECRET for 'standard'.
 
 ```javascript
 // app/api/rdcp/[...rdcp]/route.js
