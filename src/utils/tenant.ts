@@ -34,11 +34,13 @@ export interface TenantDebugConfig {
  * Request object with headers interface
  * Works with both Express and Next.js request objects
  */
+type HeadersIndex = Record<string, string | string[] | undefined>
+interface HeadersWithGet { get: (name: string) => string | null | undefined }
+
+type HeadersLike = HeadersIndex | HeadersWithGet
+
 interface RequestWithHeaders {
-  headers: {
-    get?: (name: string) => string | null | undefined
-    [key: string]: string | string[] | undefined
-  }
+  headers: HeadersLike
 }
 
 /**
@@ -48,26 +50,32 @@ interface RequestWithHeaders {
 export function extractTenantContext(
   request: RequestWithHeaders
 ): RDCPTenantContext {
-  const idFromGet = request.headers.get?.('x-rdcp-tenant-id') ?? undefined
-  const idFromIdxRaw = request.headers['x-rdcp-tenant-id']
-  const idFromIdx = Array.isArray(idFromIdxRaw) ? idFromIdxRaw[0] : idFromIdxRaw
+  const headers = request.headers
 
-  const isoFromGet = request.headers.get?.('x-rdcp-isolation-level') ?? undefined
-  const isoFromIdxRaw = request.headers['x-rdcp-isolation-level']
-  const isoFromIdx = Array.isArray(isoFromIdxRaw) ? isoFromIdxRaw[0] : isoFromIdxRaw
+  const idFromGet = 'get' in headers ? headers.get('x-rdcp-tenant-id') ?? undefined : undefined
+  const idFromIdxRaw = 'get' in headers ? undefined : headers['x-rdcp-tenant-id']
+  const idFromIdx = Array.isArray(idFromIdxRaw!) ? idFromIdxRaw![0] : idFromIdxRaw
 
-  const nameFromGet = request.headers.get?.('x-rdcp-tenant-name') ?? undefined
-  const nameFromIdxRaw = request.headers['x-rdcp-tenant-name']
-  const nameFromIdx = Array.isArray(nameFromIdxRaw) ? nameFromIdxRaw[0] : nameFromIdxRaw
+  const isoFromGet = 'get' in headers ? headers.get('x-rdcp-isolation-level') ?? undefined : undefined
+  const isoFromIdxRaw = 'get' in headers ? undefined : headers['x-rdcp-isolation-level']
+  const isoFromIdx = Array.isArray(isoFromIdxRaw!) ? isoFromIdxRaw![0] : isoFromIdxRaw
+
+  const nameFromGet = 'get' in headers ? headers.get('x-rdcp-tenant-name') ?? undefined : undefined
+  const nameFromIdxRaw = 'get' in headers ? undefined : headers['x-rdcp-tenant-name']
+  const nameFromIdx = Array.isArray(nameFromIdxRaw!) ? nameFromIdxRaw![0] : nameFromIdxRaw
+
+  const tenantId = idFromGet ?? idFromIdx ?? 'default'
+  const isolationLevel = (isoFromGet ?? isoFromIdx ?? 'global') as
+    | 'global'
+    | 'process'
+    | 'namespace'
+    | 'organization'
+  const tenantName = nameFromGet ?? nameFromIdx
 
   return {
-    tenantId: idFromGet ?? idFromIdx ?? 'default',
-    isolationLevel: (isoFromGet ?? isoFromIdx ?? 'global') as
-      | 'global'
-      | 'process'
-      | 'namespace'
-      | 'organization',
-    tenantName: nameFromGet ?? nameFromIdx,
+    tenantId,
+    isolationLevel,
+    ...(tenantName !== undefined ? { tenantName } : {}),
   }
 }
 
