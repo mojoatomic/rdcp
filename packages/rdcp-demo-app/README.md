@@ -83,6 +83,19 @@ View traces in Jaeger:
 
 Note: Requires an OTLP collector at http://localhost:4318 (Jaeger all-in-one via docker compose covers this).
 
+## Quick Local (In-Memory) Demo
+
+When you want the Jaeger Dependencies graph to work without any extra infra and reset on each run, use the in-memory setup:
+
+```bash
+# Start Jaeger (in-memory), run both services locally with correct OTEL settings,
+# seed cross-service traces, and print Jaeger service list.
+./scripts/run-inmemory-demo.sh
+```
+
+Jaeger UI: http://localhost:16686
+Dependencies graph: http://localhost:16686/dependencies (refresh after a few seconds)
+
 ## Docker Distribution (Recommended)
 
 For the complete distributable experience with Jaeger included:

@@ -10,6 +10,7 @@ services:
       - "4318:4318"     # OTLP HTTP receiver
     environment:
       - COLLECTOR_OTLP_ENABLED=true
+      - SPAN_STORAGE_TYPE=memory
     networks:
       - rdcp-network
     healthcheck:
