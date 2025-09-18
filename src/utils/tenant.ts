@@ -39,6 +39,10 @@ interface HeadersWithGet { get: (name: string) => string | null | undefined }
 
 type HeadersLike = HeadersIndex | HeadersWithGet
 
+function hasGet(headers: HeadersLike): headers is HeadersWithGet {
+  return typeof (headers as { get?: unknown }).get === 'function'
+}
+
 interface RequestWithHeaders {
   headers: HeadersLike
 }
@@ -52,16 +56,16 @@ export function extractTenantContext(
 ): RDCPTenantContext {
   const headers = request.headers
 
-  const idFromGet = 'get' in headers ? headers.get('x-rdcp-tenant-id') ?? undefined : undefined
-  const idFromIdxRaw = 'get' in headers ? undefined : headers['x-rdcp-tenant-id']
+  const idFromGet = hasGet(headers) ? headers.get('x-rdcp-tenant-id') ?? undefined : undefined
+  const idFromIdxRaw = hasGet(headers) ? undefined : headers['x-rdcp-tenant-id']
   const idFromIdx = Array.isArray(idFromIdxRaw!) ? idFromIdxRaw![0] : idFromIdxRaw
 
-  const isoFromGet = 'get' in headers ? headers.get('x-rdcp-isolation-level') ?? undefined : undefined
-  const isoFromIdxRaw = 'get' in headers ? undefined : headers['x-rdcp-isolation-level']
+  const isoFromGet = hasGet(headers) ? headers.get('x-rdcp-isolation-level') ?? undefined : undefined
+  const isoFromIdxRaw = hasGet(headers) ? undefined : headers['x-rdcp-isolation-level']
   const isoFromIdx = Array.isArray(isoFromIdxRaw!) ? isoFromIdxRaw![0] : isoFromIdxRaw
 
-  const nameFromGet = 'get' in headers ? headers.get('x-rdcp-tenant-name') ?? undefined : undefined
-  const nameFromIdxRaw = 'get' in headers ? undefined : headers['x-rdcp-tenant-name']
+  const nameFromGet = hasGet(headers) ? headers.get('x-rdcp-tenant-name') ?? undefined : undefined
+  const nameFromIdxRaw = hasGet(headers) ? undefined : headers['x-rdcp-tenant-name']
   const nameFromIdx = Array.isArray(nameFromIdxRaw!) ? nameFromIdxRaw![0] : nameFromIdxRaw
 
   const tenantId = idFromGet ?? idFromIdx ?? 'default'
