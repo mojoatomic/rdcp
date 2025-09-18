@@ -1,6 +1,7 @@
 const express = require('express')
 const morgan = require('morgan')
 const { v4: uuidv4 } = require('uuid')
+const client = require('prom-client')
 const {
   adapters,
   debug,
@@ -43,6 +44,42 @@ const rdcpMiddleware = adapters.express.createRDCPMiddleware({
 const app = express()
 app.use(express.json())
 app.use(morgan('dev'))
+
+// Prometheus metrics setup
+const register = new client.Registry()
+client.collectDefaultMetrics({ register })
+const reqCounter = new client.Counter({
+  name: 'rdcp_demo_requests_total',
+  help: 'Total HTTP requests',
+  labelNames: ['route', 'method', 'status']
+})
+const reqDuration = new client.Histogram({
+  name: 'rdcp_demo_request_duration_seconds',
+  help: 'Request duration seconds',
+  labelNames: ['route', 'method', 'status'],
+  buckets: [0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1]
+})
+register.registerMetric(reqCounter)
+register.registerMetric(reqDuration)
+
+function classifyRoute(path) {
+  if (path.startsWith('/.well-known/rdcp') || path.startsWith('/rdcp/')) return 'rdcp'
+  if (path.startsWith('/api/')) return 'api'
+  return 'other'
+}
+
+// Metrics middleware to track each request
+app.use((req, res, next) => {
+  const route = classifyRoute(req.path)
+  const method = req.method
+  const endTimer = reqDuration.startTimer({ route, method })
+  res.on('finish', () => {
+    const status = String(res.statusCode)
+    reqCounter.inc({ route, method, status })
+    endTimer({ route, method, status })
+  })
+  next()
+})
 
 // Request correlation IDs
 app.use((req, res, next) => {
@@ -119,5 +156,16 @@ apiRouter.post('/reports', async (req, res) => {
 })
 
 app.use('/api', apiRouter)
+
+// Prometheus metrics endpoint
+app.get('/metrics', async (_req, res) => {
+  try {
+    res.set('Content-Type', register.contentType)
+    const metrics = await register.metrics()
+    res.end(metrics)
+  } catch (err) {
+    res.status(500).send(String(err?.message || 'metrics error'))
+  }
+})
 
 module.exports = { app }
