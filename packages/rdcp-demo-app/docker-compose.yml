@@ -1,0 +1,22 @@
+version: '3.8'
+services:
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    ports:
+      - "16686:16686"      # Jaeger UI
+      - "4318:4318"        # OTLP HTTP receiver
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4318
+      - OTEL_SERVICE_NAME=rdcp-demo-app
+      - NODE_ENV=production
+    ports:
+      - "3000:3000"
+    depends_on:
+      - jaeger
+    command: ["node", "src/server.js"]

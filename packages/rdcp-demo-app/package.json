@@ -1,0 +1,27 @@
+{
+  "name": "@rdcp/demo-app",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Comprehensive RDCP + OpenTelemetry demonstration app with Express and Jaeger",
+  "scripts": {
+    "dev": "node src/server.js",
+    "start": "NODE_ENV=production node src/server.js",
+    "otel": "node --require ./src/opentelemetry.js src/server.js",
+    "benchmark": "node scripts/benchmark.js",
+    "examples": "node scripts/test-examples.js",
+    "build": "echo 'No build step needed (pure JS demo)'"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "morgan": "^1.10.0",
+    "uuid": "^9.0.1",
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/sdk-node": "^0.52.1",
+    "@opentelemetry/auto-instrumentations-node": "^0.53.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.52.1",
+    "@opentelemetry/resources": "^1.9.0",
+    "@opentelemetry/semantic-conventions": "^1.23.0",
+    "@rdcp/server": "file:../..",
+    "@rdcp/otel-plugin": "file:../otel-plugin"
+  }
+}
