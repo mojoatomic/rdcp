@@ -1,0 +1,81 @@
+{
+  "name": "@rdcp/otel-plugin",
+  "version": "1.0.0",
+  "description": "OpenTelemetry integration plugin for RDCP SDK - Enterprise-grade trace correlation",
+  "keywords": [
+    "rdcp",
+    "opentelemetry",
+    "tracing",
+    "observability",
+    "plugin",
+    "debug",
+    "correlation"
+  ],
+  "author": {
+    "name": "RDCP SDK Team",
+    "email": "dev@rdcp.dev"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rdcp/sdk",
+    "directory": "packages/otel-plugin"
+  },
+  "homepage": "https://rdcp.dev/docs/opentelemetry",
+  "bugs": {
+    "url": "https://github.com/rdcp/sdk/issues"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.esm.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint src --ext .ts --fix",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "peerDependencies": {
+    "@opentelemetry/api": ">=1.0.0 <2.0.0",
+    "@rdcp/server": "^1.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@opentelemetry/api": {
+      "optional": false
+    },
+    "@rdcp/server": {
+      "optional": false
+    }
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "@types/node": "^20.10.6",
+    "@typescript-eslint/eslint-plugin": "^6.16.0",
+    "@typescript-eslint/parser": "^6.16.0",
+    "eslint": "^8.56.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.0",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -87,6 +87,20 @@ app.listen(3000)
 - **[Koa Integration](Koa-Integration)** - Koa middleware integration
 - **[Next.js Integration](NextJS-Integration)** - Next.js App Router implementation
 
+### OpenTelemetry Integration
+- **[OpenTelemetry Overview](examples/opentelemetry/Overview)** - Enterprise-grade trace correlation with RDCP debug logs
+- **[Framework Examples](examples/opentelemetry/Framework-Examples)** - Production-ready integrations for Express, Next.js, Fastify, Koa
+- **[Migration Guides](examples/opentelemetry/Migration-Guides)** - Step-by-step migration from existing logging to RDCP + OpenTelemetry
+- **[Backend Configurations](examples/opentelemetry/Backend-Configurations)** - Working examples for Jaeger, DataDog, New Relic, and more
+- **[DataDog Quickstart](examples/opentelemetry/DataDog-Quickstart)** - 10-minute path to Datadog APM + RDCP correlation
+- **[New Relic Quickstart](examples/opentelemetry/NewRelic-Quickstart)** - 10-minute path to New Relic + RDCP correlation
+- **[Performance Analysis](examples/opentelemetry/Performance-Analysis)** - Benchmarks, overhead measurement, and production tuning
+
+### Enterprise Deployment
+- **[Security and Compliance](enterprise/Security-and-Compliance)** - Data protection, audit trails, retention, and regulatory mapping
+- **[Operational Production Guide](enterprise/Operational-Production-Guide)** - Authentication at scale, rate limiting, multi-tenancy
+- **[Enterprise Deployment Patterns](enterprise/Enterprise-Deployment-Patterns)** - Kubernetes, service mesh, and collector architectures
+
 ### Authentication & Security
 - **[Authentication Setup](Authentication-Setup)** - All 3 security levels: Basic, Standard, Enterprise
 - **[Multi-Tenancy](Multi-Tenancy)** - Tenant isolation and context management
