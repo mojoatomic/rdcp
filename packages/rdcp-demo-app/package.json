@@ -11,7 +11,8 @@
     "examples": "node scripts/test-examples.js",
     "test": "jest",
     "build": "echo 'No build step needed (pure JS demo)'",
-    "gen:mtls-cert": "node scripts/gen-mtls-cert.js"
+    "gen:mtls-cert": "node scripts/gen-mtls-cert.js",
+    "gen:jwt": "node scripts/mint-jwt.js"
   },
   "dependencies": {
     "express": "^4.19.2",
