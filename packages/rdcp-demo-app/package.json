@@ -2,6 +2,17 @@
   "name": "@rdcp/demo-app",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
+  "author": {
+    "name": "Doug Fennell",
+    "email": "technical@c2cfirm.com",
+    "url": "https://github.com/mojoatomic"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mojoatomic/rdcp",
+    "directory": "packages/rdcp-demo-app"
+  },
   "description": "Comprehensive RDCP + OpenTelemetry demonstration app with Express and Jaeger",
   "scripts": {
     "dev": "node src/server.js",

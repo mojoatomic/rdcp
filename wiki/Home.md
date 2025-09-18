@@ -3,8 +3,8 @@
 **Complete JavaScript/TypeScript SDK for Runtime Debug Control Protocol v1.0**
 
 [![npm version](https://badge.fury.io/js/@rdcp%2Fserver.svg)](https://badge.fury.io/js/@rdcp%2Fserver)
-[![Tests](https://github.com/mojoatomic/rdpc/workflows/test/badge.svg)](https://github.com/mojoatomic/rdpc/actions)
-[![Protocol Compliance](https://img.shields.io/badge/RDCP-v1.0%20Compliant-green)](https://github.com/mojoatomic/rdpc/blob/main/PROTOCOL-COMPLIANCE-REPORT.md)
+[![CI](https://img.shields.io/badge/CI-GitHub%20Actions-inactive)](../TESTING-SUMMARY.md)
+[![Protocol Compliance](https://img.shields.io/badge/RDCP-v1.0%20Compliant-green)](../PROTOCOL-COMPLIANCE-REPORT.md)
 
 ## What is RDCP SDK?
 
@@ -152,7 +152,7 @@ This SDK achieves **Level 2: Standard compliance** with RDCP v1.0 Protocol Speci
 - ✅ 73 passing tests across 7 test suites
 - ✅ Production-ready with security hardening
 
-See [Protocol Compliance Report](https://github.com/mojoatomic/rdpc/blob/main/PROTOCOL-COMPLIANCE-REPORT.md) for detailed analysis.
+See [Protocol Compliance Report](../PROTOCOL-COMPLIANCE-REPORT.md) for detailed analysis.
 
 ## Requirements
 
@@ -161,7 +161,7 @@ See [Protocol Compliance Report](https://github.com/mojoatomic/rdpc/blob/main/PR
 
 ## License
 
-MIT License - see [LICENSE](https://github.com/mojoatomic/rdpc/blob/main/LICENSE) file for details.
+MIT License - see [LICENSE](../LICENSE) file for details.
 
 ---
 

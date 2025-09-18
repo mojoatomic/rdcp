@@ -17,14 +17,18 @@
     "authentication",
     "multi-tenant"
   ],
-  "author": {
-    "name": "RDCP SDK Team",
-    "email": "dev@rdcp.dev"
-  },
   "license": "MIT",
+  "author": {
+    "name": "Doug Fennell",
+    "email": "doug@rdcp.dev",
+    "url": "https://github.com/mojoatomic"
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/rdcp/sdk"
+    "url": "https://github.com/mojoatomic/rdcp"
+  },
+  "bugs": {
+    "url": "https://github.com/mojoatomic/rdcp/issues"
   },
   "homepage": "https://rdcp.dev",
   "bugs": {
@@ -64,6 +68,8 @@
     }
   },
   "scripts": {
+    "docs:check-links": "node scripts/check-wiki-links.js",
+    "docs:check-links:external": "node scripts/check-wiki-links.js --external",
     "dev": "tsx watch examples/express-server.ts",
     "dev:background": "nohup npm run dev > dev.log 2>&1 &",
     "dev:full-clean": "rm -rf node_modules package-lock.json && npm install && npm run dev",

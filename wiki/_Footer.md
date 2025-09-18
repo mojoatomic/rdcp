@@ -10,6 +10,6 @@
 
 ---
 
-🏠 [**Home**](Home) | 📦 [**NPM Package**](https://npmjs.com/package/@rdcp/server) | 🐙 [**GitHub**](https://github.com/rdcp/rdcp-sdk) | 📋 [**Issues**](https://github.com/rdcp/rdcp-sdk/issues)
+🏠 [**Home**](Home) | 📦 [**NPM Package**](https://npmjs.com/package/@rdcp/server) | 🐙 [**GitHub**](https://github.com/mojoatomic) | 📋 [**Issues**](Home#how-to-contribute-to-the-docs)
 
 *RDCP SDK v1.0.0 - Runtime Debug Control Protocol implementation for JavaScript/Node.js applications*

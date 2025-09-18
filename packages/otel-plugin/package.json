@@ -11,15 +11,19 @@
     "debug",
     "correlation"
   ],
-  "author": {
-    "name": "RDCP SDK Team",
-    "email": "dev@rdcp.dev"
-  },
   "license": "MIT",
+  "author": {
+    "name": "Doug Fennell",
+    "email": "doug@rdcp.dev",
+    "url": "https://github.com/mojoatomic"
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/rdcp/sdk",
+    "url": "https://github.com/mojoatomic/rdcp",
     "directory": "packages/otel-plugin"
+  },
+  "bugs": {
+    "url": "https://github.com/mojoatomic/rdcp/issues"
   },
   "homepage": "https://rdcp.dev/docs/opentelemetry",
   "bugs": {
