@@ -264,3 +264,11 @@ CI hints (optional)
 ---
 
 Done. This page contains everything an AI agent needs to bootstrap RDCP in a project, verify success locally, and drill into deeper examples via pinned wiki links.
+
+---
+
+## Next steps
+- Validate with the in-memory demo: [RDCP Demo App](examples/RDCP-Demo-App)
+- Add endpoints to your service: [Basic Usage](Basic-Usage)
+- Confirm current repo status: [Implementation Status](Implementation-Status)
+- Deep-dive: Protocol references in docs/ (advanced)

@@ -89,6 +89,13 @@ Use this for the Dependencies graph and clean resets each run.
 Jaeger UI: http://localhost:16686
 Dependencies graph: http://localhost:16686/dependencies (refresh after a few seconds)
 
+---
+
+## Next steps
+- Learn the trace flow: [Trace Propagation Demo](Trace-Propagation-Demo)
+- Integrate in your service: [Basic Usage](../Basic-Usage)
+- Automate integration: [AI Agent Quick Reference](../AI-Agent-Quick-Reference)
+
 Metrics:
 - Endpoint: GET /metrics
 - Includes:

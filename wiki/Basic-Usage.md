@@ -348,3 +348,8 @@ Standard error codes:
 - **[Koa Integration](Koa-Integration)** - Advanced Koa configuration
 - **[Next.js Integration](NextJS-Integration)** - Advanced Next.js configuration
 - **[Client SDK](Client-SDK)** - Use the client SDK to consume RDCP endpoints
+
+Also see:
+- **[RDCP Demo App](examples/RDCP-Demo-App)** - One-command local demo (in-memory Jaeger)
+- **[Trace Propagation Demo](examples/Trace-Propagation-Demo)** - Cross-service tracing
+- **[AI Agent Quick Reference](AI-Agent-Quick-Reference)** - Copy/paste integration guide

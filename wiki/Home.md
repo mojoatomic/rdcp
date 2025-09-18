@@ -162,3 +162,20 @@ See [Protocol Compliance Report](https://github.com/mojoatomic/rdpc/blob/main/PR
 ## License
 
 MIT License - see [LICENSE](https://github.com/mojoatomic/rdpc/blob/main/LICENSE) file for details.
+
+---
+
+## How to contribute to the docs
+
+- Edit pages under wiki/ in this repository and open a PR
+- Keep examples copy/pasteable and tested against the demo app
+- Prefer linking to existing pages over duplicating content
+- For advanced protocol details, link to docs/rdcp-protocol-specification.md and docs/rdcp-implementation-guide.md
+
+## Next steps
+
+- Read: [AI Agent Quick Reference](AI-Agent-Quick-Reference)
+- Try: [RDCP Demo App (In-Memory Jaeger)](examples/RDCP-Demo-App)
+- Integrate: [Installation](Installation) → [Basic Usage](Basic-Usage)
+- Explore: [Trace Propagation Demo](examples/Trace-Propagation-Demo)
+- Deep dive: Protocol references in docs/ (advanced)

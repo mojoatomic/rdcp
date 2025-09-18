@@ -226,3 +226,7 @@ Once installation is complete:
    - **[Fastify Integration](Fastify-Integration)** 
    - **[Koa Integration](Koa-Integration)**
    - **[Next.js Integration](NextJS-Integration)**
+
+Also helpful:
+- Quick local demo with Jaeger Dependencies graph: [RDCP Demo App](examples/RDCP-Demo-App)
+- Copy/paste checklist for agents/automation: [AI Agent Quick Reference](AI-Agent-Quick-Reference)

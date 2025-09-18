@@ -199,6 +199,13 @@ it('authorized variant returns 200,200,200 for discovery, health, status', async
 
 **Solution**: Use the authorized variant (`/api/demo/multi-call-auth`) to see all successful requests.
 
+---
+
+## Next steps
+- Explore the in-memory demo: [RDCP Demo App](RDCP-Demo-App)
+- Add RDCP to your service: [Basic Usage](../Basic-Usage)
+- Automate setup: [AI Agent Quick Reference](../AI-Agent-Quick-Reference)
+
 ### Jaeger shows no traces
 
 1. **Check Jaeger is running**: `docker ps | grep jaeger`
