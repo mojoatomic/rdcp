@@ -37,7 +37,7 @@ export interface TenantDebugConfig {
 interface RequestWithHeaders {
   headers: {
     get?: (name: string) => string | null | undefined
-    [key: string]: unknown
+    [key: string]: string | string[] | undefined
   }
 }
 
@@ -48,17 +48,26 @@ interface RequestWithHeaders {
 export function extractTenantContext(
   request: RequestWithHeaders
 ): RDCPTenantContext {
+  const idFromGet = request.headers.get?.('x-rdcp-tenant-id') ?? undefined
+  const idFromIdxRaw = request.headers['x-rdcp-tenant-id']
+  const idFromIdx = Array.isArray(idFromIdxRaw) ? idFromIdxRaw[0] : idFromIdxRaw
+
+  const isoFromGet = request.headers.get?.('x-rdcp-isolation-level') ?? undefined
+  const isoFromIdxRaw = request.headers['x-rdcp-isolation-level']
+  const isoFromIdx = Array.isArray(isoFromIdxRaw) ? isoFromIdxRaw[0] : isoFromIdxRaw
+
+  const nameFromGet = request.headers.get?.('x-rdcp-tenant-name') ?? undefined
+  const nameFromIdxRaw = request.headers['x-rdcp-tenant-name']
+  const nameFromIdx = Array.isArray(nameFromIdxRaw) ? nameFromIdxRaw[0] : nameFromIdxRaw
+
   return {
-    tenantId:
-      request.headers.get?.('x-rdcp-tenant-id') ||
-      request.headers['x-rdcp-tenant-id'] ||
-      'default',
-    isolationLevel: (request.headers.get?.('x-rdcp-isolation-level') ||
-      request.headers['x-rdcp-isolation-level'] ||
-      'global') as 'global' | 'process' | 'namespace' | 'organization',
-    tenantName:
-      request.headers.get?.('x-rdcp-tenant-name') ||
-      request.headers['x-rdcp-tenant-name'],
+    tenantId: idFromGet ?? idFromIdx ?? 'default',
+    isolationLevel: (isoFromGet ?? isoFromIdx ?? 'global') as
+      | 'global'
+      | 'process'
+      | 'namespace'
+      | 'organization',
+    tenantName: nameFromGet ?? nameFromIdx,
   }
 }
 
@@ -119,7 +128,7 @@ export function setTenantDebugCategory(
  * Create RDCP standard tenant response object
  * Wraps response with tenant context when multi-tenancy is active
  */
-export function createTenantResponse<T extends Record<string, unknown>>(
+export function createTenantResponse<T extends object>(
   response: T,
   tenantContext: RDCPTenantContext
 ): T & { tenant: TenantContext } {
