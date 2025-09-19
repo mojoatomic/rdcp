@@ -145,11 +145,10 @@ export class RDCPServer {
       options.capabilities?.ttl?.enabled === true
 
     const minDurationMs = options.capabilities?.ttl?.minDurationMs ?? 1
-    const maxDurationMs = options.capabilities?.ttl?.maxDurationMs ?? 60 * 60 * 1000 // 1h
-    const maxActiveTTLs =
-      options.capabilities?.ttl?.maxActiveTTLs !== undefined
-        ? options.capabilities?.ttl?.maxActiveTTLs!
-        : null
+    // Default: 1 hour
+    const maxDurationMs =
+      options.capabilities?.ttl?.maxDurationMs ?? 60 * 60 * 1000
+    const maxActiveTTLs = options.capabilities?.ttl?.maxActiveTTLs ?? null
 
     this.ttlTimers = new Map()
     this.ttlConfig = {
