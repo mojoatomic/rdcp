@@ -92,9 +92,9 @@ export function validateRDCPAuth(request: Request): RDCPAuthResult {
         process.env.RDCP_WARN_ON_HYBRID_FALLBACK === 'true'
       if (shouldWarn) {
         logger.warn('JWT validation failed, continuing with cert-only auth', {
-          route: request.route?.path ?? request.path,
+          route: request.path,
           method: request.method,
-          clientId: request.headers['x-rdcp-client-id'],
+          clientId: request.headers['x-rdcp-client-id'] as string | undefined,
         })
       } else {
         logger.debug('Hybrid auth: JWT invalid, using certificate only')
