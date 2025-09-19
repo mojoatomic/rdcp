@@ -38,8 +38,8 @@ What’s completed
 - Fail fast with RDCP_AUTH_REQUIRED (401) when missing/invalid
 
 5) Standardized error responses and testing helpers
-- docs/error-responses.md: canonical error shape and code/status mapping
-- docs/testing-helpers.md: JWT helpers, tenant and hybrid patterns, mTLS simulation
+- wiki/Error-Responses.md: canonical error shape and code/status mapping
+- wiki/Testing-Helpers.md: JWT helpers, tenant and hybrid patterns, mTLS simulation
 - README and wiki updated to link these resources
 
 6) New e2e tests (highlights)
