@@ -11,7 +11,10 @@ npm ci
 echo "[ci-local] Running tests..."
 npm test
 
-echo "[ci-local] Running lint..."
-npm run lint
+echo "[ci-local] Type checking..."
+npm run type-check
+
+echo "[ci-local] Running lint (strict)..."
+npm run lint:ci
 
 echo "[ci-local] All checks passed."

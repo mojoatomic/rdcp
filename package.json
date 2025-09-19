@@ -73,6 +73,7 @@
     "cleanup": "pkill -f 'tsx watch' || true",
     "build": "tsc && rollup -c",
     "lint": "eslint src examples --no-error-on-unmatched-pattern --ext .js,.ts --fix",
+    "lint:ci": "eslint src examples --no-error-on-unmatched-pattern --ext .js,.ts --max-warnings=0",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
