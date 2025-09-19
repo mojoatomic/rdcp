@@ -71,7 +71,7 @@
     "dev:background": "nohup npm run dev > dev.log 2>&1 &",
     "dev:full-clean": "rm -rf node_modules package-lock.json && npm install && npm run dev",
     "cleanup": "pkill -f 'tsx watch' || true",
-    "build": "tsc && rollup -c",
+"build": "tsc && rollup -c rollup.config.mjs",
     "lint": "eslint src examples --no-error-on-unmatched-pattern --ext .js,.ts --fix",
     "lint:ci": "eslint src examples --no-error-on-unmatched-pattern --ext .js,.ts --max-warnings=0",
     "pretest": "npm run build",
