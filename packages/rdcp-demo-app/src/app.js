@@ -269,7 +269,6 @@ function requireTenantScope(scopeBase) {
 
 // Apply tenant context decorator before defining routes so it affects all handlers
 app.use(decorateTenantContext)
-
 // Tenant routes
 app.get('/rdcp/v1/tenants/:tenantId/settings', requireTenantScope('read'), (req, res) => {
   const tenantId = String(req.params.tenantId)
