@@ -318,6 +318,12 @@ console.log('System Health:', health.status)
 
 ---
 
+## Documentation
+
+- Error responses and codes: docs/error-responses.md
+- Testing helpers and patterns: docs/testing-helpers.md
+- Logging configuration (hybrid fallback): docs/logging.md
+
 ## API Reference
 
 ### RDCP Endpoints (Auto-Generated)
