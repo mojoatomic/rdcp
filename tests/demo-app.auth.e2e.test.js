@@ -443,5 +443,27 @@ describe('RDCP Demo App - Authentication & security (roadmap)', () => {
         .set('Authorization', `Bearer ${invalidToken}`)
       expect(res.status).toBe(200)
     })
+
+    test('Hybrid (mTLS + JWT) cannot bypass invalid certificate (disallowed subject) even with valid JWT', async () => {
+      const prevAllowed = process.env.RDCP_ALLOWED_CERT_SUBJECTS
+      try {
+        // Disallow all subjects
+        process.env.RDCP_ALLOWED_CERT_SUBJECTS = 'client.allowed.only'
+        const secret = process.env.JWT_SECRET || 'change-in-production'
+        const cn = 'client.tenant123.rdcp.internal'
+        const cert = makeCert(cn)
+        const base64 = Buffer.from(JSON.stringify(cert)).toString('base64')
+        const validJwt = jwt.sign({ sub: cn, scopes: ['discovery','status'] }, secret, { algorithm: 'HS256', expiresIn: '5m' })
+        const res = await request(app)
+          .get('/rdcp/v1/status')
+          .set('X-RDCP-Auth-Method', 'mtls')
+          .set('X-RDCP-Client-ID', 'demo-client')
+          .set('X-Client-Cert', base64)
+          .set('Authorization', `Bearer ${validJwt}`)
+        expect(res.status).toBe(401)
+      } finally {
+        process.env.RDCP_ALLOWED_CERT_SUBJECTS = prevAllowed
+      }
+    })
   })
 })
