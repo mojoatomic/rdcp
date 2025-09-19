@@ -10,6 +10,16 @@ The RDCP SDK supports all 3 security levels defined in the RDCP v1.0 protocol sp
 | **Standard** | Production SaaS | Bearer Token (JWT/OAuth2) | User identity, expiration, scopes validation |
 | **Enterprise** | Regulated Industries | mTLS + Token | Certificate validation, full audit trail |
 
+### Required RDCP Headers (enforced in Demo App)
+- `X-RDCP-Auth-Method`: api-key | bearer | mtls | hybrid
+- `X-RDCP-Client-ID`: <client-id>
+- `Authorization`: Bearer <credential> (API key or JWT depending on method)
+- `X-Client-Cert`: <base64-encoded JSON certificate> (demo helper for mTLS)
+
+Notes:
+- The demo app fast-fails with `RDCP_AUTH_REQUIRED` (401) when headers are missing/invalid.
+- The standard JWT validator supports optional env constraints: `JWT_ISSUER` and `JWT_AUDIENCE` (comma-separated values).
+
 ## Level 1: Basic (API Key Authentication)
 
 **Default setup** - Works out of the box with environment variable configuration.

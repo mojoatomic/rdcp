@@ -31,7 +31,40 @@ export function validateRDCPAuth(request: Request): RDCPAuthResult {
 
   try {
     const JWT_SECRET = getJWTSecret()
-    const decoded = jwt.verify(token, JWT_SECRET) as jwt.JwtPayload
+
+    // Context7: support issuer/audience constraints from env (comma-separated)
+    const issuers = (process.env.JWT_ISSUER ?? '')
+      .split(',')
+      .map(s => s.trim())
+      .filter(s => s.length > 0)
+    const audiences = (process.env.JWT_AUDIENCE ?? '')
+      .split(',')
+      .map(s => s.trim())
+      .filter(s => s.length > 0)
+
+    // Build audience option matching jsonwebtoken VerifyOptions typing
+    let audienceOption: undefined | string | [string, ...string[]]
+    if (audiences.length === 1) audienceOption = audiences[0]
+    else if (audiences.length > 1)
+      audienceOption = [audiences[0], ...audiences.slice(1)]
+
+    // Build issuer option matching jsonwebtoken VerifyOptions typing
+    let issuerOption: undefined | string | [string, ...string[]]
+    if (issuers.length === 1) issuerOption = issuers[0]
+    else if (issuers.length > 1)
+      issuerOption = [issuers[0], ...issuers.slice(1)]
+
+    const verifyOptions: jwt.VerifyOptions = {
+      algorithms: ['HS256'],
+      ...(issuerOption ? { issuer: issuerOption } : {}),
+      ...(audienceOption ? { audience: audienceOption } : {}),
+    }
+
+    const decoded = jwt.verify(
+      token,
+      JWT_SECRET,
+      verifyOptions
+    ) as jwt.JwtPayload
 
     // Return standard auth context
     return {
