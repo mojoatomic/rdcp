@@ -141,6 +141,7 @@ Validate:
 Examples & Benchmarks:
 - npm run examples --prefix packages/rdcp-demo-app
 - npm run benchmark --prefix packages/rdcp-demo-app
+- Proof-of-Capabilities: See ../Proof-of-Capabilities.md for end-to-end demo cURL commands
 
 ---
 
@@ -161,6 +162,7 @@ Links
 - Error responses and codes: ../Error-Responses.md
 - Testing helpers and patterns: ../Testing-Helpers.md
 - Logging configuration (hybrid fallback): ../Logging.md
+- Proof of Capabilities (Test Evidence & Demo Commands): ../Proof-of-Capabilities.md
 
 ### Basic (API Key) - Enforced in Demo
 
