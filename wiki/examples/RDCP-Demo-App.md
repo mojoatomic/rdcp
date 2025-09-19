@@ -383,6 +383,39 @@ Developer experience:
 
 ---
 
+## Temporary controls (TTL)
+
+- Supported on tenant-scoped control route: POST /rdcp/v1/tenants/:tenantId/control
+- Request format additions:
+  - options.temporary: boolean (enable TTL when true)
+  - options.duration: number (ms) or string with suffix ms|s|m (e.g., '150ms','2s','1m')
+- Behavior: When TTL is set, categories enabled are automatically disabled after the duration; disabling manually cancels any pending TTL timer.
+
+Examples
+```bash
+# Enable category with TTL for tenant-A
+export JWT_SECRET='change-in-production'
+TOKEN=$(node -e "console.log(require('jsonwebtoken').sign({ sub:'ops@example.com', scopes:['control','control:tenant-A'] }, process.env.JWT_SECRET, { algorithm:'HS256', expiresIn:'5m' }))")
+
+curl -s \
+  -H 'X-RDCP-Auth-Method: bearer' \
+  -H 'X-RDCP-Client-ID: demo-client' \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"action":"enable","categories":["CACHE"],"options":{"temporary":true,"duration":"2s"}}' \
+  http://localhost:3000/rdcp/v1/tenants/tenant-A/control | jq
+
+# Check settings (may show CACHE until TTL expires)
+curl -s \
+  -H 'X-RDCP-Auth-Method: bearer' \
+  -H 'X-RDCP-Client-ID: demo-client' \
+  -H "Authorization: Bearer $TOKEN" \
+  http://localhost:3000/rdcp/v1/tenants/tenant-A/settings | jq '.settings.categories'
+```
+
+Note
+- TTL is a demo-app feature to illustrate temporary controls; SDK servers may implement TTL differently.
+
 ## Contributing
 
 - Extend business examples in src/routes/api/

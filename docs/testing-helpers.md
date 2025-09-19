@@ -140,6 +140,59 @@ curl -s \
   http://localhost:3000/rdcp/v1/tenants/tenant-A/settings | jq '.tenant'
 ```
 
+Temporary controls (TTL)
+- Enable categories temporarily by setting options.temporary=true and options.duration to a duration string or milliseconds.
+- Duration supports suffixes: ms, s, m (e.g., '150ms', '2s', '1m').
+- The demo will automatically disable the category after the TTL expires.
+
+Supertest examples
+```js
+// Enable a category with TTL (expires)
+await request(app)
+  .post('/rdcp/v1/tenants/tenant-A/control')
+  .set({ 'X-RDCP-Auth-Method':'bearer','X-RDCP-Client-ID':'ttl-1','Authorization':`Bearer ${token}` })
+  .send({ action:'enable', categories:['CACHE'], options:{ temporary:true, duration:'150ms' } })
+  .expect(200)
+
+// Immediately present
+let res = await request(app)
+  .get('/rdcp/v1/tenants/tenant-A/settings')
+  .set({ 'X-RDCP-Auth-Method':'bearer','X-RDCP-Client-ID':'ttl-2','Authorization':`Bearer ${token}` })
+expect(res.body?.settings?.categories || []).toContain('CACHE')
+
+// After TTL, removed
+await new Promise(r => setTimeout(r, 220))
+res = await request(app)
+  .get('/rdcp/v1/tenants/tenant-A/settings')
+  .set({ 'X-RDCP-Auth-Method':'bearer','X-RDCP-Client-ID':'ttl-3','Authorization':`Bearer ${token}` })
+expect(res.body?.settings?.categories || []).not.toContain('CACHE')
+
+// Disabling cancels pending TTL
+await request(app)
+  .post('/rdcp/v1/tenants/tenant-A/control')
+  .set({ 'X-RDCP-Auth-Method':'bearer','X-RDCP-Client-ID':'ttl-4','Authorization':`Bearer ${token}` })
+  .send({ action:'enable', categories:['API_ROUTES'], options:{ temporary:true, duration:'500ms' } })
+  .expect(200)
+await request(app)
+  .post('/rdcp/v1/tenants/tenant-A/control')
+  .set({ 'X-RDCP-Auth-Method':'bearer','X-RDCP-Client-ID':'ttl-5','Authorization':`Bearer ${token}` })
+  .send({ action:'disable', categories:['API_ROUTES'] })
+  .expect(200)
+```
+
+Curl example
+```bash
+export JWT_SECRET='change-in-production'
+TOKEN=$(node -e "console.log(require('jsonwebtoken').sign({ sub:'ops@example.com', scopes:['control','control:tenant-A'] }, process.env.JWT_SECRET, { algorithm:'HS256', expiresIn:'5m' }))")
+curl -s \
+  -H 'X-RDCP-Auth-Method: bearer' \
+  -H 'X-RDCP-Client-ID: demo-client' \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"action":"enable","categories":["CACHE"],"options":{"temporary":true,"duration":"2s"}}' \
+  http://localhost:3000/rdcp/v1/tenants/tenant-A/control | jq
+```
+
 Rate-limit flake avoidance (demo app)
 - The demo control endpoint has a simple in-memory rate limit.
   - Increase capacity in tests: RATE_LIMIT_CONTROL_MAX=10
