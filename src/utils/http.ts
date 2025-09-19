@@ -1,6 +1,11 @@
 // Using native Node.js fetch (Node.js 18+) following Context7 patterns
 // No import needed - fetch is globally available in Node.js 18+
-import { AuthConfig, AuthHeaders, RDCPError, RDCP_ERROR_CODES } from './types.js'
+import {
+  AuthConfig,
+  AuthHeaders,
+  RDCPError,
+  RDCP_ERROR_CODES,
+} from './types.js'
 
 // RDCP HTTP Client - Protocol compliant request handling
 export class RDCPHttpClient {
@@ -16,8 +21,8 @@ export class RDCPHttpClient {
   ) {
     this.baseUrl = baseUrl.replace(/\/$/, '')
     this.auth = auth
-    this.timeout = options.timeout || 30000
-    this.retries = options.retries || 3
+    this.timeout = options.timeout ?? 30000
+    this.retries = options.retries ?? 3
   }
 
   // Generate authentication headers based on security level
@@ -107,16 +112,17 @@ export class RDCPHttpClient {
   private handleRDCPError(status: number, data: unknown): never {
     if (data && typeof data === 'object' && 'error' in data) {
       const error = (data as RDCPError).error
-      throw new RDCPClientError(error.code, error.message, status, error.details)
+      throw new RDCPClientError(
+        error.code,
+        error.message,
+        status,
+        error.details
+      )
     }
 
     // Fallback error handling
     const errorCode = this.getErrorCodeFromStatus(status)
-    throw new RDCPClientError(
-      errorCode,
-      `HTTP ${status} error`,
-      status
-    )
+    throw new RDCPClientError(errorCode, `HTTP ${status} error`, status)
   }
 
   private getErrorCodeFromStatus(status: number): string {

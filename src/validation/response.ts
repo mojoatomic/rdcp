@@ -3,12 +3,12 @@
  * Simple functions to format RDCP responses correctly
  */
 
-import { 
-  RDCPResponse, 
-  DebugCategory, 
-  PerformanceMetric, 
+import {
+  RDCPResponse,
+  DebugCategory,
+  PerformanceMetric,
   ControlChange,
-  RDCPDiscoveryResponse 
+  RDCPDiscoveryResponse,
 } from '../utils/types.js'
 
 /**
@@ -21,11 +21,13 @@ export interface BaseResponseData {
 /**
  * Creates standard RDCP response with protocol and timestamp
  */
-export function createRDCPResponse<T extends BaseResponseData>(data: T): RDCPResponse & T {
+export function createRDCPResponse<T extends BaseResponseData>(
+  data: T
+): RDCPResponse & T {
   return {
     protocol: 'rdcp/1.0',
     timestamp: new Date().toISOString(),
-    ...data
+    ...data,
   }
 }
 
@@ -43,16 +45,16 @@ export interface ControlResponseData {
  * Creates RDCP control response
  */
 export function createControlResponse(
-  action: string, 
-  categories: string | string[], 
-  status: 'success' | 'partial' | 'failed', 
+  action: string,
+  categories: string | string[],
+  status: 'success' | 'partial' | 'failed',
   changes: ControlChange[] = []
 ): RDCPResponse & ControlResponseData {
   return createRDCPResponse({
     action,
     categories: Array.isArray(categories) ? categories : [categories],
     status,
-    changes
+    changes,
   })
 }
 
@@ -73,12 +75,12 @@ export interface DiscoveryResponseData {
  * Creates RDCP discovery response
  */
 export function createDiscoveryResponse(
-  categories: DebugCategory[], 
+  categories: DebugCategory[],
   performance: DiscoveryResponseData['performance']
 ): RDCPResponse & DiscoveryResponseData {
   return createRDCPResponse({
     categories,
-    performance
+    performance,
   })
 }
 
@@ -87,14 +89,17 @@ export function createDiscoveryResponse(
  */
 export interface StatusResponseData {
   enabled: boolean
-  categories: Record<string, {
-    enabled: boolean
-    metrics: {
-      callsLastMinute: number
-      callsTotal: number
-      lastActivity: string
+  categories: Record<
+    string,
+    {
+      enabled: boolean
+      metrics: {
+        callsLastMinute: number
+        callsTotal: number
+        lastActivity: string
+      }
     }
-  }>
+  >
   performance?: {
     overhead: {
       cpu: PerformanceMetric
@@ -107,14 +112,14 @@ export interface StatusResponseData {
  * Creates RDCP status response
  */
 export function createStatusResponse(
-  enabled: boolean, 
-  categories: StatusResponseData['categories'], 
+  enabled: boolean,
+  categories: StatusResponseData['categories'],
   performance?: StatusResponseData['performance']
 ): RDCPResponse & StatusResponseData {
   return createRDCPResponse({
     enabled,
     categories,
-    ...(performance && { performance })
+    ...(performance && { performance }),
   })
 }
 
@@ -130,12 +135,12 @@ export interface HealthResponseData {
  * Creates RDCP health response
  */
 export function createHealthResponse(
-  status: 'healthy' | 'degraded' | 'unhealthy', 
+  status: 'healthy' | 'degraded' | 'unhealthy',
   checks: Record<string, 'operational' | 'degraded' | 'failed'>
 ): RDCPResponse & HealthResponseData {
   return createRDCPResponse({
     status,
-    checks
+    checks,
   })
 }
 
@@ -178,14 +183,14 @@ export interface SecurityConfig {
  * Creates protocol discovery response
  */
 export function createProtocolDiscoveryResponse(
-  endpoints: EndpointsConfig, 
-  capabilities: CapabilitiesConfig, 
+  endpoints: EndpointsConfig,
+  capabilities: CapabilitiesConfig,
   security: SecurityConfig
 ): RDCPDiscoveryResponse {
   return {
     protocol: 'rdcp/1.0',
     endpoints,
     capabilities,
-    security
+    security,
   }
 }

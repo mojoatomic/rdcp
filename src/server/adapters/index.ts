@@ -1,18 +1,18 @@
 /**
  * @fileoverview Framework adapters for RDCP server middleware
  * Exports all framework-specific middleware adapters with proper TypeScript types
- * 
+ *
  * Context7 Compliance:
  * - Uses ESM export patterns with proper TypeScript interfaces
  * - Provides comprehensive type definitions for all adapters
  * - Follows TypeScript module export best practices
  * - Ensures framework-specific types are properly exposed
- * 
+ *
  * @example
  * ```typescript
  * // Import specific adapter
  * import { createRDCPMiddleware as fastifyRDCP } from '@rdcp/server/adapters/fastify'
- * 
+ *
  * // Or import all adapters
  * import * as adapters from '@rdcp/server/adapters'
  * const middleware = adapters.fastify.createRDCPMiddleware(options)
@@ -28,11 +28,7 @@ import * as koa from './koa.js'
  * Framework adapter exports with proper TypeScript types
  * Following Context7 patterns for module organization
  */
-export {
-  express,
-  fastify,
-  koa
-}
+export { express, fastify, koa }
 
 /**
  * Default export for CommonJS compatibility
@@ -41,7 +37,7 @@ export {
 export default {
   express,
   fastify,
-  koa
+  koa,
 }
 
 /**
@@ -56,17 +52,14 @@ export { createRDCPMiddleware as createKoaMiddleware } from './koa.js'
  * Type definitions for all adapters
  * Following Context7 patterns for comprehensive typing
  */
-export type { 
+export type {
   RDCPAuthenticator as RDCPExpressAuthenticator,
-  RDCPMiddlewareOptions as RDCPExpressMiddlewareOptions 
+  RDCPMiddlewareOptions as RDCPExpressMiddlewareOptions,
 } from './express.js'
 
 export type {
   RDCPFastifyAuthenticator,
-  RDCPFastifyPluginOptions
+  RDCPFastifyPluginOptions,
 } from './fastify.js'
 
-export type {
-  RDCPKoaAuthenticator,
-  RDCPKoaMiddlewareOptions
-} from './koa.js'
+export type { RDCPKoaAuthenticator, RDCPKoaMiddlewareOptions } from './koa.js'

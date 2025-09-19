@@ -4,11 +4,13 @@ import { z } from 'zod'
 export const controlRequestSchema = z.object({
   action: z.enum(['enable', 'disable', 'toggle', 'reset']),
   categories: z.union([z.string(), z.array(z.string())]),
-  options: z.object({
-    temporary: z.boolean().optional(),
-    duration: z.number().optional(),
-    reason: z.string().optional()
-  }).optional()
+  options: z
+    .object({
+      temporary: z.boolean().optional(),
+      duration: z.number().optional(),
+      reason: z.string().optional(),
+    })
+    .optional(),
 })
 
 export const protocolDiscoverySchema = z.object({
@@ -17,13 +19,13 @@ export const protocolDiscoverySchema = z.object({
     discovery: z.string(),
     control: z.string(),
     status: z.string(),
-    health: z.string()
+    health: z.string(),
   }),
   capabilities: z.object({
     multiTenancy: z.boolean(),
     performanceMetrics: z.boolean(),
     temporaryControls: z.boolean(),
-    auditTrail: z.boolean()
+    auditTrail: z.boolean(),
   }),
   security: z.object({
     level: z.enum(['basic', 'standard', 'enterprise']),
@@ -31,6 +33,6 @@ export const protocolDiscoverySchema = z.object({
     scopes: z.array(z.string()),
     required: z.boolean(),
     keyRotation: z.boolean().optional(),
-    tokenRefresh: z.boolean().optional()
-  })
+    tokenRefresh: z.boolean().optional(),
+  }),
 })

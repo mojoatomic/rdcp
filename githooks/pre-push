@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Git pre-push hook to block pushes unless local CI passes
+# Mirrors CI: npm ci -> npm test -> npm run lint
+
+set -euo pipefail
+
+# Run local CI script
+bash scripts/ci-local.sh

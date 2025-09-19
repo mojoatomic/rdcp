@@ -1,5 +1,5 @@
 /**
- * @fileoverview RDCP Authentication System Types  
+ * @fileoverview RDCP Authentication System Types
  * TypeScript interfaces for authentication adapters
  */
 
@@ -30,5 +30,5 @@ export interface AuthHeaders {
   'x-rdcp-request-id'?: string
   'x-rdcp-tenant-id'?: string
   'x-api-key'?: string
-  'authorization'?: string
+  authorization?: string
 }

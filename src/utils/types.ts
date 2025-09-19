@@ -77,11 +77,13 @@ export interface DebugDiscoveryResponse extends RDCPResponse {
 export interface ControlRequest {
   action: 'enable' | 'disable' | 'toggle' | 'reset'
   categories: string[] | string
-  options?: {
-    temporary?: boolean | undefined
-    duration?: number | undefined
-    reason?: string | undefined
-  } | undefined
+  options?:
+    | {
+        temporary?: boolean | undefined
+        duration?: number | undefined
+        reason?: string | undefined
+      }
+    | undefined
   requestId?: string | undefined
 }
 
@@ -132,7 +134,7 @@ export interface StatusResponse extends RDCPResponse {
   tenant?: TenantContext
 }
 
-// Health Response  
+// Health Response
 export interface HealthResponse extends RDCPResponse {
   status: 'healthy' | 'degraded' | 'unhealthy'
   components: {
@@ -180,7 +182,7 @@ export interface RDCPClientConfig {
 // Standard RDCP Error Codes
 export const RDCP_ERROR_CODES = {
   AUTH_REQUIRED: 'RDCP_AUTH_REQUIRED',
-  FORBIDDEN: 'RDCP_FORBIDDEN', 
+  FORBIDDEN: 'RDCP_FORBIDDEN',
   NOT_FOUND: 'RDCP_NOT_FOUND',
   VALIDATION_ERROR: 'RDCP_VALIDATION_ERROR',
   CATEGORY_NOT_FOUND: 'RDCP_CATEGORY_NOT_FOUND',

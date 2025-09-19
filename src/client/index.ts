@@ -11,7 +11,7 @@ import {
 
 /**
  * RDCP Client SDK - Protocol compliant client for RDCP v1.0
- * 
+ *
  * Implements all required RDCP endpoints with strict protocol compliance.
  * Supports all three security levels: basic, standard, enterprise.
  * Handles multi-tenancy and provides comprehensive error handling.
@@ -25,15 +25,11 @@ export class RDCPClient {
   constructor(config: RDCPClientConfig) {
     this.config = config
     this.validateConfig(config)
-    
-    this.httpClient = new RDCPHttpClient(
-      config.baseUrl,
-      config.auth,
-      {
-        ...(config.timeout !== undefined && { timeout: config.timeout }),
-        ...(config.retries !== undefined && { retries: config.retries }),
-      }
-    )
+
+    this.httpClient = new RDCPHttpClient(config.baseUrl, config.auth, {
+      ...(config.timeout !== undefined && { timeout: config.timeout }),
+      ...(config.retries !== undefined && { retries: config.retries }),
+    })
   }
 
   private validateConfig(config: RDCPClientConfig): void {
@@ -41,7 +37,7 @@ export class RDCPClient {
       throw new Error('baseUrl is required in RDCP client config')
     }
 
-    if (!config.auth || !config.auth.level) {
+    if (!config.auth?.level) {
       throw new Error('auth configuration is required')
     }
 
@@ -49,7 +45,9 @@ export class RDCPClient {
     switch (config.auth.level) {
       case 'basic':
         if (!config.auth.apiKey || config.auth.apiKey.length < 32) {
-          throw new Error('API key must be at least 32 characters for basic auth')
+          throw new Error(
+            'API key must be at least 32 characters for basic auth'
+          )
         }
         break
       case 'standard':
@@ -59,7 +57,9 @@ export class RDCPClient {
         break
       case 'enterprise':
         if (!config.auth.clientCert && !config.auth.bearerToken) {
-          throw new Error('Client certificate or bearer token required for enterprise auth')
+          throw new Error(
+            'Client certificate or bearer token required for enterprise auth'
+          )
         }
         break
     }
@@ -71,7 +71,12 @@ export class RDCPClient {
    */
   async discover(useCache = true): Promise<RDCPDiscoveryResponse> {
     // Return cached result if valid and cache requested
-    if (useCache && this.discoveryCache && this.cacheExpiry && Date.now() < this.cacheExpiry) {
+    if (
+      useCache &&
+      this.discoveryCache &&
+      this.cacheExpiry &&
+      Date.now() < this.cacheExpiry
+    ) {
       return this.discoveryCache
     }
 
@@ -124,7 +129,10 @@ export class RDCPClient {
   /**
    * Enable debug categories
    */
-  async enable(categories: string | string[], options?: ControlRequest['options']): Promise<ControlResponse> {
+  async enable(
+    categories: string | string[],
+    options?: ControlRequest['options']
+  ): Promise<ControlResponse> {
     return this.control({
       action: 'enable',
       categories,
@@ -135,7 +143,10 @@ export class RDCPClient {
   /**
    * Disable debug categories
    */
-  async disable(categories: string | string[], options?: ControlRequest['options']): Promise<ControlResponse> {
+  async disable(
+    categories: string | string[],
+    options?: ControlRequest['options']
+  ): Promise<ControlResponse> {
     return this.control({
       action: 'disable',
       categories,
@@ -146,7 +157,10 @@ export class RDCPClient {
   /**
    * Toggle debug categories
    */
-  async toggle(categories: string | string[], options?: ControlRequest['options']): Promise<ControlResponse> {
+  async toggle(
+    categories: string | string[],
+    options?: ControlRequest['options']
+  ): Promise<ControlResponse> {
     return this.control({
       action: 'toggle',
       categories,
@@ -217,18 +231,19 @@ export class RDCPClient {
   async testConnection(): Promise<{ success: boolean; message: string }> {
     try {
       const discovery = await this.discover(false)
-      
+
       // Try to access a protected endpoint
       await this.getStatus()
-      
+
       return {
         success: true,
-        message: `Connected to RDCP server (${discovery.security.level} security)`
+        message: `Connected to RDCP server (${discovery.security.level} security)`,
       }
     } catch (error) {
       return {
         success: false,
-        message: error instanceof Error ? error.message : 'Unknown connection error'
+        message:
+          error instanceof Error ? error.message : 'Unknown connection error',
       }
     }
   }
@@ -236,12 +251,14 @@ export class RDCPClient {
   /**
    * Get available debug categories
    */
-  async getCategories(): Promise<Array<{ id: string; enabled: boolean; description: string }>> {
+  async getCategories(): Promise<
+    Array<{ id: string; enabled: boolean; description: string }>
+  > {
     const debugInfo = await this.getDebugInfo()
     return debugInfo.categories.map(cat => ({
       id: cat.id,
       enabled: cat.enabled,
-      description: cat.description
+      description: cat.description,
     }))
   }
 

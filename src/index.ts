@@ -23,7 +23,10 @@ export * from './auth/enterprise.js'
 // RDCP Endpoints
 // ============================================================================
 
-export { protocolDiscovery, debugSystemDiscovery } from './endpoints/discovery.js'
+export {
+  protocolDiscovery,
+  debugSystemDiscovery,
+} from './endpoints/discovery.js'
 export { runtimeControl } from './endpoints/control.js'
 export * from './endpoints/status.js'
 export * from './endpoints/health.js'
@@ -62,7 +65,7 @@ export {
   createDiscoveryResponse,
   createStatusResponse,
   createHealthResponse,
-  createProtocolDiscoveryResponse
+  createProtocolDiscoveryResponse,
 } from './validation/index.js'
 
 // ============================================================================
@@ -73,13 +76,13 @@ export {
   // HTTP Client
   RDCPHttpClient,
   RDCPClientError,
-  // Tenant utilities  
+  // Tenant utilities
   extractTenantContext,
   createTenantResponse,
   getTenantDebugConfig,
   setTenantDebugConfig,
   getAllTenantConfigs,
-  clearTenantConfig
+  clearTenantConfig,
 } from './utils/index.js'
 
 // ============================================================================
@@ -109,31 +112,32 @@ import { RDCPHttpClient } from './utils/http.js'
 import { extractTenantContext, createTenantResponse } from './utils/tenant.js'
 import { createRDCPError } from './validation/errors.js'
 import { validateRDCPAuth } from './auth/index.js'
+import { extractApiKey as extractApiKeyFromBasic } from './auth/basic.js'
 
 /**
  * Framework adapters interface for legacy compatibility
  * Note: Actual adapter files are in JavaScript and will be converted separately
  */
 export interface FrameworkAdapters {
-  express?: unknown  // Will be typed properly when converted
-  fastify?: unknown  // Will be typed properly when converted  
-  koa?: unknown      // Will be typed properly when converted
+  express?: unknown // Will be typed properly when converted
+  fastify?: unknown // Will be typed properly when converted
+  koa?: unknown // Will be typed properly when converted
 }
 
 // Framework Adapters - properly imported using named imports following Context7 TypeScript ESM patterns
 // Using .js extensions as required for TypeScript ESM (imports from compiled .js output)
-import { 
-  createRDCPMiddleware as createExpressMiddleware, 
-  createRDCPRouter, 
-  createRDCPErrorHandler 
+import {
+  createRDCPMiddleware as createExpressMiddleware,
+  createRDCPRouter,
+  createRDCPErrorHandler,
 } from './server/adapters/express.js'
-import { 
-  createRDCPMiddleware as createFastifyMiddleware, 
-  createRDCPPlugin 
+import {
+  createRDCPMiddleware as createFastifyMiddleware,
+  createRDCPPlugin,
 } from './server/adapters/fastify.js'
-import { 
-  createRDCPMiddleware as createKoaMiddleware, 
-  createRDCPMiddlewareWithErrorBoundary 
+import {
+  createRDCPMiddleware as createKoaMiddleware,
+  createRDCPMiddlewareWithErrorBoundary,
 } from './server/adapters/koa.js'
 
 /**
@@ -144,16 +148,16 @@ export const adapters = {
   express: {
     createRDCPMiddleware: createExpressMiddleware,
     createRDCPRouter,
-    createRDCPErrorHandler
+    createRDCPErrorHandler,
   },
   fastify: {
     createRDCPMiddleware: createFastifyMiddleware,
-    createRDCPPlugin
+    createRDCPPlugin,
   },
   koa: {
     createRDCPMiddleware: createKoaMiddleware,
-    createRDCPMiddlewareWithErrorBoundary
-  }
+    createRDCPMiddlewareWithErrorBoundary,
+  },
 }
 
 /**
@@ -162,13 +166,14 @@ export const adapters = {
 export const auth = {
   validateRDCPAuth,
   basicAuthenticator: validateRDCPAuth,
-  extractApiKey: (req: unknown) => {
-    // Extract API key from request headers - implementation from auth/index.ts
-    const headers = (req as { headers: Record<string, string> }).headers
-    const authHeader = headers?.['authorization']
-    const apiKeyHeader = headers?.['x-api-key']
-    return authHeader?.replace('Bearer ', '') || apiKeyHeader
-  }
+  extractApiKey: (req: unknown): string | undefined => {
+    // Delegate to the robust extractor used by the basic authenticator
+    // Accept a minimal shape to satisfy typing while reusing logic
+    const requestLike = req as unknown as { headers: unknown }
+    return extractApiKeyFromBasic(
+      requestLike as unknown as import('express').Request
+    )
+  },
 }
 
 /**
@@ -178,7 +183,7 @@ export const utils = {
   RDCPHttpClient,
   extractTenantContext,
   createTenantResponse,
-  createRDCPError
+  createRDCPError,
 }
 
 /**
@@ -190,15 +195,15 @@ export const rdcpSdk = {
   validateRDCPAuth,
   createRDCPError,
   RDCPHttpClient,
-  
+
   // Tenant utilities
   extractTenantContext,
   createTenantResponse,
-  
+
   // Organized exports
   adapters,
   auth,
-  utils
+  utils,
 }
 
 // Export rdcpSdk as the main export (no default export to avoid mixed exports warning)
