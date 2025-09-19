@@ -11,7 +11,9 @@ import {
   getTenantDebugConfig,
 } from '../utils/tenant.js'
 
-type RequestWithRDCPAuth = Request & { rdcpAuth?: { user?: string; method?: string } }
+type RequestWithRDCPAuth = Request & {
+  rdcpAuth?: { user?: string; method?: string }
+}
 
 export function runtimeControl(req: Request, res: Response): void {
   try {
@@ -50,7 +52,7 @@ export function runtimeControl(req: Request, res: Response): void {
         )
         break
 
-      case 'reset':
+      case 'reset': {
         const debugConfig = tenantContext
           ? getTenantDebugConfig(tenantContext.tenantId)
           : DEBUG_CONFIG
@@ -65,6 +67,7 @@ export function runtimeControl(req: Request, res: Response): void {
           effectiveAt: timestamp,
         })
         break
+      }
     }
 
     const response = {

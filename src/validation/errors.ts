@@ -16,7 +16,7 @@ export const RDCP_ERROR_CODES = {
   RDCP_TOKEN_EXPIRED: 'RDCP_TOKEN_EXPIRED',
   RDCP_FORBIDDEN: 'RDCP_FORBIDDEN',
   RDCP_INVALID_CLIENT: 'RDCP_INVALID_CLIENT',
-  
+
   // Validation errors (4xx)
   RDCP_VALIDATION_ERROR: 'RDCP_VALIDATION_ERROR',
   RDCP_INVALID_ACTION: 'RDCP_INVALID_ACTION',
@@ -26,7 +26,7 @@ export const RDCP_ERROR_CODES = {
   RDCP_INVALID_PROTOCOL: 'RDCP_INVALID_PROTOCOL',
   RDCP_NOT_FOUND: 'RDCP_NOT_FOUND',
   RDCP_RATE_LIMITED: 'RDCP_RATE_LIMITED',
-  
+
   // Server errors (5xx)
   RDCP_SERVER_ERROR: 'RDCP_SERVER_ERROR',
   RDCP_INTERNAL_ERROR: 'RDCP_INTERNAL_ERROR',
@@ -34,16 +34,17 @@ export const RDCP_ERROR_CODES = {
   RDCP_TIMEOUT: 'RDCP_TIMEOUT',
   RDCP_CONFIGURATION_ERROR: 'RDCP_CONFIGURATION_ERROR',
   RDCP_STORAGE_ERROR: 'RDCP_STORAGE_ERROR',
-  
+
   // Protocol errors
   RDCP_UNSUPPORTED_VERSION: 'RDCP_UNSUPPORTED_VERSION',
-  RDCP_MALFORMED_REQUEST: 'RDCP_MALFORMED_REQUEST'
+  RDCP_MALFORMED_REQUEST: 'RDCP_MALFORMED_REQUEST',
 } as const
 
 /**
  * RDCP error code type
  */
-export type RDCPErrorCode = typeof RDCP_ERROR_CODES[keyof typeof RDCP_ERROR_CODES]
+export type RDCPErrorCode =
+  (typeof RDCP_ERROR_CODES)[keyof typeof RDCP_ERROR_CODES]
 
 /**
  * Error code to HTTP status mapping
@@ -69,7 +70,7 @@ export const ERROR_STATUS_MAP: Record<RDCPErrorCode, number> = {
   [RDCP_ERROR_CODES.RDCP_UNAVAILABLE]: 503,
   [RDCP_ERROR_CODES.RDCP_TIMEOUT]: 504,
   [RDCP_ERROR_CODES.RDCP_CONFIGURATION_ERROR]: 500,
-  [RDCP_ERROR_CODES.RDCP_STORAGE_ERROR]: 500
+  [RDCP_ERROR_CODES.RDCP_STORAGE_ERROR]: 500,
 }
 
 /**
@@ -83,7 +84,7 @@ export class RDCPErrorClass extends Error {
     super(message)
     this.name = 'RDCPError'
     this.code = code
-    this.statusCode = statusCode || ERROR_STATUS_MAP[code] || 500
+    this.statusCode = statusCode ?? ERROR_STATUS_MAP[code] ?? 500
   }
 }
 
@@ -98,24 +99,30 @@ export interface RDCPErrorWithStatus {
 /**
  * Creates RDCP standard error response
  */
-export function createRDCPError(code: RDCPErrorCode, message: string): RDCPError {
+export function createRDCPError(
+  code: RDCPErrorCode,
+  message: string
+): RDCPError {
   return {
     error: {
       code,
       message,
       protocol: 'rdcp/1.0',
-      timestamp: new Date().toISOString()
-    }
+      timestamp: new Date().toISOString(),
+    },
   }
 }
 
 /**
  * Creates RDCP error with automatic status code mapping
  */
-export function createRDCPErrorWithStatus(code: RDCPErrorCode, message: string): RDCPErrorWithStatus {
+export function createRDCPErrorWithStatus(
+  code: RDCPErrorCode,
+  message: string
+): RDCPErrorWithStatus {
   return {
     error: createRDCPError(code, message).error,
-    statusCode: ERROR_STATUS_MAP[code] || 500
+    statusCode: ERROR_STATUS_MAP[code] || 500,
   }
 }
 
@@ -136,8 +143,8 @@ export function createValidationError(details: string): RDCPError {
       message: `Request validation failed: ${details}`,
       details: { validation: details },
       protocol: 'rdcp/1.0',
-      timestamp: new Date().toISOString()
-    }
+      timestamp: new Date().toISOString(),
+    },
   }
 }
 

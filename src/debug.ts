@@ -1,7 +1,8 @@
 // File: src/debug.ts - Enhanced debug system with OpenTelemetry trace provider support
 // WARP Compliance: TypeScript-first, no any types, under 200 lines
 
-import type { TraceProvider, TraceContext, TraceEnhancedLogEntry } from './types/trace.js'
+import type { TraceProvider, TraceEnhancedLogEntry } from './types/trace.js'
+import { setTenantDebugCategory } from './utils/tenant.js'
 
 // 1. Define your debug categories (replace with your actual categories)
 export const DEBUG_CONFIG = {
@@ -9,14 +10,14 @@ export const DEBUG_CONFIG = {
   API_ROUTES: false,
   QUERIES: false,
   REPORTS: false,
-  CACHE: false
+  CACHE: false,
 }
 
 // 2. Performance metrics (defined first to avoid circular dependency)
 const metrics = {
   callCount: 0,
   startTime: Date.now(),
-  categoryStats: {} as Record<string, number>
+  categoryStats: {} as Record<string, number>,
 }
 
 // 3. OpenTelemetry trace provider integration
@@ -33,10 +34,13 @@ export const setTraceProvider = (provider: TraceProvider | null): void => {
 /**
  * Get the current trace provider status
  */
-export const getTraceProviderStatus = (): { enabled: boolean; provider: string | null } => {
+export const getTraceProviderStatus = (): {
+  enabled: boolean
+  provider: string | null
+} => {
   return {
     enabled: traceProvider !== null,
-    provider: traceProvider ? 'opentelemetry' : null
+    provider: traceProvider ? 'opentelemetry' : null,
   }
 }
 
@@ -44,12 +48,16 @@ export const getTraceProviderStatus = (): { enabled: boolean; provider: string |
  * Enrich log data with trace context if available
  * WARP: Zero impact when not configured
  */
-const enrichWithTrace = (message: string, category: string, ...args: unknown[]): TraceEnhancedLogEntry => {
+const enrichWithTrace = (
+  message: string,
+  category: string,
+  ...args: unknown[]
+): TraceEnhancedLogEntry => {
   const baseEntry: TraceEnhancedLogEntry = {
     message,
     category,
     timestamp: Date.now(),
-    metadata: args.length > 0 ? { args } : undefined
+    metadata: args.length > 0 ? { args } : undefined,
   }
 
   // Add trace context if provider is available
@@ -69,12 +77,16 @@ const enrichWithTrace = (message: string, category: string, ...args: unknown[]):
 }
 
 // 4. Enhanced performance tracking function with trace correlation
-const createTrackedDebugger = (category: string, logFn: (entry: TraceEnhancedLogEntry) => void) => {
-  return (message: string, ...args: unknown[]) => {
+const createTrackedDebugger = (
+  category: string,
+  logFn: (entry: TraceEnhancedLogEntry) => void
+): ((message: string, ...args: unknown[]) => void) => {
+  return (message: string, ...args: unknown[]): void => {
     if (DEBUG_CONFIG[category as keyof typeof DEBUG_CONFIG]) {
       metrics.callCount++
-      metrics.categoryStats[category] = (metrics.categoryStats[category] || 0) + 1
-      
+      metrics.categoryStats[category] =
+        (metrics.categoryStats[category] || 0) + 1
+
       const enrichedEntry = enrichWithTrace(message, category, ...args)
       return logFn(enrichedEntry)
     }
@@ -83,34 +95,64 @@ const createTrackedDebugger = (category: string, logFn: (entry: TraceEnhancedLog
 
 // 5. Create debug functions with performance tracking and trace correlation
 export const debug = {
-  database: createTrackedDebugger('DATABASE', (entry: TraceEnhancedLogEntry) => {
-    const traceInfo = entry.trace ? ` [trace:${entry.trace.traceId.slice(-8)}]` : ''
-    console.log(`🔌 [DB]${traceInfo} ${entry.message}`, entry.metadata?.args || [])
-  }),
+  database: createTrackedDebugger(
+    'DATABASE',
+    (entry: TraceEnhancedLogEntry) => {
+      const traceInfo = entry.trace
+        ? ` [trace:${entry.trace.traceId.slice(-8)}]`
+        : ''
+      console.log(
+        `🔌 [DB]${traceInfo} ${entry.message}`,
+        entry.metadata?.args || []
+      )
+    }
+  ),
   api: createTrackedDebugger('API_ROUTES', (entry: TraceEnhancedLogEntry) => {
-    const traceInfo = entry.trace ? ` [trace:${entry.trace.traceId.slice(-8)}]` : ''
-    console.log(`🔍 [API]${traceInfo} ${entry.message}`, entry.metadata?.args || [])
+    const traceInfo = entry.trace
+      ? ` [trace:${entry.trace.traceId.slice(-8)}]`
+      : ''
+    console.log(
+      `🔍 [API]${traceInfo} ${entry.message}`,
+      entry.metadata?.args || []
+    )
   }),
   query: createTrackedDebugger('QUERIES', (entry: TraceEnhancedLogEntry) => {
-    const traceInfo = entry.trace ? ` [trace:${entry.trace.traceId.slice(-8)}]` : ''
-    console.log(`🚀 [QUERY]${traceInfo} ${entry.message}`, entry.metadata?.args || [])
+    const traceInfo = entry.trace
+      ? ` [trace:${entry.trace.traceId.slice(-8)}]`
+      : ''
+    console.log(
+      `🚀 [QUERY]${traceInfo} ${entry.message}`,
+      entry.metadata?.args || []
+    )
   }),
   report: createTrackedDebugger('REPORTS', (entry: TraceEnhancedLogEntry) => {
-    const traceInfo = entry.trace ? ` [trace:${entry.trace.traceId.slice(-8)}]` : ''
-    console.log(`📊 [REPORT]${traceInfo} ${entry.message}`, entry.metadata?.args || [])
+    const traceInfo = entry.trace
+      ? ` [trace:${entry.trace.traceId.slice(-8)}]`
+      : ''
+    console.log(
+      `📊 [REPORT]${traceInfo} ${entry.message}`,
+      entry.metadata?.args || []
+    )
   }),
   cache: createTrackedDebugger('CACHE', (entry: TraceEnhancedLogEntry) => {
-    const traceInfo = entry.trace ? ` [trace:${entry.trace.traceId.slice(-8)}]` : ''
-    console.log(`🐛 [CACHE]${traceInfo} ${entry.message}`, entry.metadata?.args || [])
-  })
+    const traceInfo = entry.trace
+      ? ` [trace:${entry.trace.traceId.slice(-8)}]`
+      : ''
+    console.log(
+      `🐛 [CACHE]${traceInfo} ${entry.message}`,
+      entry.metadata?.args || []
+    )
+  }),
 }
 
 // 6. Runtime control functions (tenant-aware)
-export const enableDebugCategories = (categories: string[], tenantId?: string): void => {
+export const enableDebugCategories = (
+  categories: string[],
+  tenantId?: string
+): void => {
   categories.forEach(category => {
     if (tenantId) {
-      // For tenant-specific debug control, use tenant utilities
-      const { setTenantDebugCategory } = require('./utils/tenant.js')
+      // Tenant-specific category update
       setTenantDebugCategory(tenantId, category, true)
     } else if (category in DEBUG_CONFIG) {
       DEBUG_CONFIG[category as keyof typeof DEBUG_CONFIG] = true
@@ -118,11 +160,13 @@ export const enableDebugCategories = (categories: string[], tenantId?: string): 
   })
 }
 
-export const disableDebugCategories = (categories: string[], tenantId?: string): void => {
+export const disableDebugCategories = (
+  categories: string[],
+  tenantId?: string
+): void => {
   categories.forEach(category => {
     if (tenantId) {
-      // For tenant-specific debug control, use tenant utilities
-      const { setTenantDebugCategory } = require('./utils/tenant.js')
+      // Tenant-specific category update
       setTenantDebugCategory(tenantId, category, false)
     } else if (category in DEBUG_CONFIG) {
       DEBUG_CONFIG[category as keyof typeof DEBUG_CONFIG] = false
@@ -130,17 +174,26 @@ export const disableDebugCategories = (categories: string[], tenantId?: string):
   })
 }
 
-export const getDebugStatus = () => ({ ...DEBUG_CONFIG })
+export const getDebugStatus = (): Record<string, boolean> => ({
+  ...DEBUG_CONFIG,
+})
 
 // 7. Performance metrics functions
-export const getPerformanceMetrics = () => {
+type PerformanceMetrics = {
+  callsPerSecond: number
+  totalCalls: number
+  uptime: number
+  categoryBreakdown: Record<string, number>
+}
+
+export const getPerformanceMetrics = (): PerformanceMetrics => {
   const elapsed = (Date.now() - metrics.startTime) / 1000
   const rate = elapsed > 0 ? metrics.callCount / elapsed : 0
   return {
     callsPerSecond: rate,
     totalCalls: metrics.callCount,
     uptime: elapsed,
-    categoryBreakdown: { ...metrics.categoryStats }
+    categoryBreakdown: { ...metrics.categoryStats },
   }
 }
 

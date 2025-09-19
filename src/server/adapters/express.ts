@@ -5,6 +5,7 @@
  */
 
 import { Request, Response, NextFunction, Router } from 'express'
+import * as express from 'express'
 import { RDCPServer } from '../index.js'
 import { RDCPErrorClass, createRDCPError } from '../../validation/errors.js'
 import { extractTenantContext, RDCPTenantContext } from '../../utils/tenant.js'
@@ -42,13 +43,13 @@ export function createRDCPMiddleware(options: RDCPMiddlewareOptions) {
   if (!options) {
     throw new Error('authenticator function is required')
   }
-  
+
   const {
     authenticator,
     debugConfig = {},
     basePath = '/rdcp/v1',
     performance = {},
-    tenant = {}
+    tenant = {},
   } = options
 
   if (!authenticator) {
@@ -62,17 +63,24 @@ export function createRDCPMiddleware(options: RDCPMiddlewareOptions) {
   const rdcpServer = new RDCPServer({
     debugConfig,
     performance,
-    tenant
+    tenant,
   })
 
   // Express middleware function - standard Context7 pattern
-  return async function rdcpMiddleware(req: Request, res: Response, next: NextFunction): Promise<void> {
+  return async function rdcpMiddleware(
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> {
     try {
       // Extract path from Express request
       const pathname = req.path
-      
+
       // Only handle RDCP endpoints
-      if (!pathname.startsWith('/.well-known/rdcp') && !pathname.startsWith(basePath)) {
+      if (
+        !pathname.startsWith('/.well-known/rdcp') &&
+        !pathname.startsWith(basePath)
+      ) {
         return next() // Continue to next middleware
       }
 
@@ -87,13 +95,22 @@ export function createRDCPMiddleware(options: RDCPMiddlewareOptions) {
       try {
         const isAuthenticated = await authenticator(req)
         if (!isAuthenticated) {
-          const errorResponse = createRDCPError('RDCP_AUTH_REQUIRED', 'Authentication required')
+          const errorResponse = createRDCPError(
+            'RDCP_AUTH_REQUIRED',
+            'Authentication required'
+          )
           res.status(401).json(errorResponse)
           return
         }
       } catch (authError) {
-        const errorMessage = authError instanceof Error ? authError.message : 'Authentication failed'
-        const errorResponse = createRDCPError('RDCP_AUTH_REQUIRED', `Authentication failed: ${errorMessage}`)
+        const errorMessage =
+          authError instanceof Error
+            ? authError.message
+            : 'Authentication failed'
+        const errorResponse = createRDCPError(
+          'RDCP_AUTH_REQUIRED',
+          `Authentication failed: ${errorMessage}`
+        )
         res.status(401).json(errorResponse)
         return
       }
@@ -107,10 +124,16 @@ export function createRDCPMiddleware(options: RDCPMiddlewareOptions) {
       let statusCode = 200
 
       if (pathname === `${basePath}/discovery`) {
-        response = rdcpServer.handleDiscovery({ basePath, tenant: tenantContext })
+        response = rdcpServer.handleDiscovery({
+          basePath,
+          tenant: tenantContext,
+        })
       } else if (pathname === `${basePath}/control`) {
         if (req.method !== 'POST') {
-          response = createRDCPError('RDCP_INVALID_ACTION', 'POST method required')
+          response = createRDCPError(
+            'RDCP_INVALID_ACTION',
+            'POST method required'
+          )
           statusCode = 405
         } else {
           const body = req.body || {}
@@ -128,7 +151,10 @@ export function createRDCPMiddleware(options: RDCPMiddlewareOptions) {
       res.status(statusCode).json(response)
     } catch (error) {
       console.error('RDCP middleware error:', error)
-      const errorResponse = createRDCPError('RDCP_SERVER_ERROR', 'Internal server error')
+      const errorResponse = createRDCPError(
+        'RDCP_SERVER_ERROR',
+        'Internal server error'
+      )
       res.status(500).json(errorResponse)
     }
   }
@@ -140,13 +166,12 @@ export function createRDCPMiddleware(options: RDCPMiddlewareOptions) {
  * Following Context7 Express Router patterns
  */
 export function createRDCPRouter(options: RDCPMiddlewareOptions): Router {
-  const express = require('express')
   const router = express.Router() as Router
   const middleware = createRDCPMiddleware(options)
-  
+
   // Apply middleware to all routes
   router.use(middleware)
-  
+
   return router
 }
 
@@ -157,9 +182,9 @@ export function createRDCPRouter(options: RDCPMiddlewareOptions): Router {
  */
 export function createRDCPErrorHandler() {
   return function rdcpErrorHandler(
-    error: Error, 
-    req: Request, 
-    res: Response, 
+    error: Error,
+    req: Request,
+    res: Response,
     next: NextFunction
   ): void {
     // Only handle RDCP-related errors

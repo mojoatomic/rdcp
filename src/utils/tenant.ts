@@ -35,7 +35,9 @@ export interface TenantDebugConfig {
  * Works with both Express and Next.js request objects
  */
 type HeadersIndex = Record<string, string | string[] | undefined>
-interface HeadersWithGet { get: (name: string) => string | null | undefined }
+interface HeadersWithGet {
+  get: (name: string) => string | null | undefined
+}
 
 type HeadersLike = HeadersIndex | HeadersWithGet
 
@@ -56,17 +58,33 @@ export function extractTenantContext(
 ): RDCPTenantContext {
   const headers = request.headers
 
-  const idFromGet = hasGet(headers) ? headers.get('x-rdcp-tenant-id') ?? undefined : undefined
+  const idFromGet = hasGet(headers)
+    ? (headers.get('x-rdcp-tenant-id') ?? undefined)
+    : undefined
   const idFromIdxRaw = hasGet(headers) ? undefined : headers['x-rdcp-tenant-id']
-  const idFromIdx = Array.isArray(idFromIdxRaw!) ? idFromIdxRaw![0] : idFromIdxRaw
+  const idFromIdx = Array.isArray(idFromIdxRaw!)
+    ? idFromIdxRaw![0]
+    : idFromIdxRaw
 
-  const isoFromGet = hasGet(headers) ? headers.get('x-rdcp-isolation-level') ?? undefined : undefined
-  const isoFromIdxRaw = hasGet(headers) ? undefined : headers['x-rdcp-isolation-level']
-  const isoFromIdx = Array.isArray(isoFromIdxRaw!) ? isoFromIdxRaw![0] : isoFromIdxRaw
+  const isoFromGet = hasGet(headers)
+    ? (headers.get('x-rdcp-isolation-level') ?? undefined)
+    : undefined
+  const isoFromIdxRaw = hasGet(headers)
+    ? undefined
+    : headers['x-rdcp-isolation-level']
+  const isoFromIdx = Array.isArray(isoFromIdxRaw!)
+    ? isoFromIdxRaw![0]
+    : isoFromIdxRaw
 
-  const nameFromGet = hasGet(headers) ? headers.get('x-rdcp-tenant-name') ?? undefined : undefined
-  const nameFromIdxRaw = hasGet(headers) ? undefined : headers['x-rdcp-tenant-name']
-  const nameFromIdx = Array.isArray(nameFromIdxRaw!) ? nameFromIdxRaw![0] : nameFromIdxRaw
+  const nameFromGet = hasGet(headers)
+    ? (headers.get('x-rdcp-tenant-name') ?? undefined)
+    : undefined
+  const nameFromIdxRaw = hasGet(headers)
+    ? undefined
+    : headers['x-rdcp-tenant-name']
+  const nameFromIdx = Array.isArray(nameFromIdxRaw!)
+    ? nameFromIdxRaw![0]
+    : nameFromIdxRaw
 
   const tenantId = idFromGet ?? idFromIdx ?? 'default'
   const isolationLevel = (isoFromGet ?? isoFromIdx ?? 'global') as

@@ -4,17 +4,24 @@
  * following the preHandler pattern for authentication and RDCP endpoint handling
  */
 
-import { FastifyRequest, FastifyReply, FastifyPluginCallback, FastifyInstance } from 'fastify'
+import {
+  FastifyRequest,
+  FastifyReply,
+  FastifyPluginCallback,
+  FastifyInstance,
+} from 'fastify'
 import fp from 'fastify-plugin'
 import { RDCPServer } from '../index.js'
-import { RDCPErrorClass, createRDCPError } from '../../validation/errors.js'
+import { createRDCPError } from '../../validation/errors.js'
 import { extractTenantContext, RDCPTenantContext } from '../../utils/tenant.js'
 
 /**
  * RDCP Authenticator function interface for Fastify
  * Must return boolean indicating if request is authenticated
  */
-export type RDCPFastifyAuthenticator = (req: FastifyRequest) => Promise<boolean> | boolean
+export type RDCPFastifyAuthenticator = (
+  req: FastifyRequest
+) => Promise<boolean> | boolean
 
 /**
  * RDCP middleware configuration options for Fastify
@@ -59,13 +66,13 @@ export function createRDCPMiddleware(options: RDCPFastifyMiddlewareOptions) {
   if (!options) {
     throw new Error('authenticator function is required')
   }
-  
+
   const {
     authenticator,
     debugConfig = {},
     basePath = '/rdcp/v1',
     performance = {},
-    tenant = {}
+    tenant = {},
   } = options
 
   if (!authenticator) {
@@ -79,17 +86,23 @@ export function createRDCPMiddleware(options: RDCPFastifyMiddlewareOptions) {
   const rdcpServer = new RDCPServer({
     debugConfig,
     performance,
-    tenant
+    tenant,
   })
 
   // Fastify middleware function - preHandler pattern (Context7 pattern)
-  return async function rdcpMiddleware(request: FastifyRequest, reply: FastifyReply): Promise<void> {
+  return async function rdcpMiddleware(
+    request: FastifyRequest,
+    reply: FastifyReply
+  ): Promise<void> {
     try {
       // Extract path from Fastify request
       const pathname = request.url.split('?')[0]
-      
+
       // Only handle RDCP endpoints
-      if (!pathname.startsWith('/.well-known/rdcp') && !pathname.startsWith(basePath)) {
+      if (
+        !pathname.startsWith('/.well-known/rdcp') &&
+        !pathname.startsWith(basePath)
+      ) {
         return // Continue to next handler
       }
 
@@ -104,13 +117,22 @@ export function createRDCPMiddleware(options: RDCPFastifyMiddlewareOptions) {
       try {
         const isAuthenticated = await authenticator(request)
         if (!isAuthenticated) {
-          const errorResponse = createRDCPError('RDCP_AUTH_REQUIRED', 'Authentication required')
+          const errorResponse = createRDCPError(
+            'RDCP_AUTH_REQUIRED',
+            'Authentication required'
+          )
           reply.status(401).type('application/json').send(errorResponse)
           return
         }
       } catch (authError) {
-        const errorMessage = authError instanceof Error ? authError.message : 'Authentication failed'
-        const errorResponse = createRDCPError('RDCP_AUTH_REQUIRED', `Authentication failed: ${errorMessage}`)
+        const errorMessage =
+          authError instanceof Error
+            ? authError.message
+            : 'Authentication failed'
+        const errorResponse = createRDCPError(
+          'RDCP_AUTH_REQUIRED',
+          `Authentication failed: ${errorMessage}`
+        )
         reply.status(401).type('application/json').send(errorResponse)
         return
       }
@@ -124,10 +146,16 @@ export function createRDCPMiddleware(options: RDCPFastifyMiddlewareOptions) {
       let statusCode = 200
 
       if (pathname === `${basePath}/discovery`) {
-        response = rdcpServer.handleDiscovery({ basePath, tenant: tenantContext })
+        response = rdcpServer.handleDiscovery({
+          basePath,
+          tenant: tenantContext,
+        })
       } else if (pathname === `${basePath}/control`) {
         if (request.method !== 'POST') {
-          response = createRDCPError('RDCP_INVALID_ACTION', 'POST method required')
+          response = createRDCPError(
+            'RDCP_INVALID_ACTION',
+            'POST method required'
+          )
           statusCode = 405
         } else {
           const body = request.body || {}
@@ -145,7 +173,10 @@ export function createRDCPMiddleware(options: RDCPFastifyMiddlewareOptions) {
       reply.status(statusCode).type('application/json').send(response)
     } catch (error) {
       console.error('RDCP middleware error:', error)
-      const errorResponse = createRDCPError('RDCP_SERVER_ERROR', 'Internal server error')
+      const errorResponse = createRDCPError(
+        'RDCP_SERVER_ERROR',
+        'Internal server error'
+      )
       reply.status(500).type('application/json').send(errorResponse)
     }
   }
@@ -164,17 +195,23 @@ export interface RDCPFastifyPluginOptions extends RDCPFastifyMiddlewareOptions {
  * This provides an alternative approach using Fastify's plugin system
  * Following Context7 Fastify plugin patterns with proper typing
  */
-export function createRDCPPlugin(options: RDCPFastifyPluginOptions): FastifyPluginCallback<RDCPFastifyPluginOptions> {
-  const rdcpPlugin: FastifyPluginCallback<RDCPFastifyPluginOptions> = (fastify: FastifyInstance, opts, done) => {
+export function createRDCPPlugin(
+  options: RDCPFastifyPluginOptions
+): FastifyPluginCallback<RDCPFastifyPluginOptions> {
+  const rdcpPlugin: FastifyPluginCallback<RDCPFastifyPluginOptions> = (
+    fastify: FastifyInstance,
+    opts,
+    done
+  ) => {
     try {
       const middleware = createRDCPMiddleware(options)
-      
+
       // Register as preHandler for all RDCP routes using Context7 pattern
       fastify.addHook('preHandler', middleware)
-      
+
       // Decorate fastify instance with RDCP utilities if needed
       fastify.decorate('rdcpServer', new RDCPServer(options))
-      
+
       done()
     } catch (error) {
       done(error instanceof Error ? error : new Error(String(error)))
@@ -184,7 +221,7 @@ export function createRDCPPlugin(options: RDCPFastifyPluginOptions): FastifyPlug
   // Use fastify-plugin for proper encapsulation
   return fp(rdcpPlugin, {
     name: 'rdcp-plugin',
-    fastify: '4.x'
+    fastify: '4.x',
   })
 }
 
@@ -193,7 +230,7 @@ declare module 'fastify' {
   interface FastifyRequest {
     rdcpTenant?: RDCPTenantContext
   }
-  
+
   interface FastifyInstance {
     rdcpServer?: RDCPServer
   }

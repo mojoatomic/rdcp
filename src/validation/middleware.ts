@@ -6,7 +6,11 @@
 import { Request, Response, NextFunction } from 'express'
 import { ZodSchema, ZodError } from 'zod'
 import { controlRequestSchema } from './schemas.js'
-import { createValidationError, createRDCPError, RDCP_ERROR_CODES } from './errors.js'
+import {
+  createValidationError,
+  createRDCPError,
+  RDCP_ERROR_CODES,
+} from './errors.js'
 
 /**
  * Enhanced request interface for validated requests
@@ -25,7 +29,11 @@ interface ParseError extends Error {
 /**
  * Validates RDCP control requests using Zod schema
  */
-export function validateControlRequest(req: Request, res: Response, next: NextFunction): void {
+export function validateControlRequest(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void {
   try {
     if (req.method === 'POST' && req.body) {
       const validatedData = controlRequestSchema.parse(req.body)
@@ -67,20 +75,24 @@ export function validateRequest<T>(schema: ZodSchema<T>) {
  * Handles Zod errors and JSON parse errors
  */
 export function handleValidationError(
-  err: ParseError, 
-  req: Request, 
-  res: Response, 
+  err: ParseError,
+  req: Request,
+  res: Response,
   next: NextFunction
 ): void {
   if (err instanceof ZodError || err.name === 'ZodError') {
     res.status(400).json(createValidationError(err.message))
     return
   }
-  
+
   if (err.type === 'entity.parse.failed') {
-    res.status(400).json(createRDCPError(RDCP_ERROR_CODES.RDCP_MALFORMED_REQUEST, 'Invalid JSON'))
+    res
+      .status(400)
+      .json(
+        createRDCPError(RDCP_ERROR_CODES.RDCP_MALFORMED_REQUEST, 'Invalid JSON')
+      )
     return
   }
-  
+
   next(err)
 }

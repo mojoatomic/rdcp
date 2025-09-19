@@ -4,13 +4,13 @@
  * Following RDCP v1.0 protocol specification
  */
 
-import { 
-  extractTenantContext, 
-  getTenantDebugConfig, 
+import {
+  extractTenantContext,
+  getTenantDebugConfig,
   setTenantDebugConfig,
-  createTenantResponse, 
+  createTenantResponse,
   RDCPTenantContext,
-  TenantDebugConfig
+  TenantDebugConfig,
 } from '../utils/tenant.js'
 import { createRDCPError } from '../validation/errors.js'
 import { RDCPResponse, TenantContext } from '../utils/types.js'
@@ -124,9 +124,9 @@ export class RDCPServer {
   private tenant: Record<string, unknown>
 
   constructor(options: RDCPServerOptions = {}) {
-    this.debugConfig = options.debugConfig || {}
-    this.performance = options.performance || {}
-    this.tenant = options.tenant || {}
+    this.debugConfig = options.debugConfig ?? {}
+    this.performance = options.performance ?? {}
+    this.tenant = options.tenant ?? {}
   }
 
   /**
@@ -143,13 +143,21 @@ export class RDCPServer {
         discovery: `${basePath}/discovery`,
         control: `${basePath}/control`,
         status: `${basePath}/status`,
-        health: `${basePath}/health`
+        health: `${basePath}/health`,
       },
       capabilities: {
         authentication: ['basic', 'standard', 'enterprise'],
         isolation: ['global', 'process', 'namespace', 'organization'],
-        categories: ['DATABASE', 'API_ROUTES', 'QUERIES', 'REPORTS', 'CACHE', 'AUTH', 'INTEGRATIONS']
-      }
+        categories: [
+          'DATABASE',
+          'API_ROUTES',
+          'QUERIES',
+          'REPORTS',
+          'CACHE',
+          'AUTH',
+          'INTEGRATIONS',
+        ],
+      },
     }
 
     // Include tenant context if provided
@@ -164,13 +172,19 @@ export class RDCPServer {
    * Handle RDCP control endpoint
    * Processes debug control operations with tenant isolation
    */
-  async handleControl(body: unknown, tenantContext: RDCPTenantContext): Promise<RDCPControlResponse | ReturnType<typeof createRDCPError>> {
+  async handleControl(
+    body: unknown,
+    tenantContext: RDCPTenantContext
+  ): Promise<RDCPControlResponse | ReturnType<typeof createRDCPError>> {
     // Type guard to ensure body has expected shape
     const requestBody = body as { action?: string; categories?: string[] }
     const { action, categories = [] } = requestBody
-    
+
     if (!action) {
-      return createRDCPError('RDCP_VALIDATION_ERROR', 'Missing action parameter')
+      return createRDCPError(
+        'RDCP_VALIDATION_ERROR',
+        'Missing action parameter'
+      )
     }
 
     // Get tenant-specific configuration
@@ -182,13 +196,15 @@ export class RDCPServer {
         case 'enable':
           categories.forEach(category => {
             if (category in tenantConfig) {
-              const updatedConfig: Partial<TenantDebugConfig> = { [category]: true }
+              const updatedConfig: Partial<TenantDebugConfig> = {
+                [category]: true,
+              }
               setTenantDebugConfig(tenantContext.tenantId, updatedConfig)
               changes.push({
                 category,
                 action: 'enabled',
                 tenantScope: tenantContext.tenantId,
-                isolationLevel: tenantContext.isolationLevel
+                isolationLevel: tenantContext.isolationLevel,
               })
             }
           })
@@ -197,33 +213,42 @@ export class RDCPServer {
         case 'disable':
           categories.forEach(category => {
             if (category in tenantConfig) {
-              const updatedConfig: Partial<TenantDebugConfig> = { [category]: false }
+              const updatedConfig: Partial<TenantDebugConfig> = {
+                [category]: false,
+              }
               setTenantDebugConfig(tenantContext.tenantId, updatedConfig)
               changes.push({
                 category,
                 action: 'disabled',
                 tenantScope: tenantContext.tenantId,
-                isolationLevel: tenantContext.isolationLevel
+                isolationLevel: tenantContext.isolationLevel,
               })
             }
           })
           break
 
         default:
-          return createRDCPError('RDCP_VALIDATION_ERROR', `Unknown action: ${action}`)
+          return createRDCPError(
+            'RDCP_VALIDATION_ERROR',
+            `Unknown action: ${action}`
+          )
       }
 
       const response = {
         protocol: 'rdcp/1.0' as const,
         timestamp: new Date().toISOString(),
         changes,
-        status: 'success' as const
+        status: 'success' as const,
       }
 
       return createTenantResponse(response, tenantContext)
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      return createRDCPError('RDCP_SERVER_ERROR', `Control operation failed: ${errorMessage}`)
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error'
+      return createRDCPError(
+        'RDCP_SERVER_ERROR',
+        `Control operation failed: ${errorMessage}`
+      )
     }
   }
 
@@ -234,12 +259,12 @@ export class RDCPServer {
   handleStatus(tenantContext: RDCPTenantContext): RDCPStatusResponse {
     // Get tenant-specific configuration
     const tenantConfig = getTenantDebugConfig(tenantContext.tenantId)
-    
+
     const categories: Record<string, CategoryStatus> = {}
     Object.keys(tenantConfig).forEach(category => {
       categories[category] = {
         enabled: tenantConfig[category as keyof TenantDebugConfig],
-        tenantScope: tenantContext.tenantId
+        tenantScope: tenantContext.tenantId,
       }
     })
 
@@ -250,10 +275,12 @@ export class RDCPServer {
       performance: {
         impact: {
           cpu: '0.1%',
-          memory: '1MB'
+          memory: '1MB',
         },
-        activeCategories: Object.keys(tenantConfig).filter(cat => tenantConfig[cat as keyof TenantDebugConfig]).length
-      }
+        activeCategories: Object.keys(tenantConfig).filter(
+          cat => tenantConfig[cat as keyof TenantDebugConfig]
+        ).length,
+      },
     }
 
     return createTenantResponse(response, tenantContext)
@@ -273,8 +300,8 @@ export class RDCPServer {
       system: {
         nodeVersion: process.version,
         platform: process.platform,
-        arch: process.arch
-      }
+        arch: process.arch,
+      },
     }
   }
 }
