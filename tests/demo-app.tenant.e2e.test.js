@@ -33,6 +33,9 @@ describe('RDCP Demo App - Tenant-scoped RBAC', () => {
       expect(res.body).toBeTruthy()
       expect(res.body.protocol).toBe('rdcp/1.0')
       expect(res.body.tenantId).toBe('tenant-A')
+      expect(res.body.tenant).toBeTruthy()
+      expect(res.body.tenant.id).toBe('tenant-A')
+      expect(['global','tenant-isolated']).toContain(res.body.tenant.scope)
     })
 
     test('succeeds with tenant-specific read:<tenantId> scope', async () => {

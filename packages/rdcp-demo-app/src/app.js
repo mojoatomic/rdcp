@@ -33,7 +33,7 @@ const rdcpMiddleware = adapters.express.createRDCPMiddleware({
     required: true
   },
   capabilities: {
-    multiTenancy: false,
+    multiTenancy: true,
     performanceMetrics: true,
     temporaryControls: false,
     auditTrail: true
@@ -113,6 +113,36 @@ app.use((req, res, next) => {
   res.setHeader('X-Request-ID', req.id)
   next()
 })
+
+// Tenant context decorator: add tenant object to RDCP responses when applicable
+function getTenantContext(req) {
+  const tenantId = String(req.params?.tenantId || req.headers['x-rdcp-tenant-id'] || '').trim()
+  const isolationLevel = String(req.headers['x-rdcp-isolation-level'] || 'organization').trim()
+  const scope = tenantId ? 'tenant-isolated' : 'global'
+  return { id: tenantId || 'default', isolationLevel, scope }
+}
+
+function decorateTenantContext(req, res, next) {
+  const origJson = res.json.bind(res)
+  res.json = (body) => {
+    try {
+      if (body && typeof body === 'object' && !Array.isArray(body)) {
+        if (!body.protocol) body.protocol = 'rdcp/1.0'
+        const routeIsRDCP = req.path.startsWith('/rdcp/') || req.path.startsWith('/.well-known/rdcp')
+        const hasTenantHeader = !!(req.params?.tenantId || req.headers['x-rdcp-tenant-id'])
+        if (routeIsRDCP && !body.tenant) {
+          body.tenant = getTenantContext(req)
+        } else if (hasTenantHeader && !body.tenant) {
+          body.tenant = getTenantContext(req)
+        }
+      }
+    } catch (_) {
+      // no-op
+    }
+    return origJson(body)
+  }
+  next()
+}
 
 // Rate limiting for control endpoint (demo-only, configurable)
 const rateState = new Map()
@@ -236,6 +266,9 @@ function requireTenantScope(scopeBase) {
     }
   }
 }
+
+// Apply tenant context decorator before defining routes so it affects all handlers
+app.use(decorateTenantContext)
 
 // Tenant routes
 app.get('/rdcp/v1/tenants/:tenantId/settings', requireTenantScope('read'), (req, res) => {

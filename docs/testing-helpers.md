@@ -107,6 +107,39 @@ const res = await request(app)
 expect(res.status).toBe(200)
 ```
 
+Tenant response object (multi-tenancy)
+- When multi-tenant headers are present or when using tenant routes, responses include a tenant object.
+```json
+{
+  "protocol": "rdcp/1.0",
+  "tenant": {
+    "id": "tenant-A",
+    "isolationLevel": "organization",
+    "scope": "tenant-isolated"
+  }
+}
+```
+
+Curl examples
+```bash
+# Global endpoint with tenant headers
+curl -s \
+  -H 'X-RDCP-Auth-Method: api-key' \
+  -H 'X-RDCP-Client-ID: demo-client' \
+  -H 'X-RDCP-Tenant-ID: tenant-A' \
+  -H 'X-RDCP-Isolation-Level: organization' \
+  -H 'Authorization: Bearer dev-key-change-in-production-min-32-chars' \
+  http://localhost:3000/rdcp/v1/status | jq '.tenant'
+
+# Tenant-scoped settings
+TOKEN=$(node -e "console.log(require('jsonwebtoken').sign({ sub: 'reader@example.com', scopes:['read:tenant-A'] }, 'change-in-production', { algorithm:'HS256', expiresIn:'5m' }))")
+curl -s \
+  -H 'X-RDCP-Auth-Method: bearer' \
+  -H 'X-RDCP-Client-ID: demo-client' \
+  -H "Authorization: Bearer $TOKEN" \
+  http://localhost:3000/rdcp/v1/tenants/tenant-A/settings | jq '.tenant'
+```
+
 Rate-limit flake avoidance (demo app)
 - The demo control endpoint has a simple in-memory rate limit.
   - Increase capacity in tests: RATE_LIMIT_CONTROL_MAX=10

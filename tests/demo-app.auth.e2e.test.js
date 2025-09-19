@@ -31,6 +31,23 @@ describe('RDCP Demo App - Authentication & security (roadmap)', () => {
   })
 
   describe('Basic security level (api-key)', () => {
+    test('GET /rdcp/v1/status includes tenant object when tenant headers are set', async () => {
+      const apiKey = 'dev-key-change-in-production-min-32-chars'
+      const res = await request(app)
+        .get('/rdcp/v1/status')
+        .set('X-RDCP-Auth-Method', 'api-key')
+        .set('X-RDCP-Client-ID', 'demo-client')
+        .set('X-RDCP-Tenant-ID', 'tenant-A')
+        .set('X-RDCP-Isolation-Level', 'organization')
+        .set('Authorization', `Bearer ${apiKey}`)
+
+      expect(res.status).toBe(200)
+      expect(res.body.protocol).toBe('rdcp/1.0')
+      expect(res.body.tenant).toBeTruthy()
+      expect(res.body.tenant.id).toBe('tenant-A')
+      expect(res.body.tenant.isolationLevel).toBe('organization')
+      expect(res.body.tenant.scope).toBe('tenant-isolated')
+    })
     test('GET /rdcp/v1/status succeeds with required headers and API key', async () => {
       const apiKey = 'dev-key-change-in-production-min-32-chars'
       const res = await request(app)

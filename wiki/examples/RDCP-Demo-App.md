@@ -215,6 +215,41 @@ Current state:
 - Control endpoint includes demo-only rate limiting (429) and `RDCP_AUDIT` structured logs on success.
 
 Environment variables (for future/full flows):
+
+Tenant response object
+- When tenant headers are present or tenant routes are used, responses include a tenant context object:
+```json
+{
+  "protocol": "rdcp/1.0",
+  "tenant": {
+    "id": "tenant-A",
+    "isolationLevel": "organization",
+    "scope": "tenant-isolated"
+  }
+}
+```
+
+Curl examples
+```bash
+# Global status with tenant headers (API key)
+export RDCP_API_KEY='dev-key-change-in-production-min-32-chars'
+curl -s \
+  -H 'X-RDCP-Auth-Method: api-key' \
+  -H 'X-RDCP-Client-ID: demo-client' \
+  -H 'X-RDCP-Tenant-ID: tenant-A' \
+  -H 'X-RDCP-Isolation-Level: organization' \
+  -H "Authorization: Bearer $RDCP_API_KEY" \
+  http://localhost:3000/rdcp/v1/status | jq '.tenant'
+
+# Tenant-scoped settings (bearer)
+export JWT_SECRET='change-in-production'
+TOKEN=$(node -e "console.log(require('jsonwebtoken').sign({ sub: 'reader@example.com', scopes:['read:tenant-A'] }, process.env.JWT_SECRET, { algorithm:'HS256', expiresIn:'5m' }))")
+curl -s \
+  -H 'X-RDCP-Auth-Method: bearer' \
+  -H 'X-RDCP-Client-ID: demo-client' \
+  -H "Authorization: Bearer $TOKEN" \
+  http://localhost:3000/rdcp/v1/tenants/tenant-A/settings | jq '.tenant'
+```
 - RDCP_API_KEY – 32+ chars, used for API key auth
 - JWT_SECRET – used for standard JWT bearer auth
 - RDCP_AUTH_LEVEL – basic | standard | enterprise (determines default mode)
@@ -311,6 +346,7 @@ Multi-tenancy:
 - Done:
   - Tenant-scoped routes and RBAC (read/control) with e2e coverage
   - Rate limiting and audit applied to tenant control route
+  - Tenant object included in responses for tenant headers/routes
 - Next:
   - Add explicit tenant object in responses and debug logs when multi-tenant headers are present
   - More examples and curl snippets for tenant flows
