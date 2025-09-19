@@ -136,6 +136,7 @@ Notes:
 - **[Testing](https://github.com/mojoatomic/rdcp/blob/main/TESTING-SUMMARY.md)** - Run and develop tests for the SDK
 - **[Contributing](Home#how-to-contribute-to-the-docs)** - Development setup and contribution guidelines
 - **[Release & Tagging Policy](Release-Policy.md)** - SemVer rules, tagging, release notes, retagging criteria, checklist
+- **[AI Development Guidelines](AI-Development-Guidelines.md)** - How WARP.md and warp-generic.md guide AI and human development
 
 ## Features
 
