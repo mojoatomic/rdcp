@@ -116,8 +116,11 @@ app.use((req, res, next) => {
 
 // Rate limiting for control endpoint (demo-only, configurable)
 const rateState = new Map()
+function isTenantControlPath(path) {
+  return path.startsWith('/rdcp/v1/tenants/') && path.endsWith('/control')
+}
 function rateLimitControl(req, res, next) {
-  if (req.path !== '/rdcp/v1/control') return next()
+  if (!(req.path === '/rdcp/v1/control' || isTenantControlPath(req.path))) return next()
   const windowMs = parseInt(process.env.RATE_LIMIT_CONTROL_WINDOW_MS || '2000', 10)
   const max = parseInt(process.env.RATE_LIMIT_CONTROL_MAX || '3', 10)
   const clientId = req.headers['x-rdcp-client-id'] || 'anonymous'
@@ -137,7 +140,9 @@ function rateLimitControl(req, res, next) {
 
 // Audit trail for control operations (structured log)
 function auditControl(req, res, next) {
-  if (req.path !== '/rdcp/v1/control' || req.method !== 'POST') return next()
+  const isGlobalControl = req.path === '/rdcp/v1/control' && req.method === 'POST'
+  const isTenantControl = isTenantControlPath(req.path) && req.method === 'POST'
+  if (!(isGlobalControl || isTenantControl)) return next()
   const origJson = res.json.bind(res)
   res.json = (body) => {
     try {
@@ -146,7 +151,7 @@ function auditControl(req, res, next) {
         timestamp: new Date().toISOString(),
         action: req.body?.action,
         categories: req.body?.categories,
-        tenantId: req.headers['x-rdcp-tenant-id'] || 'default',
+        tenantId: req.params?.tenantId || req.headers['x-rdcp-tenant-id'] || 'default',
         method: req.headers['x-rdcp-auth-method'] || 'unknown',
         clientId: req.headers['x-rdcp-client-id'] || null,
         statusCode: res.statusCode
@@ -160,10 +165,96 @@ function auditControl(req, res, next) {
   return next()
 }
 
+// RBAC example: for control endpoint under bearer auth, require 'control' scope
+function enforceControlRBAC(req, res, next) {
+  if (req.path !== '/rdcp/v1/control' || req.method !== 'POST') return next()
+  const method = String(req.headers['x-rdcp-auth-method'] || '')
+  if (method !== 'bearer') return next()
+  try {
+    const result = validateRDCPAuth(req)
+    const scopes = Array.isArray(result?.scopes) ? result.scopes : []
+    const tenantId = String(req.headers['x-rdcp-tenant-id'] || '').trim()
+
+    const hasGlobal = scopes.includes('control')
+    let allowed = hasGlobal
+    if (!allowed && tenantId) {
+      allowed = scopes.includes(`control:${tenantId}`)
+    }
+
+    if (!result?.valid || !allowed) {
+      return res
+        .status(403)
+        .json(createRDCPError('RDCP_FORBIDDEN', tenantId ? 'Insufficient scope for tenant' : 'Insufficient scope: control'))
+    }
+    return next()
+  } catch (e) {
+    return res
+      .status(403)
+      .json(createRDCPError('RDCP_FORBIDDEN', 'Insufficient scope'))
+  }
+}
+
+// Tenant-scoped settings storage (demo only)
+const tenantSettings = new Map()
+
+// Generic tenant RBAC middleware factory
+function requireTenantScope(scopeBase) {
+  return function (req, res, next) {
+    const method = String(req.headers['x-rdcp-auth-method'] || '')
+    if (method !== 'bearer') return next()
+    try {
+      const result = validateRDCPAuth(req)
+      const scopes = Array.isArray(result?.scopes) ? result.scopes : []
+      const tenantId = String(req.params?.tenantId || '').trim()
+
+      const hasGlobal = scopes.includes(scopeBase)
+      let allowed = hasGlobal
+      if (!allowed && tenantId) {
+        allowed = scopes.includes(`${scopeBase}:${tenantId}`)
+      }
+
+      if (!result?.valid || !allowed) {
+        return res
+          .status(403)
+          .json(
+            createRDCPError(
+              'RDCP_FORBIDDEN',
+              tenantId ? `Insufficient scope for tenant ${tenantId}` : `Insufficient scope: ${scopeBase}`
+            )
+          )
+      }
+      return next()
+    } catch (e) {
+      return res.status(403).json(createRDCPError('RDCP_FORBIDDEN', 'Insufficient scope'))
+    }
+  }
+}
+
+// Tenant routes
+app.get('/rdcp/v1/tenants/:tenantId/settings', requireTenantScope('read'), (req, res) => {
+  const tenantId = String(req.params.tenantId)
+  const data = tenantSettings.get(tenantId) || { features: [], categories: [] }
+  res.json({ tenantId, settings: data, protocol: 'rdcp/1.0', requestId: req.id })
+})
+
+app.post('/rdcp/v1/tenants/:tenantId/control', requireTenantScope('control'), (req, res) => {
+  const tenantId = String(req.params.tenantId)
+  const { action, categories } = req.body || {}
+  const cur = tenantSettings.get(tenantId) || { features: [], categories: [] }
+  if (action === 'enable') {
+    cur.categories = Array.from(new Set([...(cur.categories || []), ...(categories || [])]))
+  } else if (action === 'disable') {
+    cur.categories = (cur.categories || []).filter((c) => !(categories || []).includes(c))
+  }
+  tenantSettings.set(tenantId, cur)
+  res.json({ success: true, tenantId, protocol: 'rdcp/1.0', requestId: req.id })
+})
+
 // Mount RDCP middleware (handles /.well-known/rdcp and /rdcp/v1/*)
 app.use(enforceRDCPHeaders)
 app.use(rateLimitControl)
 app.use(auditControl)
+app.use(enforceControlRBAC)
 app.use(rdcpMiddleware)
 
 // Business API routes demonstrating debug categories
