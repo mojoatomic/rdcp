@@ -146,6 +146,22 @@ Examples & Benchmarks:
 
 ## Authentication
 
+Summary of recent additions
+- Tenant-scoped routes with RBAC enforcement (bearer-only):
+  - GET /rdcp/v1/tenants/:tenantId/settings → requires read or read:<tenantId>
+  - POST /rdcp/v1/tenants/:tenantId/control → requires control or control:<tenantId>
+- Rate limiting and audit trail extended to tenant control route
+- Enterprise mTLS hardening via env vars:
+  - RDCP_TRUSTED_CA_FINGERPRINTS (comma-separated fingerprints)
+  - RDCP_ALLOWED_CERT_SUBJECTS (comma-separated allowed CNs)
+- Hybrid (mTLS + JWT) subject matching: JWT sub must equal certificate CN
+- Logging: hybrid fallback downgraded to debug level by default; warnings gated by RDCP_WARN_ON_HYBRID_FALLBACK='true' or development
+
+Links
+- Error responses and codes: ../../docs/error-responses.md
+- Testing helpers and patterns: ../../docs/testing-helpers.md
+- Logging configuration (hybrid fallback): ../../docs/logging.md
+
 ### Basic (API Key) - Enforced in Demo
 
 ### Standard (JWT Bearer) - Demo
