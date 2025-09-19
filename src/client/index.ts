@@ -220,7 +220,8 @@ export class RDCPClient {
       throw new Error('Categories are required for control requests')
     }
 
-    if (request.options?.duration && request.options.duration <= 0) {
+    const d = request.options?.duration
+    if (typeof d === 'number' && d <= 0) {
       throw new Error('Duration must be positive if specified')
     }
   }

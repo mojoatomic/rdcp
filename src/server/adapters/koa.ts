@@ -70,6 +70,15 @@ export interface RDCPKoaMiddlewareOptions {
   basePath?: string
   performance?: Record<string, unknown>
   tenant?: Record<string, unknown>
+  capabilities?: {
+    temporaryControls?: boolean
+    ttl?: {
+      enabled?: boolean
+      minDurationMs?: number
+      maxDurationMs?: number
+      maxActiveTTLs?: number
+    }
+  }
 }
 
 /**
@@ -125,6 +134,7 @@ export function createRDCPMiddleware(
     debugConfig,
     performance,
     tenant,
+    capabilities: options.capabilities ?? {},
   })
 
   // Koa middleware function - async pattern following Context7

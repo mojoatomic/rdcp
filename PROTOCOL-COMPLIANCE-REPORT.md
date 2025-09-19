@@ -17,6 +17,7 @@ The RDCP SDK project demonstrates **Level 2: Standard compliance** with RDCP v1.
 - **Multi-Tenancy**: ✅ Standards Compliant
 - **Error Handling**: ✅ Protocol Standard Format
 - **Client & Server SDKs**: ✅ Complete Implementation
+- **Temporary Controls (TTL)**: ✅ Core support (server + adapters + client) with validation and in-memory scheduler; test coverage included
 
 ---
 
@@ -28,11 +29,11 @@ Per **Section 5** of the RDCP Protocol Specification, all required endpoints are
 
 | Endpoint | Status | Implementation | Response Format |
 |----------|--------|----------------|-----------------|
-| `/.well-known/rdcp` | ✅ Complete | `src/endpoints/protocol-discovery.ts` | Spec-compliant |
-| `/rdcp/v1/discovery` | ✅ Complete | `src/endpoints/discovery.ts` | Spec-compliant |
-| `/rdcp/v1/control` | ✅ Complete | `src/endpoints/control.ts` | Spec-compliant |
-| `/rdcp/v1/status` | ✅ Complete | `src/endpoints/status.ts` | Spec-compliant |
-| `/rdcp/v1/health` | ✅ Complete | `src/endpoints/health.ts` | Spec-compliant |
+| `/.well-known/rdcp` | ✅ Complete | Core RDCPServer + framework adapters | Spec-compliant |
+| `/rdcp/v1/discovery` | ✅ Complete | Core RDCPServer + framework adapters | Spec-compliant |
+| `/rdcp/v1/control` | ✅ Complete | Core RDCPServer + framework adapters (TTL support) | Spec-compliant |
+| `/rdcp/v1/status` | ✅ Complete | Core RDCPServer + framework adapters | Spec-compliant |
+| `/rdcp/v1/health` | ✅ Complete | Core RDCPServer + framework adapters | Spec-compliant |
 
 **✅ All required endpoints return correct JSON schemas as specified in Protocol Specification Section 5.**
 
@@ -205,7 +206,7 @@ Per **Section 11** of the RDCP Protocol Specification:
 - ✅ **All Level 2 requirements**
 - ✅ **Security level: `enterprise` (mTLS + tokens)** 
 - ⚠️ **Real performance metrics**: Currently using placeholders (can be enhanced)
-- ✅ **Temporary controls with automatic expiration**: Implemented in demo app (TTL); core SDK support planned on roadmap
+- ✅ **Temporary controls with automatic expiration**: Implemented in core (server + adapters + client) with TTL scheduler and tests
 - ⚠️ **Rate limiting**: Not implemented in core; demo app includes example middleware
 - ⚠️ **Full audit trail with compliance metadata**: Partially implemented
 - ⚠️ **Token refresh capability**: Not implemented
@@ -219,9 +220,6 @@ To achieve **Level 3: Enterprise** compliance, the following enhancements are ne
    - Replace placeholder values with actual CPU/memory measurements
    - Use Node.js `perf_hooks` and `process.memoryUsage()` APIs
 
-2. **Temporary Controls** ⚠️
-   - Implement time-based auto-disable functionality
-   - Add duration-based category control with automatic expiration
 
 3. **Rate Limiting** ⚠️  
    - Add configurable rate limiting middleware
@@ -240,7 +238,7 @@ To achieve **Level 3: Enterprise** compliance, the following enhancements are ne
 ## Testing Coverage Assessment ✅
 
 ### Test Suite Completeness ✅
-- **184 Passed Tests** across 16 test suites
+- **186 Passed Tests** across 17 test suites
 - **✅ All Framework Adapters**: Express, Fastify, Koa tested
 - **✅ Authentication**: Basic auth with RDCP header validation
 - **✅ Validation System**: Request/response validation and error handling
@@ -337,9 +335,6 @@ Per **Section 10** of the RDCP Protocol Specification:
    - Currently using placeholder values (`0.1%` CPU, `1MB` memory)
    - Enhancement needed for real-time performance monitoring
 
-2. **Temporary Controls** ⚠️
-   - Implemented in demo app (TTL) with automatic expiry
-   - Core SDK support planned for enterprise compliance
 
 3. **Rate Limiting** ⚠️
    - Not implemented at protocol level
@@ -369,7 +364,7 @@ Per **Section 10** of the RDCP Protocol Specification:
 
 ## Compliance Score
 
-### Overall Protocol Compliance: **85%** ✅
+### Overall Protocol Compliance: **88%** ✅
 
 | Category | Score | Status |
 |----------|-------|---------|
@@ -381,7 +376,7 @@ Per **Section 10** of the RDCP Protocol Specification:
 | Client SDK | **100%** | ✅ Complete |
 | Testing Coverage | **95%** | ✅ Excellent |
 | Performance Metrics | **60%** | ⚠️ Placeholder values |
-| Advanced Features | **40%** | ⚠️ Enterprise features missing |
+| Advanced Features | **60%** | ⚠️ Enterprise features partially implemented (TTL in core) |
 | Documentation | **100%** | ✅ Complete |
 
 ### Compliance Level Achieved: **Level 2: Standard** ✅
@@ -397,10 +392,16 @@ Per **Section 10** of the RDCP Protocol Specification:
 
 ### Future Enhancements ⚠️
 1. **Performance Monitoring**: Replace placeholder metrics with real measurements
-2. **Temporary Controls**: Implement duration-based debug category control
-3. **Rate Limiting**: Add configurable rate limiting for enterprise deployments
-4. **Enhanced Audit**: Add compliance metadata for regulated industries
-5. **Token Management**: Add JWT refresh and key rotation capabilities
+2. **Rate Limiting**: Add configurable rate limiting for enterprise deployments
+3. **Enhanced Audit**: Add compliance metadata for regulated industries
+4. **Token Management**: Add JWT refresh and key rotation capabilities
+
+### Change Log (recent)
+- Core TTL: Temporary controls promoted to core (server + adapters + client) with validation, in-memory scheduler, and tests
+- Hybrid auth hardening: improved behavior and fallback logging
+- Demo app: rate limiting and audit trail examples; e2e tests added
+- Validation: duration accepts number or string forms (e.g., '500ms', '5s', '2m')
+- Testing: increased to 186 tests across 17 test suites
 
 ### Documentation Updates ✅
 1. **✅ Protocol Specification**: Up-to-date and comprehensive
@@ -416,7 +417,7 @@ The RDCP SDK project successfully achieves **Level 2: Standard compliance** with
 
 - **✅ Complete Protocol Implementation**: All required endpoints, authentication levels, and multi-tenancy features
 - **✅ Production Readiness**: Security hardening, error handling, and framework integration
-- **✅ Comprehensive Testing**: 73 passing tests covering all major functionality
+- **✅ Comprehensive Testing**: 186 passing tests covering all major functionality
 - **✅ Standards Adherence**: RFC compliance and protocol versioning support
 - **✅ Framework Compatibility**: Support for Express, Fastify, Koa, and Next.js
 

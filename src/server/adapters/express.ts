@@ -26,6 +26,15 @@ export interface RDCPMiddlewareOptions {
   basePath?: string
   performance?: Record<string, unknown>
   tenant?: Record<string, unknown>
+  capabilities?: {
+    temporaryControls?: boolean
+    ttl?: {
+      enabled?: boolean
+      minDurationMs?: number
+      maxDurationMs?: number
+      maxActiveTTLs?: number
+    }
+  }
 }
 
 /**
@@ -67,6 +76,7 @@ export function createRDCPMiddleware(
     debugConfig,
     performance,
     tenant,
+    capabilities: options.capabilities ?? {},
   })
 
   // Express middleware function - standard Context7 pattern
