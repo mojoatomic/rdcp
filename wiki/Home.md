@@ -81,6 +81,7 @@ app.listen(3000)
 - [AI Agent Quick Reference](AI-Agent-Quick-Reference.md) — copy/paste setup for agents and automation
 - [RDCP Demo App (In-Memory Jaeger)](examples/RDCP-Demo-App.md) — one-command local demo with Dependencies graph
 - [Implementation Status](Implementation-Status.md) — current state, demos, and observability
+- [Proof of Capabilities (Test Evidence & Demo Commands)](Proof-of-Capabilities.md)
 
 ### Getting Started
 - **[Installation](Installation.md)** - Install and setup the RDCP SDK
