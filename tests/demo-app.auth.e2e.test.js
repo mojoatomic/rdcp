@@ -13,6 +13,21 @@ describe('RDCP Demo App - Authentication & security (roadmap)', () => {
       expect(res.body.error).toBeTruthy()
       expect(typeof res.body.error.code).toBe('string')
     })
+
+    test('GET /rdcp/v1/status with invalid X-RDCP-Auth-Method returns 401', async () => {
+      const res = await request(app)
+        .get('/rdcp/v1/status')
+        .set('X-RDCP-Auth-Method', 'invalid')
+        .set('X-RDCP-Client-ID', 'demo-client')
+      expect(res.status).toBe(401)
+    })
+
+    test('GET /rdcp/v1/status missing X-RDCP-Client-ID returns 401', async () => {
+      const res = await request(app)
+        .get('/rdcp/v1/status')
+        .set('X-RDCP-Auth-Method', 'api-key')
+      expect(res.status).toBe(401)
+    })
   })
 
   describe('Basic security level (api-key)', () => {
@@ -26,6 +41,15 @@ describe('RDCP Demo App - Authentication & security (roadmap)', () => {
 
       expect(res.status).toBe(200)
       expect(res.body.protocol).toBe('rdcp/1.0')
+    })
+
+    test('GET /rdcp/v1/status with short API key returns 401', async () => {
+      const res = await request(app)
+        .get('/rdcp/v1/status')
+        .set('X-RDCP-Auth-Method', 'api-key')
+        .set('X-RDCP-Client-ID', 'demo-client')
+        .set('Authorization', 'Bearer short-key')
+      expect(res.status).toBe(401)
     })
   })
 
@@ -46,6 +70,35 @@ describe('RDCP Demo App - Authentication & security (roadmap)', () => {
 
       expect(res.status).toBe(200)
       expect(res.body.protocol).toBe('rdcp/1.0')
+    })
+
+    test('GET /rdcp/v1/status with expired JWT returns 401', async () => {
+      const secret = process.env.JWT_SECRET || 'change-in-production'
+      const token = jwt.sign(
+        { sub: 'user@example.com', scopes: ['discovery', 'status'], exp: Math.floor(Date.now() / 1000) - 10 },
+        secret,
+        { algorithm: 'HS256' }
+      )
+      const res = await request(app)
+        .get('/rdcp/v1/status')
+        .set('X-RDCP-Auth-Method', 'bearer')
+        .set('X-RDCP-Client-ID', 'demo-client')
+        .set('Authorization', `Bearer ${token}`)
+      expect(res.status).toBe(401)
+    })
+
+    test('GET /rdcp/v1/status with invalid signature returns 401', async () => {
+      const token = jwt.sign(
+        { sub: 'user@example.com', scopes: ['discovery', 'status'] },
+        'wrong-secret',
+        { algorithm: 'HS256', expiresIn: '5m' }
+      )
+      const res = await request(app)
+        .get('/rdcp/v1/status')
+        .set('X-RDCP-Auth-Method', 'bearer')
+        .set('X-RDCP-Client-ID', 'demo-client')
+        .set('Authorization', `Bearer ${token}`)
+      expect(res.status).toBe(401)
     })
   })
 
@@ -68,6 +121,40 @@ describe('RDCP Demo App - Authentication & security (roadmap)', () => {
 
       expect(res.status).toBe(200)
       expect(res.body.protocol).toBe('rdcp/1.0')
+    })
+
+    test('GET /rdcp/v1/status with invalid CN pattern returns 401', async () => {
+      const badCert = {
+        subject: 'CN=client.bad.rdcp.internal,O=Test,L=Test,C=US',
+        validFrom: new Date(Date.now() - 60 * 1000).toISOString(),
+        validTo: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+        keyUsage: ['digitalSignature'],
+        fingerprint256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+      }
+      const base64 = Buffer.from(JSON.stringify(badCert)).toString('base64')
+      const res = await request(app)
+        .get('/rdcp/v1/status')
+        .set('X-RDCP-Auth-Method', 'mtls')
+        .set('X-RDCP-Client-ID', 'demo-client')
+        .set('X-Client-Cert', base64)
+      expect(res.status).toBe(401)
+    })
+
+    test('GET /rdcp/v1/status with expired certificate returns 401', async () => {
+      const expiredCert = {
+        subject: 'CN=client.tenant123.rdcp.internal,O=Test,L=Test,C=US',
+        validFrom: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+        validTo: new Date(Date.now() - 60 * 1000).toISOString(),
+        keyUsage: ['digitalSignature'],
+        fingerprint256: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+      }
+      const base64 = Buffer.from(JSON.stringify(expiredCert)).toString('base64')
+      const res = await request(app)
+        .get('/rdcp/v1/status')
+        .set('X-RDCP-Auth-Method', 'mtls')
+        .set('X-RDCP-Client-ID', 'demo-client')
+        .set('X-Client-Cert', base64)
+      expect(res.status).toBe(401)
     })
   })
 })
