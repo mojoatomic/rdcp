@@ -190,14 +190,21 @@ describe('RDCP Demo App - Authentication & security (roadmap)', () => {
   })
 
   describe('Enterprise security level (mTLS + optional token)', () => {
-    test('GET /rdcp/v1/status succeeds with mock mTLS cert header', async () => {
-      const mockCert = {
-        subject: 'CN=client.tenant123.rdcp.internal,O=Test,L=Test,C=US',
+    const goodFingerprint = '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+
+    function makeCert(subjectCN, opts = {}) {
+      return {
+        subject: `CN=${subjectCN},O=Test,L=Test,C=US`,
         validFrom: new Date(Date.now() - 60 * 1000).toISOString(),
         validTo: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
         keyUsage: ['digitalSignature'],
-        fingerprint256: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'
+        fingerprint256: goodFingerprint,
+        ...opts,
       }
+    }
+
+    test('GET /rdcp/v1/status succeeds with mock mTLS cert header', async () => {
+      const mockCert = makeCert('client.tenant123.rdcp.internal')
       const base64 = Buffer.from(JSON.stringify(mockCert)).toString('base64')
 
       const res = await request(app)
@@ -210,14 +217,53 @@ describe('RDCP Demo App - Authentication & security (roadmap)', () => {
       expect(res.body.protocol).toBe('rdcp/1.0')
     })
 
-    test('GET /rdcp/v1/status with invalid CN pattern returns 401', async () => {
-      const badCert = {
-        subject: 'CN=client.bad.rdcp.internal,O=Test,L=Test,C=US',
-        validFrom: new Date(Date.now() - 60 * 1000).toISOString(),
-        validTo: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-        keyUsage: ['digitalSignature'],
-        fingerprint256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+    test('enforces RDCP_ALLOWED_CERT_SUBJECTS allow-list', async () => {
+      const prev = process.env.RDCP_ALLOWED_CERT_SUBJECTS
+      process.env.RDCP_ALLOWED_CERT_SUBJECTS = 'client.tenant123.rdcp.internal'
+      try {
+        const okCert = makeCert('client.tenant123.rdcp.internal')
+        const okBase64 = Buffer.from(JSON.stringify(okCert)).toString('base64')
+        const okRes = await request(app)
+          .get('/rdcp/v1/status')
+          .set('X-RDCP-Auth-Method', 'mtls')
+          .set('X-RDCP-Client-ID', 'demo-client')
+          .set('X-Client-Cert', okBase64)
+        expect(okRes.status).toBe(200)
+
+        const badCert = makeCert('client.tenant999.rdcp.internal')
+        const badBase64 = Buffer.from(JSON.stringify(badCert)).toString('base64')
+        const badRes = await request(app)
+          .get('/rdcp/v1/status')
+          .set('X-RDCP-Auth-Method', 'mtls')
+          .set('X-RDCP-Client-ID', 'demo-client')
+          .set('X-Client-Cert', badBase64)
+        expect(badRes.status).toBe(401)
+      } finally {
+        process.env.RDCP_ALLOWED_CERT_SUBJECTS = prev
       }
+    })
+
+    test('enforces RDCP_TRUSTED_CA_FINGERPRINTS (demo uses leaf fingerprint)', async () => {
+      const prev = process.env.RDCP_TRUSTED_CA_FINGERPRINTS
+      try {
+        const okCert = makeCert('client.tenant123.rdcp.internal')
+        const okBase64 = Buffer.from(JSON.stringify(okCert)).toString('base64')
+
+        // Set a non-matching fingerprint -> should reject
+        process.env.RDCP_TRUSTED_CA_FINGERPRINTS = 'deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef'
+        const badRes = await request(app)
+          .get('/rdcp/v1/status')
+          .set('X-RDCP-Auth-Method', 'mtls')
+          .set('X-RDCP-Client-ID', 'demo-client')
+          .set('X-Client-Cert', okBase64)
+        expect(badRes.status).toBe(401)
+      } finally {
+        process.env.RDCP_TRUSTED_CA_FINGERPRINTS = prev
+      }
+    })
+
+    test('GET /rdcp/v1/status with invalid CN pattern returns 401', async () => {
+      const badCert = makeCert('client.bad.rdcp.internal')
       const base64 = Buffer.from(JSON.stringify(badCert)).toString('base64')
       const res = await request(app)
         .get('/rdcp/v1/status')
@@ -228,13 +274,10 @@ describe('RDCP Demo App - Authentication & security (roadmap)', () => {
     })
 
     test('GET /rdcp/v1/status with expired certificate returns 401', async () => {
-      const expiredCert = {
-        subject: 'CN=client.tenant123.rdcp.internal,O=Test,L=Test,C=US',
+      const expiredCert = makeCert('client.tenant123.rdcp.internal', {
         validFrom: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
         validTo: new Date(Date.now() - 60 * 1000).toISOString(),
-        keyUsage: ['digitalSignature'],
-        fingerprint256: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
-      }
+      })
       const base64 = Buffer.from(JSON.stringify(expiredCert)).toString('base64')
       const res = await request(app)
         .get('/rdcp/v1/status')
@@ -242,6 +285,56 @@ describe('RDCP Demo App - Authentication & security (roadmap)', () => {
         .set('X-RDCP-Client-ID', 'demo-client')
         .set('X-Client-Cert', base64)
       expect(res.status).toBe(401)
+    })
+
+    test('Hybrid (mTLS + JWT) subject must match CN; mismatches are rejected', async () => {
+      // Ensure no extra enforcement interferes
+      process.env.RDCP_TRUSTED_CA_FINGERPRINTS = ''
+      process.env.RDCP_ALLOWED_CERT_SUBJECTS = ''
+
+      const secret = process.env.JWT_SECRET || 'change-in-production'
+      const cn = 'client.tenant123.rdcp.internal'
+      const cert = makeCert(cn)
+      const base64 = Buffer.from(JSON.stringify(cert)).toString('base64')
+
+      // Matching subject
+      const tokenOk = jwt.sign({ sub: cn, scopes: ['discovery','status','control'] }, secret, { algorithm: 'HS256', expiresIn: '5m' })
+      const resOk = await request(app)
+        .get('/rdcp/v1/status')
+        .set('X-RDCP-Auth-Method', 'mtls')
+        .set('X-RDCP-Client-ID', 'demo-client')
+        .set('X-Client-Cert', base64)
+        .set('Authorization', `Bearer ${tokenOk}`)
+      expect(resOk.status).toBe(200)
+
+      // Mismatched subject -> reject
+      const tokenBad = jwt.sign({ sub: 'other.subject', scopes: ['discovery','status'] }, secret, { algorithm: 'HS256', expiresIn: '5m' })
+      const resBad = await request(app)
+        .get('/rdcp/v1/status')
+        .set('X-RDCP-Auth-Method', 'mtls')
+        .set('X-RDCP-Client-ID', 'demo-client')
+        .set('X-Client-Cert', base64)
+        .set('Authorization', `Bearer ${tokenBad}`)
+      expect(resBad.status).toBe(401)
+    })
+
+    test('Hybrid (mTLS + JWT) with invalid JWT falls back to cert-only and still succeeds', async () => {
+      // Ensure no extra enforcement interferes
+      process.env.RDCP_TRUSTED_CA_FINGERPRINTS = ''
+      process.env.RDCP_ALLOWED_CERT_SUBJECTS = ''
+
+      const cn = 'client.tenant123.rdcp.internal'
+      const cert = makeCert(cn)
+      const base64 = Buffer.from(JSON.stringify(cert)).toString('base64')
+
+      const invalidToken = jwt.sign({ sub: cn, scopes: ['discovery','status'] }, 'wrong-secret', { algorithm: 'HS256', expiresIn: '5m' })
+      const res = await request(app)
+        .get('/rdcp/v1/status')
+        .set('X-RDCP-Auth-Method', 'mtls')
+        .set('X-RDCP-Client-ID', 'demo-client')
+        .set('X-Client-Cert', base64)
+        .set('Authorization', `Bearer ${invalidToken}`)
+      expect(res.status).toBe(200)
     })
   })
 })
