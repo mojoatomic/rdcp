@@ -82,6 +82,7 @@ app.listen(3000)
 - [RDCP Demo App (In-Memory Jaeger)](examples/RDCP-Demo-App.md) — one-command local demo with Dependencies graph
 - [Implementation Status](Implementation-Status.md) — current state, demos, and observability
 - [Proof of Capabilities (Test Evidence & Demo Commands)](Proof-of-Capabilities.md)
+  - One-liner: `npm run demo:proof` (start demo app first: `npm run dev --prefix packages/rdcp-demo-app`)
 
 ### Getting Started
 - **[Installation](Installation.md)** - Install and setup the RDCP SDK
