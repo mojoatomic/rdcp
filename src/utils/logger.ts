@@ -9,4 +9,11 @@ export const logger = {
   info: (...args: unknown[]): void => {
     console.log(...args)
   },
+  debug: (...args: unknown[]): void => {
+    if (typeof console.debug === 'function') {
+      console.debug(...args)
+    } else {
+      console.log(...args)
+    }
+  },
 }

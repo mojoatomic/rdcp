@@ -22,6 +22,10 @@ Notes:
 
 ## Level 1: Basic (API Key Authentication)
 
+Related docs
+- Error responses and codes: ../docs/error-responses.md
+- Testing helpers and patterns: ../docs/testing-helpers.md
+
 **Default setup** - Works out of the box with environment variable configuration.
 
 ### Environment Setup
@@ -101,6 +105,10 @@ curl -H "Authorization: Bearer your-api-key" \
 ```
 
 ## Level 2: Standard (JWT Bearer Token)
+
+Related docs
+- Error responses and codes: ../docs/error-responses.md
+- Testing helpers and patterns (JWT scopes, tenant routes): ../docs/testing-helpers.md
 
 **Production SaaS** setup with user identity and scopes validation.
 
@@ -197,6 +205,10 @@ curl -H "Authorization: Bearer $JWT_TOKEN" \
 ```
 
 ## Level 3: Enterprise (mTLS + JWT Hybrid)
+
+Related docs
+- Error responses and codes: ../docs/error-responses.md
+- Testing helpers and patterns (hybrid, mTLS, tenants): ../docs/testing-helpers.md
 
 **Regulated industries** setup with certificate validation and full audit trail.
 

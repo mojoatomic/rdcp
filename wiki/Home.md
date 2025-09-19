@@ -110,6 +110,9 @@ app.listen(3000)
 ### Authentication & Security
 - **[Authentication Setup](Authentication-Setup.md)** - All 3 security levels: Basic, Standard, Enterprise
 - **[Multi-Tenancy](Authentication-Setup.md#multi-tenancy-support)** - Tenant isolation and context management
+- **[Error Responses](../docs/error-responses.md)** - Standardized error schema, codes, and assertions
+- **[Testing Helpers](../docs/testing-helpers.md)** - JWT scopes, mTLS simulation, hybrid and tenant patterns
+- **[Logging (Hybrid Fallback)](../docs/logging.md)** - Debug-by-default with env-gated warnings
 
 ### Migration & Advanced
 - **[Migration Guide](Migration-Guide.md)** - Migrate from manual RDCP implementation to SDK

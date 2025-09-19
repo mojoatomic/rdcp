@@ -2,11 +2,22 @@
 // EXTREMELY STRICT certificate validation following Context7 Node.js crypto patterns
 import { X509Certificate, timingSafeEqual } from 'crypto'
 
-// CRITICAL: These should be environment variables in production
-const TRUSTED_CA_FINGERPRINTS =
-  process.env.RDCP_TRUSTED_CA_FINGERPRINTS?.split(',') ?? []
-const ALLOWED_CERT_SUBJECTS =
-  process.env.RDCP_ALLOWED_CERT_SUBJECTS?.split(',') ?? []
+// NOTE: Read enforcement env vars at runtime to support per-test configuration in CI/local
+function getTrustedCAFingerprints(): string[] {
+  const raw = process.env.RDCP_TRUSTED_CA_FINGERPRINTS ?? ''
+  return raw
+    .split(',')
+    .map(s => s.trim())
+    .filter(s => s.length > 0)
+}
+
+function getAllowedCertSubjects(): string[] {
+  const raw = process.env.RDCP_ALLOWED_CERT_SUBJECTS ?? ''
+  return raw
+    .split(',')
+    .map(s => s.trim())
+    .filter(s => s.length > 0)
+}
 
 /**
  * Extract tenant from CN following Context7 security patterns
@@ -69,6 +80,7 @@ export function verifyCertificateChain(cert: X509Certificate): {
     }
 
     const cn = cnMatch[1]
+    const ALLOWED_CERT_SUBJECTS = getAllowedCertSubjects()
     if (
       ALLOWED_CERT_SUBJECTS.length > 0 &&
       !ALLOWED_CERT_SUBJECTS.includes(cn)
@@ -76,25 +88,28 @@ export function verifyCertificateChain(cert: X509Certificate): {
       return { valid: false, error: 'Certificate subject not in allowed list' }
     }
 
-    // CRITICAL: Verify issuer fingerprint against trusted CAs
+    // CRITICAL: Verify issuer fingerprint against trusted CAs (demo: uses leaf fingerprint)
+    const TRUSTED_CA_FINGERPRINTS = getTrustedCAFingerprints()
     if (TRUSTED_CA_FINGERPRINTS.length > 0) {
       const issuerFingerprint = cert.fingerprint256
       let isTrusted = false
 
-      // Use timing-safe comparison for each trusted fingerprint
-      for (const trustedFingerprint of TRUSTED_CA_FINGERPRINTS) {
+      // Use timing-safe comparison for each trusted fingerprint; fallback to normalized string compare
+      for (const trustedFingerprintRaw of TRUSTED_CA_FINGERPRINTS) {
+        const tf = trustedFingerprintRaw.replace(/:/g, '').toLowerCase()
         try {
-          if (
-            timingSafeEqual(
-              Buffer.from(issuerFingerprint, 'hex'),
-              Buffer.from(trustedFingerprint.replace(/:/g, ''), 'hex')
-            )
-          ) {
+          const a = Buffer.from(issuerFingerprint.toLowerCase(), 'hex')
+          const b = Buffer.from(tf, 'hex')
+          if (a.length === b.length && timingSafeEqual(a, b)) {
             isTrusted = true
             break
           }
         } catch {
-          // Continue to next fingerprint if comparison fails
+          // Fallback comparison if Buffer conversion fails for any reason
+          if (issuerFingerprint.replace(/:/g, '').toLowerCase() === tf) {
+            isTrusted = true
+            break
+          }
         }
       }
 

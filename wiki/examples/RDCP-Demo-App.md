@@ -146,6 +146,22 @@ Examples & Benchmarks:
 
 ## Authentication
 
+Summary of recent additions
+- Tenant-scoped routes with RBAC enforcement (bearer-only):
+  - GET /rdcp/v1/tenants/:tenantId/settings → requires read or read:<tenantId>
+  - POST /rdcp/v1/tenants/:tenantId/control → requires control or control:<tenantId>
+- Rate limiting and audit trail extended to tenant control route
+- Enterprise mTLS hardening via env vars:
+  - RDCP_TRUSTED_CA_FINGERPRINTS (comma-separated fingerprints)
+  - RDCP_ALLOWED_CERT_SUBJECTS (comma-separated allowed CNs)
+- Hybrid (mTLS + JWT) subject matching: JWT sub must equal certificate CN
+- Logging: hybrid fallback downgraded to debug level by default; warnings gated by RDCP_WARN_ON_HYBRID_FALLBACK='true' or development
+
+Links
+- Error responses and codes: ../../docs/error-responses.md
+- Testing helpers and patterns: ../../docs/testing-helpers.md
+- Logging configuration (hybrid fallback): ../../docs/logging.md
+
 ### Basic (API Key) - Enforced in Demo
 
 ### Standard (JWT Bearer) - Demo
@@ -199,6 +215,41 @@ Current state:
 - Control endpoint includes demo-only rate limiting (429) and `RDCP_AUDIT` structured logs on success.
 
 Environment variables (for future/full flows):
+
+Tenant response object
+- When tenant headers are present or tenant routes are used, responses include a tenant context object:
+```json
+{
+  "protocol": "rdcp/1.0",
+  "tenant": {
+    "id": "tenant-A",
+    "isolationLevel": "organization",
+    "scope": "tenant-isolated"
+  }
+}
+```
+
+Curl examples
+```bash
+# Global status with tenant headers (API key)
+export RDCP_API_KEY='dev-key-change-in-production-min-32-chars'
+curl -s \
+  -H 'X-RDCP-Auth-Method: api-key' \
+  -H 'X-RDCP-Client-ID: demo-client' \
+  -H 'X-RDCP-Tenant-ID: tenant-A' \
+  -H 'X-RDCP-Isolation-Level: organization' \
+  -H "Authorization: Bearer $RDCP_API_KEY" \
+  http://localhost:3000/rdcp/v1/status | jq '.tenant'
+
+# Tenant-scoped settings (bearer)
+export JWT_SECRET='change-in-production'
+TOKEN=$(node -e "console.log(require('jsonwebtoken').sign({ sub: 'reader@example.com', scopes:['read:tenant-A'] }, process.env.JWT_SECRET, { algorithm:'HS256', expiresIn:'5m' }))")
+curl -s \
+  -H 'X-RDCP-Auth-Method: bearer' \
+  -H 'X-RDCP-Client-ID: demo-client' \
+  -H "Authorization: Bearer $TOKEN" \
+  http://localhost:3000/rdcp/v1/tenants/tenant-A/settings | jq '.tenant'
+```
 - RDCP_API_KEY – 32+ chars, used for API key auth
 - JWT_SECRET – used for standard JWT bearer auth
 - RDCP_AUTH_LEVEL – basic | standard | enterprise (determines default mode)
@@ -284,42 +335,86 @@ Authentication & security:
   - RDCP required header enforcement for all /rdcp/v1/* endpoints (fast-fail 401 with RDCP_AUTH_REQUIRED)
   - E2E coverage for success/failure across API key, JWT (expiry/signature; optional issuer/audience), and mTLS (mock base64 JSON cert)
   - Rate limiting for POST /rdcp/v1/control (configurable) with `RDCP_AUDIT` structured logging
+  - Enterprise mTLS hardening with `RDCP_TRUSTED_CA_FINGERPRINTS` and `RDCP_ALLOWED_CERT_SUBJECTS`
+  - Hybrid mode subject matching (JWT sub == certificate CN); fallback behavior documented; env-gated warnings
+  - Standardized error shapes and testing helpers documentation
 - Next:
-  - Harden enterprise mTLS: enforce `RDCP_TRUSTED_CA_FINGERPRINTS` and `RDCP_ALLOWED_CERT_SUBJECTS`
-  - Hybrid mode assertions (mTLS + JWT subject match) and expanded negative cases
-  - Per-tenant auth and RBAC scope examples (tenant-aware controls)
-  - Document standardized error shapes and test helpers for consumers
+  - Expand negative cases (hybrid subject mismatch, fingerprint mismatch variants)
+  - Additional scope-negative tests for control/read across tenants
 
 Multi-tenancy:
-- Add explicit tenant header handling and views (X-RDCP-Tenant-ID, X-RDCP-Isolation-Level)
-- Add routes/scripts to enable/disable categories per-tenant and verify isolation
-- Demonstrate tenant context in responses and debug logs
+- Done:
+  - Tenant-scoped routes and RBAC (read/control) with e2e coverage
+  - Rate limiting and audit applied to tenant control route
+  - Tenant object included in responses for tenant headers/routes
+- Next:
+  - Add explicit tenant object in responses and debug logs when multi-tenant headers are present
+  - More examples and curl snippets for tenant flows
 
 Runtime controls & categories:
-- CLI/script to toggle categories with TTL (temporary controls)
-- Include all standard categories and add simple examples for each
-- Add /api routes that exercise QUERIES, REPORTS, CACHE, AUTH, INTEGRATIONS paths
+- Next:
+  - CLI/script to toggle categories with TTL (temporary controls)
+  - Include all standard categories and add simple examples for each
+  - Add /api routes exercising QUERIES, REPORTS, CACHE, AUTH, INTEGRATIONS
 
 Traces and propagation:
-- Add internal service call (second mini-service) to demonstrate context propagation across services
-- Document both W3C traceparent and B3 propagation (if configured)
-- Add baggage example for tenant/user correlation
+- Next:
+  - Add internal service call (second mini-service) to demonstrate context propagation
+  - Document both W3C traceparent and B3 propagation (if configured)
+  - Add baggage example for tenant/user correlation
 
 Observability & metrics:
-- Add application-level metrics (request counts, latencies) and expose /metrics (Prometheus optional)
-- Add logs-to-traces correlations in examples
+- Done:
+  - /metrics endpoint with request counters and histograms (prom-client)
+- Next:
+  - Add logs-to-traces correlation examples
 
 Testing & CI:
-- Supertest-based e2e tests for all endpoints under each auth mode
-- Scripted test harness to run benchmarks as part of CI (informational)
-- Add GitHub Actions example to run the demo app tests
+- Next:
+  - Supertest-based e2e tests for all endpoints under each auth mode
+  - Scripted test harness to run benchmarks as part of CI (informational)
+  - GitHub Actions example to run the demo app tests
 
 Developer experience:
-- Add Postman collection / HTTPie scripts
-- Add example front-end (optional) that calls the API and shows trace ids
-- Add Dockerfile for the app container (docker-compose already references one)
+- Next:
+  - Postman collection / HTTPie scripts
+  - Example front-end (optional) that calls the API and shows trace ids
+  - Dockerfile for the app container (docker-compose already references one)
 
 ---
+
+## Temporary controls (TTL)
+
+- Supported on tenant-scoped control route: POST /rdcp/v1/tenants/:tenantId/control
+- Request format additions:
+  - options.temporary: boolean (enable TTL when true)
+  - options.duration: number (ms) or string with suffix ms|s|m (e.g., '150ms','2s','1m')
+- Behavior: When TTL is set, categories enabled are automatically disabled after the duration; disabling manually cancels any pending TTL timer.
+
+Examples
+```bash
+# Enable category with TTL for tenant-A
+export JWT_SECRET='change-in-production'
+TOKEN=$(node -e "console.log(require('jsonwebtoken').sign({ sub:'ops@example.com', scopes:['control','control:tenant-A'] }, process.env.JWT_SECRET, { algorithm:'HS256', expiresIn:'5m' }))")
+
+curl -s \
+  -H 'X-RDCP-Auth-Method: bearer' \
+  -H 'X-RDCP-Client-ID: demo-client' \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"action":"enable","categories":["CACHE"],"options":{"temporary":true,"duration":"2s"}}' \
+  http://localhost:3000/rdcp/v1/tenants/tenant-A/control | jq
+
+# Check settings (may show CACHE until TTL expires)
+curl -s \
+  -H 'X-RDCP-Auth-Method: bearer' \
+  -H 'X-RDCP-Client-ID: demo-client' \
+  -H "Authorization: Bearer $TOKEN" \
+  http://localhost:3000/rdcp/v1/tenants/tenant-A/settings | jq '.settings.categories'
+```
+
+Note
+- TTL is a demo-app feature to illustrate temporary controls; SDK servers may implement TTL differently.
 
 ## Contributing
 

@@ -86,8 +86,19 @@ export function validateRDCPAuth(request: Request): RDCPAuthResult {
         scopes = decoded.scopes
       }
     } catch (jwtError) {
-      // Continue with cert-only auth if JWT fails
-      logger.warn('JWT validation failed, continuing with cert-only auth')
+      // Continue with cert-only auth if JWT fails; downgrade to debug in production unless explicitly enabled
+      const shouldWarn =
+        process.env.NODE_ENV === 'development' ||
+        process.env.RDCP_WARN_ON_HYBRID_FALLBACK === 'true'
+      if (shouldWarn) {
+        logger.warn('JWT validation failed, continuing with cert-only auth', {
+          route: request.path,
+          method: request.method,
+          clientId: request.headers['x-rdcp-client-id'] as string | undefined,
+        })
+      } else {
+        logger.debug('Hybrid auth: JWT invalid, using certificate only')
+      }
     }
   }
 
