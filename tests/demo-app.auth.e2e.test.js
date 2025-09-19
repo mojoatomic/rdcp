@@ -100,6 +100,93 @@ describe('RDCP Demo App - Authentication & security (roadmap)', () => {
         .set('Authorization', `Bearer ${token}`)
       expect(res.status).toBe(401)
     })
+
+    test('GET /rdcp/v1/status validates issuer when JWT_ISSUER is set', async () => {
+      const prev = process.env.JWT_ISSUER
+      process.env.JWT_ISSUER = 'urn:issuer'
+      try {
+        const secret = process.env.JWT_SECRET || 'change-in-production'
+        const token = jwt.sign(
+          { sub: 'user@example.com', scopes: ['discovery', 'status'], iss: 'urn:issuer' },
+          secret,
+          { algorithm: 'HS256', expiresIn: '5m' }
+        )
+        const res = await request(app)
+          .get('/rdcp/v1/status')
+          .set('X-RDCP-Auth-Method', 'bearer')
+          .set('X-RDCP-Client-ID', 'demo-client')
+          .set('Authorization', `Bearer ${token}`)
+        expect(res.status).toBe(200)
+      } finally {
+        process.env.JWT_ISSUER = prev
+      }
+    })
+
+    test('GET /rdcp/v1/status with wrong issuer returns 401 when JWT_ISSUER is set', async () => {
+      const prev = process.env.JWT_ISSUER
+      process.env.JWT_ISSUER = 'urn:issuer'
+      try {
+        const secret = process.env.JWT_SECRET || 'change-in-production'
+        const token = jwt.sign(
+          { sub: 'user@example.com', scopes: ['discovery', 'status'], iss: 'wrong-issuer' },
+          secret,
+          { algorithm: 'HS256', expiresIn: '5m' }
+        )
+        const res = await request(app)
+          .get('/rdcp/v1/status')
+          .set('X-RDCP-Auth-Method', 'bearer')
+          .set('X-RDCP-Client-ID', 'demo-client')
+          .set('Authorization', `Bearer ${token}`)
+        expect(res.status).toBe(401)
+      } finally {
+        process.env.JWT_ISSUER = prev
+      }
+    })
+
+    test('GET /rdcp/v1/status validates audience when JWT_AUDIENCE is set', async () => {
+      const prevAud = process.env.JWT_AUDIENCE
+      const prevIss = process.env.JWT_ISSUER
+      process.env.JWT_AUDIENCE = 'urn:foo'
+      process.env.JWT_ISSUER = ''
+      try {
+        const secret = process.env.JWT_SECRET || 'change-in-production'
+        const token = jwt.sign(
+          { sub: 'user@example.com', scopes: ['discovery', 'status'], aud: 'urn:foo' },
+          secret,
+          { algorithm: 'HS256', expiresIn: '5m' }
+        )
+        const res = await request(app)
+          .get('/rdcp/v1/status')
+          .set('X-RDCP-Auth-Method', 'bearer')
+          .set('X-RDCP-Client-ID', 'demo-client')
+          .set('Authorization', `Bearer ${token}`)
+        expect(res.status).toBe(200)
+      } finally {
+        process.env.JWT_AUDIENCE = prevAud
+        process.env.JWT_ISSUER = prevIss
+      }
+    })
+
+    test('GET /rdcp/v1/status with wrong audience returns 401 when JWT_AUDIENCE is set', async () => {
+      const prev = process.env.JWT_AUDIENCE
+      process.env.JWT_AUDIENCE = 'urn:foo'
+      try {
+        const secret = process.env.JWT_SECRET || 'change-in-production'
+        const token = jwt.sign(
+          { sub: 'user@example.com', scopes: ['discovery', 'status'], aud: 'urn:bar' },
+          secret,
+          { algorithm: 'HS256', expiresIn: '5m' }
+        )
+        const res = await request(app)
+          .get('/rdcp/v1/status')
+          .set('X-RDCP-Auth-Method', 'bearer')
+          .set('X-RDCP-Client-ID', 'demo-client')
+          .set('Authorization', `Bearer ${token}`)
+        expect(res.status).toBe(401)
+      } finally {
+        process.env.JWT_AUDIENCE = prev
+      }
+    })
   })
 
   describe('Enterprise security level (mTLS + optional token)', () => {
