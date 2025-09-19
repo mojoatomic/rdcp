@@ -201,9 +201,16 @@ const tenantSettings = new Map()
 function requireTenantScope(scopeBase) {
   return function (req, res, next) {
     const method = String(req.headers['x-rdcp-auth-method'] || '')
-    if (method !== 'bearer') return next()
+    if (method !== 'bearer') {
+      return res
+        .status(401)
+        .json(createRDCPError('RDCP_AUTH_REQUIRED', 'Bearer token required for tenant route'))
+    }
     try {
       const result = validateRDCPAuth(req)
+      if (!result?.valid) {
+        return res.status(401).json(createRDCPError('RDCP_AUTH_REQUIRED', 'Invalid bearer token'))
+      }
       const scopes = Array.isArray(result?.scopes) ? result.scopes : []
       const tenantId = String(req.params?.tenantId || '').trim()
 
@@ -213,7 +220,7 @@ function requireTenantScope(scopeBase) {
         allowed = scopes.includes(`${scopeBase}:${tenantId}`)
       }
 
-      if (!result?.valid || !allowed) {
+      if (!allowed) {
         return res
           .status(403)
           .json(
@@ -225,7 +232,7 @@ function requireTenantScope(scopeBase) {
       }
       return next()
     } catch (e) {
-      return res.status(403).json(createRDCPError('RDCP_FORBIDDEN', 'Insufficient scope'))
+      return res.status(401).json(createRDCPError('RDCP_AUTH_REQUIRED', 'Invalid bearer token'))
     }
   }
 }
