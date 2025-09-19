@@ -167,6 +167,96 @@ describe('RDCP Demo App - Authentication & security (roadmap)', () => {
       }
     })
 
+    test('POST /rdcp/v1/control requires control scope when using bearer JWT (403 without)', async () => {
+      // Ensure issuer/audience are not enforced for this test
+      process.env.JWT_ISSUER = ''
+      process.env.JWT_AUDIENCE = ''
+      const secret = process.env.JWT_SECRET || 'change-in-production'
+      const token = jwt.sign(
+        { sub: 'user@example.com', scopes: ['discovery', 'status'] },
+        secret,
+        { algorithm: 'HS256', expiresIn: '5m' }
+      )
+      const res = await request(app)
+        .post('/rdcp/v1/control')
+        .set('X-RDCP-Auth-Method', 'bearer')
+        .set('X-RDCP-Client-ID', 'demo-client')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ action: 'enable', categories: ['API_ROUTES'] })
+      expect(res.status).toBe(403)
+    })
+
+    test('POST /rdcp/v1/control succeeds with bearer JWT including control scope', async () => {
+      // Ensure issuer/audience are not enforced for this test
+      process.env.JWT_ISSUER = ''
+      process.env.JWT_AUDIENCE = ''
+      const secret = process.env.JWT_SECRET || 'change-in-production'
+      const token = jwt.sign(
+        { sub: 'user@example.com', scopes: ['discovery', 'status', 'control'] },
+        secret,
+        { algorithm: 'HS256', expiresIn: '5m' }
+      )
+      const res = await request(app)
+        .post('/rdcp/v1/control')
+        .set('X-RDCP-Auth-Method', 'bearer')
+        .set('X-RDCP-Client-ID', 'demo-client')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ action: 'enable', categories: ['API_ROUTES'] })
+      expect([200,405]).toContain(res.status)
+    })
+
+    test('POST /rdcp/v1/control with tenant-specific scope works for that tenant and is denied for others', async () => {
+      process.env.JWT_ISSUER = ''
+      process.env.JWT_AUDIENCE = ''
+      // Relax rate limiting for this test
+      const prevMax = process.env.RATE_LIMIT_CONTROL_MAX
+      process.env.RATE_LIMIT_CONTROL_MAX = '10'
+
+      const secret = process.env.JWT_SECRET || 'change-in-production'
+      const tokenTenantA = jwt.sign(
+        { sub: 'ops@example.com', scopes: ['control:tenant-A'] },
+        secret,
+        { algorithm: 'HS256', expiresIn: '5m' }
+      )
+      // Allowed for tenant-A (unique client)
+      const resA = await request(app)
+        .post('/rdcp/v1/control')
+        .set('X-RDCP-Auth-Method', 'bearer')
+        .set('X-RDCP-Client-ID', `tenant-scope-A-${Date.now()}`)
+        .set('X-RDCP-Tenant-ID', 'tenant-A')
+        .set('Authorization', `Bearer ${tokenTenantA}`)
+        .send({ action: 'enable', categories: ['API_ROUTES'] })
+      expect([200,405]).toContain(resA.status)
+
+      // Denied for tenant-B (unique client)
+      const resB = await request(app)
+        .post('/rdcp/v1/control')
+        .set('X-RDCP-Auth-Method', 'bearer')
+        .set('X-RDCP-Client-ID', `tenant-scope-B-${Date.now()}`)
+        .set('X-RDCP-Tenant-ID', 'tenant-B')
+        .set('Authorization', `Bearer ${tokenTenantA}`)
+        .send({ action: 'enable', categories: ['API_ROUTES'] })
+      expect(resB.status).toBe(403)
+
+      // Global control allows any tenant (unique client)
+      const tokenGlobal = jwt.sign(
+        { sub: 'ops@example.com', scopes: ['control'] },
+        secret,
+        { algorithm: 'HS256', expiresIn: '5m' }
+      )
+      const resAny = await request(app)
+        .post('/rdcp/v1/control')
+        .set('X-RDCP-Auth-Method', 'bearer')
+        .set('X-RDCP-Client-ID', `tenant-scope-G-${Date.now()}`)
+        .set('X-RDCP-Tenant-ID', 'tenant-B')
+        .set('Authorization', `Bearer ${tokenGlobal}`)
+        .send({ action: 'enable', categories: ['API_ROUTES'] })
+      expect([200,405]).toContain(resAny.status)
+
+      // restore rate limit
+      process.env.RATE_LIMIT_CONTROL_MAX = prevMax
+    })
+
     test('GET /rdcp/v1/status with wrong audience returns 401 when JWT_AUDIENCE is set', async () => {
       const prev = process.env.JWT_AUDIENCE
       process.env.JWT_AUDIENCE = 'urn:foo'

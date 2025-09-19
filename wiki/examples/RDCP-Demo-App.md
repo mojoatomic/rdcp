@@ -300,40 +300,50 @@ Authentication & security:
   - RDCP required header enforcement for all /rdcp/v1/* endpoints (fast-fail 401 with RDCP_AUTH_REQUIRED)
   - E2E coverage for success/failure across API key, JWT (expiry/signature; optional issuer/audience), and mTLS (mock base64 JSON cert)
   - Rate limiting for POST /rdcp/v1/control (configurable) with `RDCP_AUDIT` structured logging
+  - Enterprise mTLS hardening with `RDCP_TRUSTED_CA_FINGERPRINTS` and `RDCP_ALLOWED_CERT_SUBJECTS`
+  - Hybrid mode subject matching (JWT sub == certificate CN); fallback behavior documented; env-gated warnings
+  - Standardized error shapes and testing helpers documentation
 - Next:
-  - Harden enterprise mTLS: enforce `RDCP_TRUSTED_CA_FINGERPRINTS` and `RDCP_ALLOWED_CERT_SUBJECTS`
-  - Hybrid mode assertions (mTLS + JWT subject match) and expanded negative cases
-  - Per-tenant auth and RBAC scope examples (tenant-aware controls)
-  - Document standardized error shapes and test helpers for consumers
+  - Expand negative cases (hybrid subject mismatch, fingerprint mismatch variants)
+  - Additional scope-negative tests for control/read across tenants
 
 Multi-tenancy:
-- Add explicit tenant header handling and views (X-RDCP-Tenant-ID, X-RDCP-Isolation-Level)
-- Add routes/scripts to enable/disable categories per-tenant and verify isolation
-- Demonstrate tenant context in responses and debug logs
+- Done:
+  - Tenant-scoped routes and RBAC (read/control) with e2e coverage
+  - Rate limiting and audit applied to tenant control route
+- Next:
+  - Add explicit tenant object in responses and debug logs when multi-tenant headers are present
+  - More examples and curl snippets for tenant flows
 
 Runtime controls & categories:
-- CLI/script to toggle categories with TTL (temporary controls)
-- Include all standard categories and add simple examples for each
-- Add /api routes that exercise QUERIES, REPORTS, CACHE, AUTH, INTEGRATIONS paths
+- Next:
+  - CLI/script to toggle categories with TTL (temporary controls)
+  - Include all standard categories and add simple examples for each
+  - Add /api routes exercising QUERIES, REPORTS, CACHE, AUTH, INTEGRATIONS
 
 Traces and propagation:
-- Add internal service call (second mini-service) to demonstrate context propagation across services
-- Document both W3C traceparent and B3 propagation (if configured)
-- Add baggage example for tenant/user correlation
+- Next:
+  - Add internal service call (second mini-service) to demonstrate context propagation
+  - Document both W3C traceparent and B3 propagation (if configured)
+  - Add baggage example for tenant/user correlation
 
 Observability & metrics:
-- Add application-level metrics (request counts, latencies) and expose /metrics (Prometheus optional)
-- Add logs-to-traces correlations in examples
+- Done:
+  - /metrics endpoint with request counters and histograms (prom-client)
+- Next:
+  - Add logs-to-traces correlation examples
 
 Testing & CI:
-- Supertest-based e2e tests for all endpoints under each auth mode
-- Scripted test harness to run benchmarks as part of CI (informational)
-- Add GitHub Actions example to run the demo app tests
+- Next:
+  - Supertest-based e2e tests for all endpoints under each auth mode
+  - Scripted test harness to run benchmarks as part of CI (informational)
+  - GitHub Actions example to run the demo app tests
 
 Developer experience:
-- Add Postman collection / HTTPie scripts
-- Add example front-end (optional) that calls the API and shows trace ids
-- Add Dockerfile for the app container (docker-compose already references one)
+- Next:
+  - Postman collection / HTTPie scripts
+  - Example front-end (optional) that calls the API and shows trace ids
+  - Dockerfile for the app container (docker-compose already references one)
 
 ---
 
