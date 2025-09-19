@@ -2,7 +2,7 @@
 
 **Project**: RDCP SDK  
 **Protocol Version**: RDCP v1.0  
-**Assessment Date**: 2025-09-17  
+**Assessment Date**: 2025-09-19
 **Documentation Sources**: `/docs/rdcp-protocol-specification.md`, `/docs/rdcp-implementation-guide.md`  
 
 ---
@@ -205,8 +205,8 @@ Per **Section 11** of the RDCP Protocol Specification:
 - ✅ **All Level 2 requirements**
 - ✅ **Security level: `enterprise` (mTLS + tokens)** 
 - ⚠️ **Real performance metrics**: Currently using placeholders (can be enhanced)
-- ⚠️ **Temporary controls with automatic expiration**: Not implemented
-- ⚠️ **Rate limiting**: Not implemented in core (can be added via middleware)
+- ✅ **Temporary controls with automatic expiration**: Implemented in demo app (TTL); core SDK support planned on roadmap
+- ⚠️ **Rate limiting**: Not implemented in core; demo app includes example middleware
 - ⚠️ **Full audit trail with compliance metadata**: Partially implemented
 - ⚠️ **Token refresh capability**: Not implemented
 - ⚠️ **Multiple active keys per client**: Not implemented
@@ -240,7 +240,7 @@ To achieve **Level 3: Enterprise** compliance, the following enhancements are ne
 ## Testing Coverage Assessment ✅
 
 ### Test Suite Completeness ✅
-- **73 Passed Tests** across 7 test suites
+- **184 Passed Tests** across 16 test suites
 - **✅ All Framework Adapters**: Express, Fastify, Koa tested
 - **✅ Authentication**: Basic auth with RDCP header validation
 - **✅ Validation System**: Request/response validation and error handling
@@ -338,8 +338,8 @@ Per **Section 10** of the RDCP Protocol Specification:
    - Enhancement needed for real-time performance monitoring
 
 2. **Temporary Controls** ⚠️
-   - Not implemented in current version
-   - Feature planned for enterprise compliance
+   - Implemented in demo app (TTL) with automatic expiry
+   - Core SDK support planned for enterprise compliance
 
 3. **Rate Limiting** ⚠️
    - Not implemented at protocol level

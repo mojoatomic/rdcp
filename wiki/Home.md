@@ -153,7 +153,7 @@ This SDK achieves **Level 2: Standard compliance** with RDCP v1.0 Protocol Speci
 - ✅ All 3 authentication security levels supported  
 - ✅ Multi-tenancy with standard header support
 - ✅ Protocol-compliant error handling
-- ✅ 73 passing tests across 7 test suites
+- ✅ 184 passing tests across 16 test suites
 - ✅ Production-ready with security hardening
 
 See [Protocol Compliance Report](https://github.com/mojoatomic/rdcp/blob/main/PROTOCOL-COMPLIANCE-REPORT.md) for detailed analysis.
