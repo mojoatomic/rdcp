@@ -227,6 +227,41 @@ function enforceControlRBAC(req, res, next) {
 // Tenant-scoped settings storage (demo only)
 const tenantSettings = new Map()
 
+// TTL timers for temporary controls per tenant/category
+const ttlTimers = new Map()
+
+function parseDurationToMs(input) {
+  if (!input) return 0
+  if (typeof input === 'number' && Number.isFinite(input)) return Math.max(0, input)
+  const s = String(input).trim()
+  const m = s.match(/^(\d+)(ms|s|m)?$/)
+  if (!m) return 0
+  const value = parseInt(m[1], 10)
+  const unit = m[2] || 'ms'
+  if (unit === 'ms') return value
+  if (unit === 's') return value * 1000
+  if (unit === 'm') return value * 60 * 1000
+  return 0
+}
+
+function scheduleCategoryTTL(tenantId, category, ms) {
+  const key = `${tenantId}:${category}`
+  // Clear any existing timer
+  const existing = ttlTimers.get(key)
+  if (existing) clearTimeout(existing)
+  if (ms <= 0) return
+  const t = setTimeout(() => {
+    try {
+      const cur = tenantSettings.get(tenantId) || { features: [], categories: [] }
+      cur.categories = (cur.categories || []).filter((c) => c !== category)
+      tenantSettings.set(tenantId, cur)
+    } finally {
+      ttlTimers.delete(key)
+    }
+  }, ms)
+  ttlTimers.set(key, t)
+}
+
 // Generic tenant RBAC middleware factory
 function requireTenantScope(scopeBase) {
   return function (req, res, next) {
@@ -269,7 +304,6 @@ function requireTenantScope(scopeBase) {
 
 // Apply tenant context decorator before defining routes so it affects all handlers
 app.use(decorateTenantContext)
-
 // Tenant routes
 app.get('/rdcp/v1/tenants/:tenantId/settings', requireTenantScope('read'), (req, res) => {
   const tenantId = String(req.params.tenantId)
@@ -279,15 +313,36 @@ app.get('/rdcp/v1/tenants/:tenantId/settings', requireTenantScope('read'), (req,
 
 app.post('/rdcp/v1/tenants/:tenantId/control', requireTenantScope('control'), (req, res) => {
   const tenantId = String(req.params.tenantId)
-  const { action, categories } = req.body || {}
+  const { action, categories, options } = req.body || {}
   const cur = tenantSettings.get(tenantId) || { features: [], categories: [] }
+  const cats = Array.isArray(categories) ? categories : []
+
   if (action === 'enable') {
-    cur.categories = Array.from(new Set([...(cur.categories || []), ...(categories || [])]))
+    cur.categories = Array.from(new Set([...(cur.categories || []), ...cats]))
+    // Handle temporary controls with TTL
+    const temporary = !!(options && options.temporary)
+    const durationMs = parseDurationToMs(options && options.duration)
+    if (temporary && durationMs > 0) {
+      for (const c of cats) scheduleCategoryTTL(tenantId, c, durationMs)
+    }
   } else if (action === 'disable') {
-    cur.categories = (cur.categories || []).filter((c) => !(categories || []).includes(c))
+    // Clear any pending TTL timers for disabled categories
+    for (const c of cats) {
+      const key = `${tenantId}:${c}`
+      const t = ttlTimers.get(key)
+      if (t) {
+        clearTimeout(t)
+        ttlTimers.delete(key)
+      }
+    }
+    cur.categories = (cur.categories || []).filter((c) => !cats.includes(c))
   }
   tenantSettings.set(tenantId, cur)
-  res.json({ success: true, tenantId, protocol: 'rdcp/1.0', requestId: req.id })
+  const response = { success: true, tenantId, protocol: 'rdcp/1.0', requestId: req.id }
+  if (options && options.temporary && options.duration) {
+    response.temporary = { enabled: true, duration: String(options.duration) }
+  }
+  res.json(response)
 })
 
 // Mount RDCP middleware (handles /.well-known/rdcp and /rdcp/v1/*)
