@@ -33,6 +33,15 @@ export interface RDCPFastifyMiddlewareOptions {
   basePath?: string
   performance?: Record<string, unknown>
   tenant?: Record<string, unknown>
+  capabilities?: {
+    temporaryControls?: boolean
+    ttl?: {
+      enabled?: boolean
+      minDurationMs?: number
+      maxDurationMs?: number
+      maxActiveTTLs?: number
+    }
+  }
 }
 
 /**
@@ -90,6 +99,7 @@ export function createRDCPMiddleware(
     debugConfig,
     performance,
     tenant,
+    capabilities: options.capabilities ?? {},
   })
 
   // Fastify middleware function - preHandler pattern (Context7 pattern)

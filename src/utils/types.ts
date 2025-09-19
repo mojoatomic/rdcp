@@ -80,7 +80,7 @@ export interface ControlRequest {
   options?:
     | {
         temporary?: boolean | undefined
-        duration?: number | undefined
+        duration?: number | string | undefined
         reason?: string | undefined
       }
     | undefined

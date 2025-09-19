@@ -7,7 +7,7 @@ export const controlRequestSchema = z.object({
   options: z
     .object({
       temporary: z.boolean().optional(),
-      duration: z.number().optional(),
+      duration: z.union([z.number(), z.string()]).optional(),
       reason: z.string().optional(),
     })
     .optional(),
