@@ -74,7 +74,7 @@
 "build": "tsc && rollup -c rollup.config.mjs",
     "lint": "eslint src examples --no-error-on-unmatched-pattern --ext .js,.ts --fix",
     "lint:ci": "eslint src examples --no-error-on-unmatched-pattern --ext .js,.ts --max-warnings=0",
-    "pretest": "npm run build",
+"pretest": "npm run build && npm ci --prefix packages/rdcp-demo-app",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
