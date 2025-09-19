@@ -89,6 +89,14 @@ Use this for the Dependencies graph and clean resets each run.
 Jaeger UI: http://localhost:16686
 Dependencies graph: http://localhost:16686/dependencies (refresh after a few seconds)
 
+### Finding demo traces in Jaeger
+- Lookback: set to Last 15–30 minutes
+- Service: start with rdcp-demo-app; also check upstream-service
+- Operations to try: GET /rdcp/v1/status, GET /rdcp/v1/discovery, POST /rdcp/v1/control, GET /api/users
+- Optional tags: http.route=/rdcp/v1/status or url.path=/rdcp/v1/status; user_agent.original=curl
+- Compare view: select multiple results and click Compare traces
+- If no results appear, seed traffic using `./packages/rdcp-demo-app/scripts/run-inmemory-demo.sh` (recommended) or hit endpoints with curl
+
 ---
 
 ## Next steps
@@ -174,6 +182,10 @@ Supertest e2e coverage (passing):
 - Accepts valid API key with required headers
 - `POST /rdcp/v1/control`: 405 on GET, 401 without headers, 200 with valid headers
 
+Related tests:
+- [tests/demo-app.auth.e2e.test.js](../../tests/demo-app.auth.e2e.test.js)
+- [tests/demo-app.control.e2e.test.js](../../tests/demo-app.control.e2e.test.js)
+
 Sample commands (basic mode):
 - export RDCP_API_KEY='dev-key-change-in-production-min-32-chars'
 - curl -H 'X-RDCP-Auth-Method: api-key' \
@@ -182,7 +194,9 @@ Sample commands (basic mode):
        http://localhost:3000/rdcp/v1/status | jq
 
 Current state:
-- The app wires up RDCP authentication utilities and middleware scaffolding; full strict enforcement (headers & modes) will be enabled as we add the complete demo flows below.
+- Strict RDCP header enforcement is enabled for /rdcp/v1/* (X-RDCP-Auth-Method and X-RDCP-Client-ID required; invalid/missing returns RDCP_AUTH_REQUIRED 401).
+- RDCP middleware uses an authenticator that wraps `validateRDCPAuth`; e2e tests cover success/failure for API key, JWT (expiry/signature, optional issuer/audience), and mTLS (mock base64 JSON cert).
+- Control endpoint includes demo-only rate limiting (429) and `RDCP_AUDIT` structured logs on success.
 
 Environment variables (for future/full flows):
 - RDCP_API_KEY – 32+ chars, used for API key auth
@@ -258,6 +272,7 @@ Example curl (mTLS + JWT hybrid):
 - Basic (API key) enforcement added with e2e tests
 - Standard (JWT Bearer) demo added with mint helper and e2e tests
 - Enterprise (mTLS + optional JWT) demo added with base64 JSON cert helper and e2e tests
+- RDCP header enforcement for /rdcp/v1/* (fast-fail 401 on missing/invalid X-RDCP-Auth-Method or X-RDCP-Client-ID)
 - Multi-tenancy isolation e2e added: per-tenant category enable/disable and verification
 - Rate limiting for POST /rdcp/v1/control (configurable) with audit trail logging and e2e tests
 - Prometheus /metrics endpoint with request counters and histograms (e2e)
@@ -265,14 +280,15 @@ Example curl (mTLS + JWT hybrid):
 ## Roadmap – What to add next (app improvements)
 
 Authentication & security:
-- Enforce RDCP required headers and authenticator in middleware for all RDCP endpoints
-- Implement fully testable flows for all 3 security levels:
-  1) basic – API key validation with constant-time compare
-  2) standard – JWT bearer with scopes, expiry, issuer/audience checks
-  3) enterprise – mTLS + optional token (hybrid), with cert subject validation and trusted CA fingerprints
-- Add e2e tests that cover success/failure cases per mode (missing header, invalid key, expired token, invalid cert, etc.)
-- Add rate limiting for POST /rdcp/v1/control (demo-only, configurable)
-- Add audit trail output for control operations (structured logs)
+- Done:
+  - RDCP required header enforcement for all /rdcp/v1/* endpoints (fast-fail 401 with RDCP_AUTH_REQUIRED)
+  - E2E coverage for success/failure across API key, JWT (expiry/signature; optional issuer/audience), and mTLS (mock base64 JSON cert)
+  - Rate limiting for POST /rdcp/v1/control (configurable) with `RDCP_AUDIT` structured logging
+- Next:
+  - Harden enterprise mTLS: enforce `RDCP_TRUSTED_CA_FINGERPRINTS` and `RDCP_ALLOWED_CERT_SUBJECTS`
+  - Hybrid mode assertions (mTLS + JWT subject match) and expanded negative cases
+  - Per-tenant auth and RBAC scope examples (tenant-aware controls)
+  - Document standardized error shapes and test helpers for consumers
 
 Multi-tenancy:
 - Add explicit tenant header handling and views (X-RDCP-Tenant-ID, X-RDCP-Isolation-Level)

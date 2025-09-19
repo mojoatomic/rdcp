@@ -1,6 +1,6 @@
 # Implementation Status
 
-Last updated: 2025-09-18
+Last updated: 2025-09-19
 
 ## Current Snapshot (Demo + Observability)
 - ✅ In-memory Jaeger demo validated (Dependencies graph visible)
@@ -9,6 +9,8 @@ Last updated: 2025-09-18
 - ✅ OpenTelemetry integration (Node) via `@rdcp/otel-plugin`
   - Auto-instrumentations enabled; trace correlation in RDCP debug logs
   - Verified export to Jaeger OTLP HTTP
+- ✅ RDCP header enforcement for /rdcp/v1/* (401 RDCP_AUTH_REQUIRED on missing/invalid headers)
+- ✅ Control endpoint: demo rate limiting (429) and `RDCP_AUDIT` structured logging (e2e)
 - ✅ Docker Compose adjusted to use `SPAN_STORAGE_TYPE=memory` for all-in-one
 - ♻️ Database demo removed (no native modules; simpler, fully resettable demo)
 - 📘 Wiki/README updated with quick local in-memory instructions
