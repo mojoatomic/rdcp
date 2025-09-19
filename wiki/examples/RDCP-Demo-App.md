@@ -158,9 +158,9 @@ Summary of recent additions
 - Logging: hybrid fallback downgraded to debug level by default; warnings gated by RDCP_WARN_ON_HYBRID_FALLBACK='true' or development
 
 Links
-- Error responses and codes: ../../docs/error-responses.md
-- Testing helpers and patterns: ../../docs/testing-helpers.md
-- Logging configuration (hybrid fallback): ../../docs/logging.md
+- Error responses and codes: ../Error-Responses.md
+- Testing helpers and patterns: ../Testing-Helpers.md
+- Logging configuration (hybrid fallback): ../Logging.md
 
 ### Basic (API Key) - Enforced in Demo
 

@@ -320,9 +320,9 @@ console.log('System Health:', health.status)
 
 ## Documentation
 
-- Error responses and codes: docs/error-responses.md
-- Testing helpers and patterns: docs/testing-helpers.md
-- Logging configuration (hybrid fallback): docs/logging.md
+- Error responses and codes: wiki/Error-Responses.md
+- Testing helpers and patterns: wiki/Testing-Helpers.md
+- Logging configuration (hybrid fallback): wiki/Logging.md
 
 ## API Reference
 

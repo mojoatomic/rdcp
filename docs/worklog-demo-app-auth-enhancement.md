@@ -31,7 +31,7 @@ What’s completed
 - Logging behavior:
   - Default: fallback logged at debug level only
   - Opt-in warnings via RDCP_WARN_ON_HYBRID_FALLBACK='true' or development env
-- Documented in docs/logging.md and docs/testing-helpers.md
+- Documented in wiki/Logging.md and wiki/Testing-Helpers.md
 
 4) RDCP header enforcement
 - All /rdcp/v1/* endpoints enforce X-RDCP-Auth-Method and X-RDCP-Client-ID (/.well-known/rdcp remains open)
@@ -56,9 +56,9 @@ Files touched (high-level)
   - tests/demo-app.auth.e2e.test.js (mTLS/hybrid/headers; control scope)
   - tests/demo-app.tenant.e2e.test.js (tenant RBAC)
 - Documentation
-  - docs/error-responses.md (NEW)
-  - docs/testing-helpers.md (NEW)
-  - docs/logging.md (NEW)
+- wiki/Error-Responses.md (NEW)
+- wiki/Testing-Helpers.md (NEW)
+- wiki/Logging.md (NEW)
   - README.md (links)
   - wiki/Home.md (links)
   - wiki/examples/RDCP-Demo-App.md (auth + notes)
