@@ -72,7 +72,7 @@ export function verifyCertificateChain(cert: X509Certificate): {
       }
     }
 
-    // CRITICAL: Validate subject against allowed list
+// CRITICAL: Validate subject against allowed list
     const subject = cert.subject
     const cnMatch = subject.match(/CN=([^,]+)/)
     if (!cnMatch) {
