@@ -112,6 +112,7 @@ import { RDCPHttpClient } from './utils/http.js'
 import { extractTenantContext, createTenantResponse } from './utils/tenant.js'
 import { createRDCPError } from './validation/errors.js'
 import { validateRDCPAuth } from './auth/index.js'
+import { extractApiKey as extractApiKeyFromBasic } from './auth/basic.js'
 
 /**
  * Framework adapters interface for legacy compatibility
@@ -166,11 +167,12 @@ export const auth = {
   validateRDCPAuth,
   basicAuthenticator: validateRDCPAuth,
   extractApiKey: (req: unknown): string | undefined => {
-    // Extract API key from request headers - implementation from auth/index.ts
-    const headers = (req as { headers: Record<string, string> }).headers
-    const authHeader = headers?.['authorization']
-    const apiKeyHeader = headers?.['x-api-key']
-    return authHeader?.replace('Bearer ', '') || apiKeyHeader
+    // Delegate to the robust extractor used by the basic authenticator
+    // Accept a minimal shape to satisfy typing while reusing logic
+    const requestLike = req as unknown as { headers: unknown }
+    return extractApiKeyFromBasic(
+      requestLike as unknown as import('express').Request
+    )
   },
 }
 

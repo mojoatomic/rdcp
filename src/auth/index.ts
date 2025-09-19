@@ -67,20 +67,7 @@ function validateRDCPHeaders(request: Request): {
   return { valid: true }
 }
 
-// Extract API key utility function (for compatibility)
-export function extractApiKey(request: Request): string | undefined {
-  const authHeader = request.headers['authorization']
-  const apiKeyHeader = request.headers['x-api-key']
-
-  // Handle potential string array from Express headers
-  const authValue = Array.isArray(authHeader) ? authHeader[0] : authHeader
-  const apiKeyValue = Array.isArray(apiKeyHeader)
-    ? apiKeyHeader[0]
-    : apiKeyHeader
-
-  const bearer = authValue?.startsWith('Bearer ') ? authValue.slice(7) : undefined
-  return bearer ?? apiKeyValue
-}
+export { extractApiKey } from './basic.js'
 
 // Basic authenticator alias (for compatibility)
 export const basicAuthenticator = validateRDCPAuth

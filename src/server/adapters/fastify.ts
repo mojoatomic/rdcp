@@ -14,6 +14,7 @@ import fp from 'fastify-plugin'
 import { RDCPServer } from '../index.js'
 import { createRDCPError } from '../../validation/errors.js'
 import { extractTenantContext, RDCPTenantContext } from '../../utils/tenant.js'
+import { logger } from '../../utils/logger.js'
 
 /**
  * RDCP Authenticator function interface for Fastify
@@ -62,7 +63,9 @@ type RDCPFastifyRequest = FastifyRequest<RDCPRouteGeneric> & {
  * Uses preHandler pattern for authentication and route-specific middleware
  * Following Context7 Fastify patterns
  */
-export function createRDCPMiddleware(options: RDCPFastifyMiddlewareOptions) {
+export function createRDCPMiddleware(
+  options: RDCPFastifyMiddlewareOptions
+): (request: FastifyRequest, reply: FastifyReply) => Promise<void> {
   if (!options) {
     throw new Error('authenticator function is required')
   }
@@ -172,7 +175,7 @@ export function createRDCPMiddleware(options: RDCPFastifyMiddlewareOptions) {
 
       reply.status(statusCode).type('application/json').send(response)
     } catch (error) {
-      console.error('RDCP middleware error:', error)
+      logger.error('RDCP middleware error:', error)
       const errorResponse = createRDCPError(
         'RDCP_SERVER_ERROR',
         'Internal server error'

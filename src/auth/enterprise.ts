@@ -9,6 +9,7 @@ import {
   parseCertificateFromHeader,
   extractTenantFromCN,
 } from './certificate-validator.js'
+import { logger } from '../utils/logger.js'
 
 const JWT_SECRET = process.env.JWT_SECRET ?? 'change-in-production'
 
@@ -30,11 +31,18 @@ export function validateRDCPAuth(request: Request): RDCPAuthResult {
 
   // Parse certificate from header
   const parseResult = parseCertificateFromHeader(certHeader)
-  if (parseResult.error || !parseResult.cert) {
+  if (parseResult.error) {
     return {
       valid: false,
       method: 'mtls',
       error: parseResult.error ?? 'Certificate parsing failed',
+    }
+  }
+  if (!parseResult.cert) {
+    return {
+      valid: false,
+      method: 'mtls',
+      error: 'Certificate parsing failed',
     }
   }
 
@@ -79,7 +87,7 @@ export function validateRDCPAuth(request: Request): RDCPAuthResult {
       }
     } catch (jwtError) {
       // Continue with cert-only auth if JWT fails
-      console.warn('JWT validation failed, continuing with cert-only auth')
+      logger.warn('JWT validation failed, continuing with cert-only auth')
     }
   }
 

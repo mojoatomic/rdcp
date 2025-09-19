@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 // File: src/debug.ts - Enhanced debug system with OpenTelemetry trace provider support
 // WARP Compliance: TypeScript-first, no any types, under 200 lines
 

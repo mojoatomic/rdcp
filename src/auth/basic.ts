@@ -1,15 +1,18 @@
 // File: src/auth/basic.ts - Basic Level (API Key) from implementation guide
 import * as crypto from 'crypto'
 import type { Request } from 'express'
+import { logger } from '../utils/logger.js'
 
 // Read API key at runtime for testability (Context7 Jest pattern)
 function getRDCPApiKey(): string {
   return process.env.RDCP_API_KEY ?? 'dev-key-change-in-production-min-32-chars'
 }
 
-function extractApiKey(request: Request): string | undefined {
+export function extractApiKey(request: Request): string | undefined {
   const headers = request.headers
-  const hasGet = (h: unknown): h is { get: (name: string) => string | undefined } =>
+  const hasGet = (
+    h: unknown
+  ): h is { get: (name: string) => string | undefined } =>
     typeof (h as { get?: unknown }).get === 'function'
 
   let authHeader: string | undefined
@@ -28,7 +31,9 @@ function extractApiKey(request: Request): string | undefined {
     apiKeyHeader = apiKeyValue
   }
 
-  const bearer = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : undefined
+  const bearer = authHeader?.startsWith('Bearer ')
+    ? authHeader.slice(7)
+    : undefined
   return bearer ?? apiKeyHeader
 }
 
@@ -57,7 +62,7 @@ export function validateRDCPAuth(request: Request): RDCPAuthResult {
   const RDCP_API_KEY = getRDCPApiKey()
 
   if (!RDCP_API_KEY || RDCP_API_KEY.length < 32) {
-    console.error('RDCP_API_KEY must be at least 32 characters for security')
+    logger.error('RDCP_API_KEY must be at least 32 characters for security')
     return {
       valid: false,
       method: 'api-key',

@@ -36,6 +36,7 @@ import { Context, Next } from 'koa'
 import { RDCPServer } from '../index.js'
 import { createRDCPError } from '../../validation/errors.js'
 import { RDCPTenantContext } from '../../utils/tenant.js'
+import { logger } from '../../utils/logger.js'
 
 /**
  * Extended Koa Request interface for body parsing
@@ -97,7 +98,9 @@ function extractTenantContextFromKoa(ctx: Context): RDCPTenantContext {
  * Uses Koa's async middleware pattern with ctx and next parameters
  * Following Context7 Koa middleware patterns
  */
-export function createRDCPMiddleware(options: RDCPKoaMiddlewareOptions) {
+export function createRDCPMiddleware(
+  options: RDCPKoaMiddlewareOptions
+): (ctx: KoaContextWithBody, next: Next) => Promise<void> {
   if (!options) {
     throw new Error('authenticator function is required')
   }
@@ -138,7 +141,7 @@ export function createRDCPMiddleware(options: RDCPKoaMiddlewareOptions) {
         !pathname.startsWith('/.well-known/rdcp') &&
         !pathname.startsWith(basePath)
       ) {
-        return await next() // Continue to next middleware (Context7 pattern)
+        await next() // Continue to next middleware (Context7 pattern)
       }
 
       // Handle .well-known/rdcp discovery endpoint (no auth required)
@@ -217,7 +220,7 @@ export function createRDCPMiddleware(options: RDCPKoaMiddlewareOptions) {
       ctx.type = 'application/json'
       ctx.body = response
     } catch (error) {
-      console.error('RDCP middleware error:', error)
+      logger.error('RDCP middleware error:', error)
       const errorResponse = createRDCPError(
         'RDCP_SERVER_ERROR',
         'Internal server error'
@@ -236,7 +239,7 @@ export function createRDCPMiddleware(options: RDCPKoaMiddlewareOptions) {
  */
 export function createRDCPMiddlewareWithErrorBoundary(
   options: RDCPKoaMiddlewareOptions
-) {
+): (ctx: KoaContextWithBody, next: Next) => Promise<void> {
   const middleware = createRDCPMiddleware(options)
 
   return async function rdcpMiddlewareWithErrorBoundary(
@@ -247,7 +250,7 @@ export function createRDCPMiddlewareWithErrorBoundary(
       return await middleware(ctx, next)
     } catch (error) {
       // Secondary error boundary for catastrophic failures
-      console.error('RDCP middleware catastrophic error:', error)
+      logger.error('RDCP middleware catastrophic error:', error)
       const errorResponse = createRDCPError(
         'RDCP_SERVER_ERROR',
         'System error occurred'

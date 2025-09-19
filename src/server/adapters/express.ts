@@ -9,6 +9,7 @@ import * as express from 'express'
 import { RDCPServer } from '../index.js'
 import { RDCPErrorClass, createRDCPError } from '../../validation/errors.js'
 import { extractTenantContext, RDCPTenantContext } from '../../utils/tenant.js'
+import { logger } from '../../utils/logger.js'
 
 /**
  * RDCP Authenticator function interface
@@ -39,7 +40,9 @@ interface RequestWithTenant extends Request {
  * Uses standard Express middleware pattern with req, res, next parameters
  * Following Context7 Express middleware patterns
  */
-export function createRDCPMiddleware(options: RDCPMiddlewareOptions) {
+export function createRDCPMiddleware(
+  options: RDCPMiddlewareOptions
+): (req: Request, res: Response, next: NextFunction) => Promise<void> {
   if (!options) {
     throw new Error('authenticator function is required')
   }
@@ -150,7 +153,7 @@ export function createRDCPMiddleware(options: RDCPMiddlewareOptions) {
 
       res.status(statusCode).json(response)
     } catch (error) {
-      console.error('RDCP middleware error:', error)
+      logger.error('RDCP middleware error:', error)
       const errorResponse = createRDCPError(
         'RDCP_SERVER_ERROR',
         'Internal server error'
@@ -180,7 +183,12 @@ export function createRDCPRouter(options: RDCPMiddlewareOptions): Router {
  * Should be used after RDCP middleware to catch any unhandled errors
  * Following Context7 Express error handler patterns (4 parameters)
  */
-export function createRDCPErrorHandler() {
+export function createRDCPErrorHandler(): (
+  error: Error,
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => void {
   return function rdcpErrorHandler(
     error: Error,
     req: Request,
@@ -192,7 +200,7 @@ export function createRDCPErrorHandler() {
       return next(error)
     }
 
-    console.error('RDCP error handler:', error)
+    logger.error('RDCP error handler:', error)
     const errorResponse = createRDCPError(
       error.code || 'RDCP_SERVER_ERROR',
       error.message

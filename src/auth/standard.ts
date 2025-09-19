@@ -5,7 +5,7 @@ import type { RDCPAuthResult } from './types.js'
 
 // Read JWT secret at runtime for testability (Context7 Jest pattern)
 function getJWTSecret(): string {
-  return process.env.JWT_SECRET || 'change-in-production'
+  return process.env.JWT_SECRET ?? 'change-in-production'
 }
 
 export function validateRDCPAuth(request: Request): RDCPAuthResult {
@@ -37,11 +37,13 @@ export function validateRDCPAuth(request: Request): RDCPAuthResult {
     return {
       valid: true,
       method: 'bearer',
-      userId: decoded.sub || decoded.email,
-      tenantId: decoded.org_id || decoded.tenant,
-      scopes: decoded.scopes || ['discovery', 'status'],
+      userId: (decoded.sub ?? decoded.email) as string | undefined,
+      tenantId: (decoded.org_id ?? (decoded as { tenant?: string }).tenant) as
+        | string
+        | undefined,
+      scopes: (decoded.scopes ?? ['discovery', 'status']) as string[],
       sessionId: decoded.session_id,
-      expiresAt: new Date((decoded.exp || 0) * 1000).toISOString(),
+      expiresAt: new Date(((decoded.exp ?? 0) as number) * 1000).toISOString(),
     }
   } catch (error) {
     return {

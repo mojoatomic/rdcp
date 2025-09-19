@@ -5,7 +5,6 @@
  */
 
 import {
-  extractTenantContext,
   getTenantDebugConfig,
   setTenantDebugConfig,
   createTenantResponse,
@@ -52,11 +51,8 @@ interface RDCPDiscoveryResponse extends RDCPResponse {
 
 /**
  * Control request body structure
+ * (Removed unused interface)
  */
-interface ControlRequestBody {
-  action: string
-  categories?: string[]
-}
 
 /**
  * Control response change
