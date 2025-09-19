@@ -45,6 +45,32 @@ const app = express()
 app.use(express.json())
 app.use(morgan('dev'))
 
+// Explicit RDCP header enforcement (fast-fail for /rdcp/v1/*)
+function enforceRDCPHeaders(req, res, next) {
+  if (!req.path.startsWith('/rdcp/v1/')) return next()
+
+  const method = req.headers['x-rdcp-auth-method']
+  const clientId = req.headers['x-rdcp-client-id']
+
+  if (!method) {
+    return res
+      .status(401)
+      .json(createRDCPError('RDCP_AUTH_REQUIRED', 'Missing required header: X-RDCP-Auth-Method'))
+  }
+  const validMethods = ['api-key', 'bearer', 'mtls', 'hybrid']
+  if (!validMethods.includes(String(method))) {
+    return res
+      .status(401)
+      .json(createRDCPError('RDCP_AUTH_REQUIRED', 'Invalid X-RDCP-Auth-Method'))
+  }
+  if (!clientId) {
+    return res
+      .status(401)
+      .json(createRDCPError('RDCP_AUTH_REQUIRED', 'Missing required header: X-RDCP-Client-ID'))
+  }
+  return next()
+}
+
 // Prometheus metrics setup
 const register = new client.Registry()
 client.collectDefaultMetrics({ register })
@@ -135,6 +161,7 @@ function auditControl(req, res, next) {
 }
 
 // Mount RDCP middleware (handles /.well-known/rdcp and /rdcp/v1/*)
+app.use(enforceRDCPHeaders)
 app.use(rateLimitControl)
 app.use(auditControl)
 app.use(rdcpMiddleware)
