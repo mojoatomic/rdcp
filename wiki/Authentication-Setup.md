@@ -401,8 +401,13 @@ All RDCP requests must include these headers per the protocol specification:
 ```http
 X-RDCP-Auth-Method: api-key | bearer | mtls | hybrid
 X-RDCP-Client-ID: <client-identifier>
-X-RDCP-Request-ID: <unique-request-id>  # Optional but recommended
+X-RDCP-Request-ID: <unique-request-id>  # Optional (UUID). Echoed as X-Request-Id; generated when absent
 ```
+
+### Request Correlation (optional)
+
+- If provided, X-RDCP-Request-ID must be a valid UUID. Invalid values return RDCP_REQUEST_ID_INVALID (400).
+- All RDCP responses include X-Request-Id. If X-RDCP-Request-ID is provided and valid, it is echoed; otherwise, a new UUID is generated.
 
 ## Error Responses
 

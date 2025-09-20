@@ -11,16 +11,41 @@ import {
   RDCPTenantContext,
   TenantDebugConfig,
 } from '../utils/tenant.js'
-import { createRDCPError } from '../validation/errors.js'
+import { createRDCPError, createRateLimitError } from '../validation/errors.js'
 import { RDCPResponse, TenantContext } from '../utils/types.js'
+import { TokenBucketLimiter, RateLimitConfig } from './rateLimiter.js'
+import {
+  AuditSink,
+  NoopAuditSink,
+  ConsoleAuditSink,
+  FileAuditSink,
+  FileAuditOptions,
+} from './audit.js'
 
 /**
  * RDCP Server configuration options
  */
+type AuditRedactFn = (
+  r: import('./audit.js').AuditRecord
+) => import('./audit.js').AuditRecord
+
 export interface RDCPServerOptions {
   debugConfig?: Record<string, boolean>
   performance?: Record<string, unknown>
   tenant?: Record<string, unknown>
+  // Hook for adapters to observe rate limit results per request
+  onRateLimit?: (event: {
+    endpoint: 'discovery' | 'control' | 'status' | 'health'
+    tenantId: string | null
+    allowed: boolean
+    remaining: number
+    resetMs: number
+    limit: number
+    windowMs: number
+    requestId?: string
+  }) => void
+  // Random source (for sampling); defaults to Math.random
+  random?: () => number
   capabilities?: {
     temporaryControls?: boolean
     ttl?: {
@@ -28,6 +53,29 @@ export interface RDCPServerOptions {
       minDurationMs?: number
       maxDurationMs?: number
       maxActiveTTLs?: number
+    }
+    rateLimit?: {
+      enabled?: boolean
+      headers?: boolean
+      headersMode?: 'x' | 'draft-7'
+      defaultRule?: {
+        windowMs?: number
+        maxRequests?: number
+      }
+      perEndpoint?: Record<string, { windowMs?: number; maxRequests?: number }>
+      perTenant?: Record<string, { windowMs?: number; maxRequests?: number }>
+    }
+    audit?: {
+      enabled?: boolean
+      sink?: 'console' | 'file' | 'none'
+      file?: {
+        path?: string
+        maxBytes?: number
+        maxFiles?: number
+      }
+      sampleRate?: number
+      redact?: AuditRedactFn
+      failureMode?: 'ignore' | 'warn' | 'fail'
     }
   }
 }
@@ -38,6 +86,7 @@ export interface RDCPServerOptions {
 interface DiscoveryOptions {
   basePath?: string
   tenant?: RDCPTenantContext
+  requestId?: string
 }
 
 /**
@@ -134,6 +183,16 @@ export class RDCPServer {
     maxDurationMs: number
     maxActiveTTLs: number | null
   }
+  private rateLimitingEnabled: boolean
+  private rateLimiter?: TokenBucketLimiter
+  private rateLimitHeadersEnabled: boolean
+  private rateLimitHeadersMode: 'x' | 'draft-7'
+  private auditSink: AuditSink
+  private randomFn: () => number
+  private auditSampleRate: number | undefined
+  private auditRedact: AuditRedactFn | undefined
+  private auditFailureMode: 'ignore' | 'warn' | 'fail' | undefined
+  private onRateLimit?: RDCPServerOptions['onRateLimit']
 
   constructor(options: RDCPServerOptions = {}) {
     this.debugConfig = options.debugConfig ?? {}
@@ -143,6 +202,55 @@ export class RDCPServer {
     this.temporaryControlsEnabled =
       options.capabilities?.temporaryControls === true ||
       options.capabilities?.ttl?.enabled === true
+
+    // Rate limiting configuration
+    this.onRateLimit = options.onRateLimit
+
+    const rlOptions = options.capabilities?.rateLimit
+    this.rateLimitingEnabled = rlOptions?.enabled === true
+    this.rateLimitHeadersEnabled = rlOptions?.headers === true
+    this.rateLimitHeadersMode = rlOptions?.headersMode ?? 'x'
+    if (this.rateLimitingEnabled) {
+      const defaultRule = {
+        windowMs: rlOptions?.defaultRule?.windowMs ?? 60_000,
+        maxRequests: rlOptions?.defaultRule?.maxRequests ?? 60,
+      }
+      const rlConfig: RateLimitConfig = {
+        enabled: true,
+        defaultRule,
+      }
+      if (rlOptions?.perEndpoint) rlConfig.perEndpoint = rlOptions.perEndpoint
+      if (rlOptions?.perTenant) rlConfig.perTenant = rlOptions.perTenant
+      this.rateLimiter = new TokenBucketLimiter(rlConfig)
+    }
+
+    // Audit sink
+    const auditOpts = options.capabilities?.audit
+    this.randomFn = options.random ?? Math.random
+    this.auditSampleRate = auditOpts?.sampleRate
+    this.auditRedact = auditOpts?.redact
+    this.auditFailureMode = auditOpts?.failureMode ?? 'ignore'
+    if (auditOpts?.enabled) {
+      if (auditOpts.sink === 'console') {
+        this.auditSink = new ConsoleAuditSink()
+      } else if (auditOpts.sink === 'file') {
+        const fileOpts: FileAuditOptions = {}
+        if (auditOpts.file?.path) {
+          fileOpts.path = auditOpts.file.path
+        }
+        if (auditOpts.file?.maxBytes) {
+          fileOpts.maxBytes = auditOpts.file.maxBytes
+        }
+        if (auditOpts.file?.maxFiles) {
+          fileOpts.maxFiles = auditOpts.file.maxFiles
+        }
+        this.auditSink = new FileAuditSink(fileOpts)
+      } else {
+        this.auditSink = new NoopAuditSink()
+      }
+    } else {
+      this.auditSink = new NoopAuditSink()
+    }
 
     const minDurationMs = options.capabilities?.ttl?.minDurationMs ?? 1
     // Default: 1 hour
@@ -162,7 +270,42 @@ export class RDCPServer {
    * Handle RDCP discovery endpoint
    * Returns available endpoints and capabilities
    */
-  handleDiscovery(options: DiscoveryOptions = {}): RDCPDiscoveryResponse {
+  handleDiscovery(
+    options: DiscoveryOptions = {}
+  ): RDCPDiscoveryResponse | ReturnType<typeof createRDCPError> {
+    // Rate limit: discovery
+    if (this.rateLimitingEnabled && this.rateLimiter) {
+      const res = this.rateLimiter.check({
+        endpoint: 'discovery',
+        tenantId: options.tenant?.tenantId ?? null,
+      })
+      this.onRateLimit?.({
+        endpoint: 'discovery',
+        tenantId: options.tenant?.tenantId ?? null,
+        allowed: res.allowed,
+        remaining: res.remaining,
+        resetMs: res.resetMs,
+        limit: res.limit,
+        windowMs: res.windowMs,
+        ...(options.requestId ? { requestId: options.requestId } : {}),
+      })
+      if (!res.allowed) {
+        const retryAfterSec = Math.ceil(res.resetMs / 1000)
+        const resetEpoch = Math.ceil((Date.now() + res.resetMs) / 1000)
+        const policy = `${res.limit};w=${Math.ceil(res.windowMs / 1000)}`
+        return createRateLimitError(
+          {
+            limit: res.limit,
+            remaining: Math.max(0, res.remaining),
+            reset: resetEpoch,
+            retryAfterSec,
+            policy,
+            ...(options.requestId ? { requestId: options.requestId } : {}),
+          },
+          `Discovery rate limited. Retry after ${res.resetMs}ms`
+        )
+      }
+    }
     const { basePath = '/rdcp/v1', tenant } = options
 
     const response: RDCPDiscoveryResponse = {
@@ -203,8 +346,47 @@ export class RDCPServer {
    */
   async handleControl(
     body: unknown,
-    tenantContext: RDCPTenantContext
+    tenantContext: RDCPTenantContext,
+    req?: {
+      requestId?: string
+      authMethod?: string
+      clientId?: string
+      ip?: string
+    }
   ): Promise<RDCPControlResponse | ReturnType<typeof createRDCPError>> {
+    // Rate limit: control
+    if (this.rateLimitingEnabled && this.rateLimiter) {
+      const res = this.rateLimiter.check({
+        endpoint: 'control',
+        tenantId: tenantContext.tenantId,
+      })
+      this.onRateLimit?.({
+        endpoint: 'control',
+        tenantId: tenantContext.tenantId,
+        allowed: res.allowed,
+        remaining: res.remaining,
+        resetMs: res.resetMs,
+        limit: res.limit,
+        windowMs: res.windowMs,
+        ...(req?.requestId ? { requestId: req.requestId } : {}),
+      })
+      if (!res.allowed) {
+        const retryAfterSec = Math.ceil(res.resetMs / 1000)
+        const resetEpoch = Math.ceil((Date.now() + res.resetMs) / 1000)
+        const policy = `${res.limit};w=${Math.ceil(res.windowMs / 1000)}`
+        return createRateLimitError(
+          {
+            limit: res.limit,
+            remaining: Math.max(0, res.remaining),
+            reset: resetEpoch,
+            retryAfterSec,
+            policy,
+            ...(req?.requestId ? { requestId: req.requestId } : {}),
+          },
+          `Control rate limited. Retry after ${res.resetMs}ms`
+        )
+      }
+    }
     // Type guard to ensure body has expected shape
     const requestBody = body as {
       action?: string
@@ -306,6 +488,58 @@ export class RDCPServer {
         timestamp: new Date().toISOString(),
         changes,
         status: 'success' as const,
+      } as RDCPControlResponse & { __rdcpWarnings?: string[] }
+
+      // Emit audit record (success)
+      try {
+        // sampling
+        const pass =
+          this.auditSampleRate === undefined
+            ? true
+            : this.randomFn() < this.auditSampleRate
+        if (pass) {
+          const rec = {
+            event: 'RDCP_AUDIT' as const,
+            timestamp: response.timestamp ?? new Date().toISOString(),
+            action: action,
+            categories,
+            tenantId: tenantContext.tenantId,
+            status: 'success' as const,
+            ...(req?.requestId ? { requestId: req.requestId } : {}),
+            ...(req?.authMethod ? { authMethod: req.authMethod } : {}),
+            ...(req?.clientId ? { clientId: req.clientId } : {}),
+            ...(req?.ip ? { ip: req.ip } : {}),
+          }
+          const out = this.auditRedact ? this.auditRedact(rec) : rec
+          this.auditSink.write(out)
+        }
+      } catch (e) {
+        // audit write failure handling per configuration
+        const fm = this.auditFailureMode ?? 'ignore'
+        if (fm === 'fail') {
+          const sinkType =
+            this.auditSink instanceof FileAuditSink
+              ? 'file'
+              : this.auditSink instanceof ConsoleAuditSink
+                ? 'console'
+                : 'none'
+          return createRDCPError(
+            'RDCP_AUDIT_WRITE_FAILED',
+            'Audit sink write failed',
+            {
+              sink: sinkType,
+              reason: e instanceof Error ? e.message : 'unknown',
+              ...(req?.requestId ? { requestId: req.requestId } : {}),
+            }
+          )
+        }
+        if (fm === 'warn') {
+          response.__rdcpWarnings = [
+            ...(response.__rdcpWarnings ?? []),
+            'audit-write-failed',
+          ]
+        }
+        // ignore mode: swallow
       }
 
       return createTenantResponse(response, tenantContext)
@@ -382,7 +616,43 @@ export class RDCPServer {
    * Handle RDCP status endpoint
    * Returns current debug status with tenant isolation
    */
-  handleStatus(tenantContext: RDCPTenantContext): RDCPStatusResponse {
+  handleStatus(
+    tenantContext: RDCPTenantContext,
+    req?: { requestId?: string }
+  ): RDCPStatusResponse | ReturnType<typeof createRDCPError> {
+    // Rate limit: status
+    if (this.rateLimitingEnabled && this.rateLimiter) {
+      const res = this.rateLimiter.check({
+        endpoint: 'status',
+        tenantId: tenantContext.tenantId,
+      })
+      this.onRateLimit?.({
+        endpoint: 'status',
+        tenantId: tenantContext.tenantId,
+        allowed: res.allowed,
+        remaining: res.remaining,
+        resetMs: res.resetMs,
+        limit: res.limit,
+        windowMs: res.windowMs,
+        ...(req?.requestId ? { requestId: req.requestId } : {}),
+      })
+      if (!res.allowed) {
+        const retryAfterSec = Math.ceil(res.resetMs / 1000)
+        const resetEpoch = Math.ceil((Date.now() + res.resetMs) / 1000)
+        const policy = `${res.limit};w=${Math.ceil(res.windowMs / 1000)}`
+        return createRateLimitError(
+          {
+            limit: res.limit,
+            remaining: Math.max(0, res.remaining),
+            reset: resetEpoch,
+            retryAfterSec,
+            policy,
+            ...(req?.requestId ? { requestId: req.requestId } : {}),
+          },
+          `Status rate limited. Retry after ${res.resetMs}ms`
+        )
+      }
+    }
     // Get tenant-specific configuration
     const tenantConfig = getTenantDebugConfig(tenantContext.tenantId)
 
@@ -416,7 +686,39 @@ export class RDCPServer {
    * Handle RDCP health endpoint
    * Returns system health status (global, not tenant-specific)
    */
-  handleHealth(): RDCPHealthResponse {
+  handleHealth(req?: {
+    requestId?: string
+  }): RDCPHealthResponse | ReturnType<typeof createRDCPError> {
+    // Rate limit: health
+    if (this.rateLimitingEnabled && this.rateLimiter) {
+      const res = this.rateLimiter.check({ endpoint: 'health', tenantId: null })
+      this.onRateLimit?.({
+        endpoint: 'health',
+        tenantId: null,
+        allowed: res.allowed,
+        remaining: res.remaining,
+        resetMs: res.resetMs,
+        limit: res.limit,
+        windowMs: res.windowMs,
+        ...(req?.requestId ? { requestId: req.requestId } : {}),
+      })
+      if (!res.allowed) {
+        const retryAfterSec = Math.ceil(res.resetMs / 1000)
+        const resetEpoch = Math.ceil((Date.now() + res.resetMs) / 1000)
+        const policy = `${res.limit};w=${Math.ceil(res.windowMs / 1000)}`
+        return createRateLimitError(
+          {
+            limit: res.limit,
+            remaining: Math.max(0, res.remaining),
+            reset: resetEpoch,
+            retryAfterSec,
+            policy,
+            ...(req?.requestId ? { requestId: req.requestId } : {}),
+          },
+          `Health rate limited. Retry after ${res.resetMs}ms`
+        )
+      }
+    }
     return {
       protocol: 'rdcp/1.0',
       timestamp: new Date().toISOString(),

@@ -1459,6 +1459,45 @@ When `isolationLevel` is not `global`, all control operations MUST include:
 - Standard headers enable tool interoperability
 - SecFlo can use Clerk while others use different auth systems
 
+### Server capabilities: rate limiting and audit
+
+The server supports optional rate limiting and persistent audit with configurable behavior.
+
+- Rate limiting
+  - Configuration supports defaultRule, perEndpoint, perTenant
+  - Standard headers (draft-7) are emitted when enabled; Retry-After is added on limited responses
+- Audit
+  - Sink options: console | file | none (file supports rotation/retention)
+  - sampleRate: number (0.0–1.0)
+  - redact: (record) => record (optional redaction)
+  - failureMode: 'ignore' | 'warn' | 'fail'
+    - ignore (default): do nothing on write failure
+    - warn: adapters add Warning: 199 rdcp "audit-write-failed"
+    - fail: returns RDCP_AUDIT_WRITE_FAILED (500) with details
+
+Example (Express adapter):
+```ts
+adapters.express.createRDCPMiddleware({
+  authenticator: auth.validateRDCPAuth,
+  capabilities: {
+    rateLimit: {
+      enabled: true,
+      headers: true,
+      headersMode: 'draft-7',
+      defaultRule: { windowMs: 60000, maxRequests: 120 },
+      perEndpoint: { control: { windowMs: 10000, maxRequests: 10 } },
+    },
+    audit: {
+      enabled: true,
+      sink: 'file',
+      sampleRate: 0.25,
+      failureMode: 'warn',
+      file: { path: 'rdcp-audit.log', maxBytes: 5*1024*1024, maxFiles: 5 }
+    }
+  }
+})
+```
+
 ### eBPF Readiness
 **Emerging Trend**: Kernel-level observability becoming crucial.
 

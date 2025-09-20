@@ -204,3 +204,44 @@ Logging behavior for hybrid fallback
 ```bash
 export RDCP_WARN_ON_HYBRID_FALLBACK='true'
 ```
+
+## Cross-adapter consistency (headers)
+
+Verify identical behavior across Express, Fastify, and Koa for X-Request-Id echo and RateLimit draft-7 headers.
+
+```js
+const request = require('supertest')
+const { createExpressApp, createFastifyApp, createKoaApp } = require('./test-helpers') // pseudo-helpers
+
+describe('Cross-adapter: headers', () => {
+  const uuid = '00000000-0000-4000-8000-000000000000'
+
+  test.each([
+    ['express', createExpressApp()],
+    ['fastify', createFastifyApp()],
+    ['koa', createKoaApp()],
+  ])('%s echoes X-Request-Id and sets RateLimit headers when enabled', async (_name, app) => {
+    // echo supplied request id
+    let res = await request(app)
+      .get('/rdcp/v1/status')
+      .set('X-RDCP-Auth-Method', 'api-key')
+      .set('X-RDCP-Client-ID', 'x-adapter')
+      .set('X-API-Key', 'dev-key-change-in-production-min-32-chars')
+      .set('X-RDCP-Request-ID', uuid)
+    expect(res.headers['x-request-id']).toBe(uuid)
+
+    // generated when absent
+    res = await request(app)
+      .get('/rdcp/v1/status')
+      .set('X-RDCP-Auth-Method', 'api-key')
+      .set('X-RDCP-Client-ID', 'x-adapter')
+      .set('X-API-Key', 'dev-key-change-in-production-min-32-chars')
+    expect(res.headers['x-request-id']).toBeTruthy()
+
+    // RateLimit headers on discovery when enabled
+    res = await request(app).get('/.well-known/rdcp')
+    // Note: enable rateLimit.headers: true in your server config
+    expect(res.headers['ratelimit-policy'] || res.headers['x-ratelimit-limit']).toBeTruthy()
+  })
+})
+```

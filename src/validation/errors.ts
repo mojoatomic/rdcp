@@ -26,6 +26,7 @@ export const RDCP_ERROR_CODES = {
   RDCP_INVALID_PROTOCOL: 'RDCP_INVALID_PROTOCOL',
   RDCP_NOT_FOUND: 'RDCP_NOT_FOUND',
   RDCP_RATE_LIMITED: 'RDCP_RATE_LIMITED',
+  RDCP_REQUEST_ID_INVALID: 'RDCP_REQUEST_ID_INVALID',
 
   // Server errors (5xx)
   RDCP_SERVER_ERROR: 'RDCP_SERVER_ERROR',
@@ -34,6 +35,8 @@ export const RDCP_ERROR_CODES = {
   RDCP_TIMEOUT: 'RDCP_TIMEOUT',
   RDCP_CONFIGURATION_ERROR: 'RDCP_CONFIGURATION_ERROR',
   RDCP_STORAGE_ERROR: 'RDCP_STORAGE_ERROR',
+  RDCP_AUDIT_WRITE_FAILED: 'RDCP_AUDIT_WRITE_FAILED',
+  RDCP_RATE_LIMIT_MISCONFIGURED: 'RDCP_RATE_LIMIT_MISCONFIGURED',
 
   // Protocol errors
   RDCP_UNSUPPORTED_VERSION: 'RDCP_UNSUPPORTED_VERSION',
@@ -63,6 +66,7 @@ export const ERROR_STATUS_MAP: Record<RDCPErrorCode, number> = {
   [RDCP_ERROR_CODES.RDCP_INVALID_PROTOCOL]: 400,
   [RDCP_ERROR_CODES.RDCP_NOT_FOUND]: 404,
   [RDCP_ERROR_CODES.RDCP_RATE_LIMITED]: 429,
+  [RDCP_ERROR_CODES.RDCP_REQUEST_ID_INVALID]: 400,
   [RDCP_ERROR_CODES.RDCP_MALFORMED_REQUEST]: 400,
   [RDCP_ERROR_CODES.RDCP_UNSUPPORTED_VERSION]: 400,
   [RDCP_ERROR_CODES.RDCP_SERVER_ERROR]: 500,
@@ -71,6 +75,8 @@ export const ERROR_STATUS_MAP: Record<RDCPErrorCode, number> = {
   [RDCP_ERROR_CODES.RDCP_TIMEOUT]: 504,
   [RDCP_ERROR_CODES.RDCP_CONFIGURATION_ERROR]: 500,
   [RDCP_ERROR_CODES.RDCP_STORAGE_ERROR]: 500,
+  [RDCP_ERROR_CODES.RDCP_AUDIT_WRITE_FAILED]: 500,
+  [RDCP_ERROR_CODES.RDCP_RATE_LIMIT_MISCONFIGURED]: 500,
 }
 
 /**
@@ -101,12 +107,14 @@ export interface RDCPErrorWithStatus {
  */
 export function createRDCPError(
   code: RDCPErrorCode,
-  message: string
+  message: string,
+  details?: Record<string, unknown>
 ): RDCPError {
   return {
     error: {
       code,
       message,
+      ...(details ? { details } : {}),
       protocol: 'rdcp/1.0',
       timestamp: new Date().toISOString(),
     },
@@ -118,10 +126,11 @@ export function createRDCPError(
  */
 export function createRDCPErrorWithStatus(
   code: RDCPErrorCode,
-  message: string
+  message: string,
+  details?: Record<string, unknown>
 ): RDCPErrorWithStatus {
   return {
-    error: createRDCPError(code, message).error,
+    error: createRDCPError(code, message, details).error,
     statusCode: ERROR_STATUS_MAP[code] || 500,
   }
 }
@@ -155,6 +164,45 @@ export function createAuthError(reason: string): RDCPError {
   return createRDCPError(
     RDCP_ERROR_CODES.RDCP_AUTH_REQUIRED,
     `Authentication required: ${reason}`
+  )
+}
+
+/**
+ * Specialized details for rate limiting error
+ */
+export interface RateLimitErrorDetails extends Record<string, unknown> {
+  limit: number
+  remaining: number
+  reset: number // epoch seconds
+  retryAfterSec?: number
+  policy?: string
+  requestId?: string
+}
+
+/**
+ * Specialized details for audit write error
+ */
+export interface AuditWriteErrorDetails extends Record<string, unknown> {
+  sink: 'file' | 'console' | 'custom' | 'none'
+  reason: string
+  requestId?: string
+}
+
+export function createRateLimitError(
+  details: RateLimitErrorDetails,
+  message = 'Request was rate limited'
+): RDCPError {
+  return createRDCPError(RDCP_ERROR_CODES.RDCP_RATE_LIMITED, message, details)
+}
+
+export function createAuditWriteError(
+  details: AuditWriteErrorDetails,
+  message = 'Failed to write audit record'
+): RDCPError {
+  return createRDCPError(
+    RDCP_ERROR_CODES.RDCP_AUDIT_WRITE_FAILED,
+    message,
+    details
   )
 }
 

@@ -1,4 +1,54 @@
-# Basic Usage
+## Basic Usage
+
+### Capabilities: Rate limiting and Audit (optional)
+
+Add optional rate limiting and persistent audit to RDCP middleware. These are disabled by default.
+
+- Rate limiting: per-endpoint and per-tenant rules; emit either X-RateLimit-* or standardized RateLimit headers (draft-7)
+- Audit: file sink with rotation/retention, optional sampling and redaction hook
+
+Example (Express):
+
+```ts
+import express from 'express'
+import { adapters, auth } from '@rdcp/server'
+
+const app = express()
+app.use(express.json())
+
+app.use(
+  adapters.express.createRDCPMiddleware({
+    authenticator: auth.validateRDCPAuth,
+    capabilities: {
+      rateLimit: {
+        enabled: true,
+        headers: true,
+        headersMode: 'draft-7', // or 'x'
+        defaultRule: { windowMs: 60000, maxRequests: 120 },
+        perEndpoint: { control: { windowMs: 10000, maxRequests: 10 } },
+        perTenant: { 'tenant-A': { windowMs: 60000, maxRequests: 30 } },
+      },
+      audit: {
+        enabled: true,
+        sink: 'file',
+        file: { path: 'rdcp-audit.log', maxBytes: 5 * 1024 * 1024, maxFiles: 5 },
+        sampleRate: 0.5,
+        failureMode: 'warn', // or 'ignore' (default) | 'fail'
+      },
+    },
+  })
+)
+
+app.listen(3000)
+```
+
+Notes:
+- Request correlation: If you provide X-RDCP-Request-ID (UUID), adapters echo it back as X-Request-Id on all RDCP responses. If omitted, a new UUID is generated and returned in X-Request-Id. If provided but invalid, adapters return RDCP_REQUEST_ID_INVALID (400).
+- Rate limit headers: When rate limiting is enabled, adapters emit standard draft-7 headers (RateLimit, RateLimit-Policy, RateLimit-Remaining, RateLimit-Reset) and Retry-After on limited responses. Legacy X-RateLimit-* headers can be enabled via headersMode: 'x'.
+- Audit failure behavior:
+  - failureMode: 'ignore' – audit write failures are ignored (default)
+  - failureMode: 'warn' – adapters add Warning: 199 rdcp "audit-write-failed"
+  - failureMode: 'fail' – server returns RDCP_AUDIT_WRITE_FAILED (500) with details { sink, reason, requestId? }
 
 This guide shows how to quickly integrate RDCP SDK with your application across all supported frameworks.
 
@@ -289,6 +339,42 @@ curl -H "X-API-Key: your-api-key" \
      -H "X-RDCP-Auth-Method: api-key" \
      -H "X-RDCP-Client-ID: test-client" \
      http://localhost:3000/rdcp/v1/health
+```
+
+### Request Correlation (X-RDCP-Request-ID -> X-Request-Id)
+
+- Provide a UUID in X-RDCP-Request-ID to correlate requests; it will be echoed as X-Request-Id in the response.
+- If you don't provide X-RDCP-Request-ID, the server generates one and returns it in X-Request-Id.
+- If X-RDCP-Request-ID is not a valid UUID, the server returns RDCP_REQUEST_ID_INVALID (400).
+
+Examples:
+```bash
+# With a supplied UUID (echoed back)
+UUID=$(uuidgen)
+curl -i \
+  -H 'X-API-Key: your-api-key' \
+  -H 'X-RDCP-Auth-Method: api-key' \
+  -H 'X-RDCP-Client-ID: test-client' \
+  -H "X-RDCP-Request-ID: $UUID" \
+  http://localhost:3000/rdcp/v1/status | sed -n '1,/^$/p'
+
+# Without a supplied UUID (server generates X-Request-Id)
+curl -i \
+  -H 'X-API-Key: your-api-key' \
+  -H 'X-RDCP-Auth-Method: api-key' \
+  -H 'X-RDCP-Client-ID: test-client' \
+  http://localhost:3000/rdcp/v1/status | sed -n '1,/^$/p'
+```
+
+### RateLimit headers (draft-7)
+
+When rate limiting is enabled (capabilities.rateLimit.headers: true):
+```bash
+curl -i \
+  -H 'X-API-Key: your-api-key' \
+  -H 'X-RDCP-Auth-Method: api-key' \
+  -H 'X-RDCP-Client-ID: test-client' \
+  http://localhost:3000/.well-known/rdcp | grep -i 'ratelimit\|retry-after'
 ```
 
 ## Configuration Options
