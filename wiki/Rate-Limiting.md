@@ -143,3 +143,4 @@ curl -s -o /dev/null -w '%{http_code}\n' \
 See also:
 - Error-Responses.md (RDCP_RATE_LIMITED details)
 - Basic-Usage.md (capabilities configuration)
+- Monitoring & Metrics (Monitoring.md) — /status measured metrics and Prometheus /metrics
