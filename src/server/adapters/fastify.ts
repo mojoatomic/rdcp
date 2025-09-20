@@ -225,7 +225,12 @@ export function createRDCPMiddleware(
           statusCode = 405
         } else {
           const body = request.body || {}
-          response = await rdcpServer.handleControl(body, tenantContext, { requestId: reqId })
+          response = await rdcpServer.handleControl(body, tenantContext, {
+            requestId: reqId,
+            authMethod: (request.headers['x-rdcp-auth-method'] as string) || undefined,
+            clientId: (request.headers['x-rdcp-client-id'] as string) || undefined,
+            ip: (request as any).ip,
+          })
         }
       } else if (pathname === `${basePath}/status`) {
         response = rdcpServer.handleStatus(tenantContext, { requestId: reqId })

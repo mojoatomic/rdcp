@@ -179,7 +179,7 @@ export class RDCPServer {
   private auditSink: AuditSink
   private randomFn: () => number
   private auditSampleRate: number | undefined
-  private auditRedact?: (r: import('./audit.js').AuditRecord) => import('./audit.js').AuditRecord
+  private auditRedact: ((r: import('./audit.js').AuditRecord) => import('./audit.js').AuditRecord) | undefined
   private onRateLimit?: RDCPServerOptions['onRateLimit']
 
   constructor(options: RDCPServerOptions = {}) {
@@ -262,6 +262,7 @@ export class RDCPServer {
         remaining: res.remaining,
         resetMs: res.resetMs,
         limit: res.limit,
+        windowMs: res.windowMs,
         ...(options.requestId ? { requestId: options.requestId } : {}),
       })
       if (!res.allowed) {
@@ -312,7 +313,7 @@ export class RDCPServer {
   async handleControl(
     body: unknown,
     tenantContext: RDCPTenantContext,
-    req?: { requestId?: string }
+    req?: { requestId?: string; authMethod?: string; clientId?: string; ip?: string }
   ): Promise<RDCPControlResponse | ReturnType<typeof createRDCPError>> {
     // Rate limit: control
     if (this.rateLimitingEnabled && this.rateLimiter) {
@@ -324,6 +325,7 @@ export class RDCPServer {
         remaining: res.remaining,
         resetMs: res.resetMs,
         limit: res.limit,
+        windowMs: res.windowMs,
         ...(req?.requestId ? { requestId: req.requestId } : {}),
       })
       if (!res.allowed) {
@@ -448,6 +450,10 @@ export class RDCPServer {
             categories,
             tenantId: tenantContext.tenantId,
             status: 'success' as const,
+            ...(req?.requestId ? { requestId: req.requestId } : {}),
+            ...(req?.authMethod ? { authMethod: req.authMethod } : {}),
+            ...(req?.clientId ? { clientId: req.clientId } : {}),
+            ...(req?.ip ? { ip: req.ip } : {}),
           }
           const out = this.auditRedact ? this.auditRedact(rec) : rec
           this.auditSink.write(out)
@@ -541,6 +547,7 @@ export class RDCPServer {
         remaining: res.remaining,
         resetMs: res.resetMs,
         limit: res.limit,
+        windowMs: res.windowMs,
         ...(req?.requestId ? { requestId: req.requestId } : {}),
       })
       if (!res.allowed) {
@@ -594,6 +601,7 @@ export class RDCPServer {
         remaining: res.remaining,
         resetMs: res.resetMs,
         limit: res.limit,
+        windowMs: res.windowMs,
         ...(req?.requestId ? { requestId: req.requestId } : {}),
       })
       if (!res.allowed) {

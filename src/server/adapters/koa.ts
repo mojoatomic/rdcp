@@ -267,7 +267,12 @@ export function createRDCPMiddleware(
         } else {
           // Following Context7 patterns - body parser middleware adds body property
           const body = ctx.request.body || {}
-          response = await rdcpServer.handleControl(body, tenantContext, { requestId: reqId })
+          response = await rdcpServer.handleControl(body, tenantContext, {
+            requestId: reqId,
+            authMethod: (ctx.headers['x-rdcp-auth-method'] as string) || undefined,
+            clientId: (ctx.headers['x-rdcp-client-id'] as string) || undefined,
+            ip: ctx.ip,
+          })
         }
       } else if (pathname === `${basePath}/status`) {
         response = rdcpServer.handleStatus(tenantContext, { requestId: reqId })
