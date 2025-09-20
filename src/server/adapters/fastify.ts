@@ -143,6 +143,7 @@ export function createRDCPMiddleware(
     request: FastifyRequest,
     reply: FastifyReply
   ): Promise<void> {
+    let reqId = ''
     try {
       // Extract path from Fastify request
       const pathname = request.url.split('?')[0]
@@ -180,7 +181,7 @@ export function createRDCPMiddleware(
       }
 
       // Generate request ID for rate limit tracking
-      const reqId =
+      reqId =
         reqIdHeader ??
         `req-${Date.now()}-${Math.random().toString(36).slice(2)}`
 
@@ -217,6 +218,7 @@ export function createRDCPMiddleware(
               reply.header('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
           }
         }
+        reply.header('X-Request-Id', reqId)
         reply.type('application/json').send(discoveryResponse)
         return
       }
@@ -229,6 +231,7 @@ export function createRDCPMiddleware(
             'RDCP_AUTH_REQUIRED',
             'Authentication required'
           )
+          reply.header('X-Request-Id', reqId)
           reply.status(401).type('application/json').send(errorResponse)
           return
         }
@@ -241,6 +244,7 @@ export function createRDCPMiddleware(
           'RDCP_AUTH_REQUIRED',
           `Authentication failed: ${errorMessage}`
         )
+        reply.header('X-Request-Id', reqId)
         reply.status(401).type('application/json').send(errorResponse)
         return
       }
@@ -333,6 +337,7 @@ export function createRDCPMiddleware(
       if (warnings?.includes('audit-write-failed')) {
         reply.header('Warning', '199 rdcp "audit-write-failed"')
       }
+      reply.header('X-Request-Id', reqId)
       reply.status(statusCode).type('application/json').send(response)
     } catch (error) {
       logger.error('RDCP middleware error:', error)
@@ -340,7 +345,10 @@ export function createRDCPMiddleware(
         'RDCP_SERVER_ERROR',
         'Internal server error'
       )
+      if (reqId) reply.header('X-Request-Id', reqId)
       reply.status(500).type('application/json').send(errorResponse)
+    } finally {
+      if (reqId) rateEvents.delete(reqId)
     }
   }
 }

@@ -126,6 +126,7 @@ export function createRDCPMiddleware(
     res: Response,
     next: NextFunction
   ): Promise<void> {
+    let reqId = ''
     try {
       // Extract path from Express request
       const pathname = req.path
@@ -161,7 +162,7 @@ export function createRDCPMiddleware(
       }
 
       // Generate request ID for rate limit tracking
-      const reqId =
+      reqId =
         reqIdHeader ??
         `req-${Date.now()}-${Math.random().toString(36).slice(2)}`
 
@@ -198,6 +199,7 @@ export function createRDCPMiddleware(
               res.set('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
           }
         }
+        res.set('X-Request-Id', reqId)
         res.json(discoveryResponse)
         return
       }
@@ -210,6 +212,7 @@ export function createRDCPMiddleware(
             'RDCP_AUTH_REQUIRED',
             'Authentication required'
           )
+          res.set('X-Request-Id', reqId)
           res.status(401).json(errorResponse)
           return
         }
@@ -222,6 +225,7 @@ export function createRDCPMiddleware(
           'RDCP_AUTH_REQUIRED',
           `Authentication failed: ${errorMessage}`
         )
+        res.set('X-Request-Id', reqId)
         res.status(401).json(errorResponse)
         return
       }
@@ -314,6 +318,7 @@ export function createRDCPMiddleware(
       if (warnings?.includes('audit-write-failed')) {
         res.set('Warning', '199 rdcp "audit-write-failed"')
       }
+      res.set('X-Request-Id', reqId)
       res.status(statusCode).json(response)
     } catch (error) {
       logger.error('RDCP middleware error:', error)
@@ -321,7 +326,10 @@ export function createRDCPMiddleware(
         'RDCP_SERVER_ERROR',
         'Internal server error'
       )
+      if (reqId) res.set('X-Request-Id', reqId)
       res.status(500).json(errorResponse)
+    } finally {
+      if (reqId) rateEvents.delete(reqId)
     }
   }
 }

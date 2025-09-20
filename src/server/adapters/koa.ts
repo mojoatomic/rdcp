@@ -178,6 +178,7 @@ export function createRDCPMiddleware(
     ctx: KoaContextWithBody,
     next: Next
   ): Promise<void> {
+    let reqId = ''
     try {
       // Extract path from Koa context (Context7 pattern)
       const pathname = ctx.path
@@ -215,7 +216,7 @@ export function createRDCPMiddleware(
       }
 
       // Generate request ID for rate limit tracking
-      const reqId =
+      reqId =
         reqIdHeader ??
         `req-${Date.now()}-${Math.random().toString(36).slice(2)}`
 
@@ -251,6 +252,7 @@ export function createRDCPMiddleware(
               ctx.set('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
           }
         }
+        ctx.set('X-Request-Id', reqId)
         ctx.type = 'application/json'
         ctx.body = discoveryResponse
         return
@@ -375,6 +377,7 @@ export function createRDCPMiddleware(
       if (warnings?.includes('audit-write-failed')) {
         ctx.set('Warning', '199 rdcp "audit-write-failed"')
       }
+      ctx.set('X-Request-Id', reqId)
       ctx.status = statusCode
       ctx.type = 'application/json'
       ctx.body = response
@@ -384,9 +387,12 @@ export function createRDCPMiddleware(
         'RDCP_SERVER_ERROR',
         'Internal server error'
       )
+      if (reqId) ctx.set('X-Request-Id', reqId)
       ctx.status = 500
       ctx.type = 'application/json'
       ctx.body = errorResponse
+    } finally {
+      if (reqId) rateEvents.delete(reqId)
     }
   }
 }
