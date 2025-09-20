@@ -71,11 +71,31 @@ export function createRDCPMiddleware(
     throw new Error('authenticator must be a function')
   }
 
+  // Rate limit header capture per-request
+  const rateEvents = new Map<string, {
+    allowed: boolean
+    remaining: number
+    resetMs: number
+    limit: number
+  }>()
+
   // Initialize RDCP server utilities
   const rdcpServer = new RDCPServer({
     debugConfig,
     performance,
     tenant,
+    onRateLimit: (e) => {
+      if ((options.capabilities as any)?.rateLimit?.headers) {
+        // store by requestId if available, otherwise key by endpoint+tenant
+        const key = (e as any).requestId || `${e.endpoint}:${e.tenantId ?? 'global'}`
+        rateEvents.set(key, {
+          allowed: e.allowed,
+          remaining: e.remaining,
+          resetMs: e.resetMs,
+          limit: e.limit,
+        })
+      }
+    },
     capabilities: options.capabilities ?? {},
   })
 
@@ -97,9 +117,22 @@ export function createRDCPMiddleware(
         return next() // Continue to next middleware
       }
 
+      // Generate request ID for rate limit tracking
+      const reqId =
+        (req.headers['x-rdcp-request-id'] as string) ||
+        `req-${Date.now()}-${Math.random().toString(36).slice(2)}`
+
       // Handle .well-known/rdcp discovery endpoint (no auth required)
       if (pathname === '/.well-known/rdcp') {
-        const discoveryResponse = rdcpServer.handleDiscovery({ basePath })
+        const discoveryResponse = rdcpServer.handleDiscovery({ basePath, requestId: reqId })
+        // Set rate limit headers if configured
+        const ev = rateEvents.get(reqId)
+        if (ev && (options.capabilities as any)?.rateLimit?.headers) {
+          res.set('X-RateLimit-Limit', String(ev.limit))
+          res.set('X-RateLimit-Remaining', String(ev.remaining))
+          res.set('X-RateLimit-Reset', String(Math.ceil((Date.now() + ev.resetMs) / 1000)))
+          if (!ev.allowed) res.set('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
+        }
         res.json(discoveryResponse)
         return
       }
@@ -140,6 +173,7 @@ export function createRDCPMiddleware(
         response = rdcpServer.handleDiscovery({
           basePath,
           tenant: tenantContext,
+          requestId: reqId,
         })
       } else if (pathname === `${basePath}/control`) {
         if (req.method !== 'POST') {
@@ -150,17 +184,34 @@ export function createRDCPMiddleware(
           statusCode = 405
         } else {
           const body = req.body || {}
-          response = await rdcpServer.handleControl(body, tenantContext)
+          response = await rdcpServer.handleControl(body, tenantContext, { requestId: reqId })
         }
       } else if (pathname === `${basePath}/status`) {
-        response = rdcpServer.handleStatus(tenantContext)
+        response = rdcpServer.handleStatus(tenantContext, { requestId: reqId })
       } else if (pathname === `${basePath}/health`) {
-        response = rdcpServer.handleHealth()
+        response = rdcpServer.handleHealth({ requestId: reqId })
       } else {
         response = createRDCPError('RDCP_NOT_FOUND', 'RDCP endpoint not found')
         statusCode = 404
       }
 
+      // Map error code to HTTP status if present
+      if ((response as any)?.error?.code) {
+        const code = (response as any).error.code as string
+        if (code === 'RDCP_RATE_LIMITED') statusCode = 429
+        else if (code === 'RDCP_NOT_FOUND') statusCode = 404
+        else if (code === 'RDCP_AUTH_REQUIRED') statusCode = 401
+        else if (code === 'RDCP_FORBIDDEN') statusCode = 403
+        else if (code.startsWith('RDCP_')) statusCode = 400
+      }
+      // Rate limit headers
+      const ev = rateEvents.get(reqId)
+      if (ev && (options.capabilities as any)?.rateLimit?.headers) {
+        res.set('X-RateLimit-Limit', String(ev.limit))
+        res.set('X-RateLimit-Remaining', String(ev.remaining))
+        res.set('X-RateLimit-Reset', String(Math.ceil((Date.now() + ev.resetMs) / 1000)))
+        if (!ev.allowed) res.set('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
+      }
       res.status(statusCode).json(response)
     } catch (error) {
       logger.error('RDCP middleware error:', error)

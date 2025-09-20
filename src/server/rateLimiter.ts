@@ -25,6 +25,7 @@ export interface RateLimitResult {
   allowed: boolean
   remaining: number
   resetMs: number
+  limit: number
 }
 
 export class TokenBucketLimiter {
@@ -93,12 +94,12 @@ export class TokenBucketLimiter {
       const deficit = Math.max(0, 1 - b.tokens)
       // time until we get 1 token again
       const resetMs = Math.ceil(deficit / b.refillPerMs)
-      return { allowed: true, remaining, resetMs }
+      return { allowed: true, remaining, resetMs, limit: b.capacity }
     }
     // Not allowed: compute time until next token
     const deficit = 1 - b.tokens
     const resetMs = Math.ceil(deficit / b.refillPerMs)
     const remaining = 0
-    return { allowed: false, remaining, resetMs }
+    return { allowed: false, remaining, resetMs, limit: b.capacity }
   }
 }

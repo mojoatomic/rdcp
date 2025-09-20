@@ -28,3 +28,74 @@ export class ConsoleAuditSink implements AuditSink {
     console.info('RDCP_AUDIT', JSON.stringify(record))
   }
 }
+
+import fs from 'fs'
+import path from 'path'
+
+export interface FileAuditOptions {
+  path?: string
+  maxBytes?: number
+  maxFiles?: number
+}
+
+export class FileAuditSink implements AuditSink {
+  private filePath: string
+  private maxBytes: number
+  private maxFiles: number
+
+  constructor(options: FileAuditOptions = {}) {
+    this.filePath = options.path || path.resolve(process.cwd(), 'rdcp-audit.log')
+    this.maxBytes = options.maxBytes ?? 5 * 1024 * 1024
+    this.maxFiles = options.maxFiles ?? 5
+  }
+
+  write(record: AuditRecord): void {
+    try {
+      this.rotateIfNeeded()
+      const line = JSON.stringify(record) + '\n'
+      fs.appendFileSync(this.filePath, line, { encoding: 'utf8' })
+    } catch {
+      // fail-closed for audit sink; do not throw
+    }
+  }
+
+  private rotateIfNeeded(): void {
+    try {
+      const stat = fs.existsSync(this.filePath) ? fs.statSync(this.filePath) : null
+      if (stat && stat.size >= this.maxBytes) {
+        // rotate: rename current to filePath.timestamp
+        const ts = new Date().toISOString().replace(/[:.]/g, '-')
+        const rotated = `${this.filePath}.${ts}`
+        fs.renameSync(this.filePath, rotated)
+        this.enforceRetention()
+      }
+    } catch {
+      // ignore rotation errors
+    }
+  }
+
+  private enforceRetention(): void {
+    try {
+      const dir = path.dirname(this.filePath)
+      const base = path.basename(this.filePath)
+      const files = fs
+        .readdirSync(dir)
+        .filter(f => f === base || f.startsWith(`${base}.`))
+        .sort((a, b) => {
+          // newest last
+          return fs.statSync(path.join(dir, a)).mtimeMs - fs.statSync(path.join(dir, b)).mtimeMs
+        })
+      // keep latest maxFiles files (including current)
+      while (files.length > this.maxFiles) {
+        const toRemove = files.shift()
+        if (toRemove) {
+          try {
+            fs.unlinkSync(path.join(dir, toRemove))
+          } catch {}
+        }
+      }
+    } catch {
+      // ignore retention errors
+    }
+  }
+}

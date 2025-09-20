@@ -129,11 +129,30 @@ export function createRDCPMiddleware(
     throw new Error('authenticator must be a function')
   }
 
+  // Rate limit header capture per-request
+  const rateEvents = new Map<string, {
+    allowed: boolean
+    remaining: number
+    resetMs: number
+    limit: number
+  }>()
+
   // Initialize RDCP server utilities
   const rdcpServer = new RDCPServer({
     debugConfig,
     performance,
     tenant,
+    onRateLimit: (e) => {
+      if ((options.capabilities as any)?.rateLimit?.headers) {
+        const key = (e as any).requestId || `${e.endpoint}:${e.tenantId ?? 'global'}`
+        rateEvents.set(key, {
+          allowed: e.allowed,
+          remaining: e.remaining,
+          resetMs: e.resetMs,
+          limit: e.limit,
+        })
+      }
+    },
     capabilities: options.capabilities ?? {},
   })
 
@@ -154,9 +173,21 @@ export function createRDCPMiddleware(
         await next() // Continue to next middleware (Context7 pattern)
       }
 
+      // Generate request ID for rate limit tracking
+      const reqId =
+        (ctx.headers['x-rdcp-request-id'] as string) ||
+        `req-${Date.now()}-${Math.random().toString(36).slice(2)}`
+
       // Handle .well-known/rdcp discovery endpoint (no auth required)
       if (pathname === '/.well-known/rdcp') {
-        const discoveryResponse = rdcpServer.handleDiscovery({ basePath })
+        const discoveryResponse = rdcpServer.handleDiscovery({ basePath, requestId: reqId })
+        const ev = rateEvents.get(reqId)
+        if (ev && (options.capabilities as any)?.rateLimit?.headers) {
+          ctx.set('X-RateLimit-Limit', String(ev.limit))
+          ctx.set('X-RateLimit-Remaining', String(ev.remaining))
+          ctx.set('X-RateLimit-Reset', String(Math.ceil((Date.now() + ev.resetMs) / 1000)))
+          if (!ev.allowed) ctx.set('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
+        }
         ctx.type = 'application/json'
         ctx.body = discoveryResponse
         return
@@ -204,6 +235,7 @@ export function createRDCPMiddleware(
         response = rdcpServer.handleDiscovery({
           basePath,
           tenant: tenantContext,
+          requestId: reqId,
         })
       } else if (pathname === `${basePath}/control`) {
         if (ctx.method !== 'POST') {
@@ -215,17 +247,34 @@ export function createRDCPMiddleware(
         } else {
           // Following Context7 patterns - body parser middleware adds body property
           const body = ctx.request.body || {}
-          response = await rdcpServer.handleControl(body, tenantContext)
+          response = await rdcpServer.handleControl(body, tenantContext, { requestId: reqId })
         }
       } else if (pathname === `${basePath}/status`) {
-        response = rdcpServer.handleStatus(tenantContext)
+        response = rdcpServer.handleStatus(tenantContext, { requestId: reqId })
       } else if (pathname === `${basePath}/health`) {
-        response = rdcpServer.handleHealth()
+        response = rdcpServer.handleHealth({ requestId: reqId })
       } else {
         response = createRDCPError('RDCP_NOT_FOUND', 'RDCP endpoint not found')
         statusCode = 404
       }
 
+      // Map error to HTTP status
+      if ((response as any)?.error?.code) {
+        const code = (response as any).error.code as string
+        if (code === 'RDCP_RATE_LIMITED') statusCode = 429
+        else if (code === 'RDCP_NOT_FOUND') statusCode = 404
+        else if (code === 'RDCP_AUTH_REQUIRED') statusCode = 401
+        else if (code === 'RDCP_FORBIDDEN') statusCode = 403
+        else if (code.startsWith('RDCP_')) statusCode = 400
+      }
+      // Rate limit headers
+      const ev = rateEvents.get(reqId)
+      if (ev && (options.capabilities as any)?.rateLimit?.headers) {
+        ctx.set('X-RateLimit-Limit', String(ev.limit))
+        ctx.set('X-RateLimit-Remaining', String(ev.remaining))
+        ctx.set('X-RateLimit-Reset', String(Math.ceil((Date.now() + ev.resetMs) / 1000)))
+        if (!ev.allowed) ctx.set('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
+      }
       ctx.status = statusCode
       ctx.type = 'application/json'
       ctx.body = response
