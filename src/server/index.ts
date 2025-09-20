@@ -21,6 +21,8 @@ import {
   FileAuditSink,
   FileAuditOptions,
 } from './audit.js'
+import os from 'os'
+import { monitorEventLoopDelay } from 'perf_hooks'
 
 /**
  * RDCP Server configuration options
@@ -150,6 +152,24 @@ interface RDCPStatusResponse extends RDCPResponse {
       cpu: string
       memory: string
     }
+    // Optional measured metrics with standard representation
+    metrics?: {
+      cpu?: {
+        value: number
+        unit: 'percent'
+        measured: true
+      }
+      memory?: {
+        value: number
+        unit: 'bytes'
+        measured: true
+      }
+      eventLoopDelayP99?: {
+        value: number
+        unit: 'milliseconds'
+        measured: true
+      }
+    }
     activeCategories: number
   }
 }
@@ -176,6 +196,11 @@ export class RDCPServer {
   private debugConfig: Record<string, boolean>
   private performance: Record<string, unknown>
   private tenant: Record<string, unknown>
+  // Metrics baselines
+  private lastCpu: NodeJS.CpuUsage
+  private lastHrTimeNs: bigint
+  private readonly cpuCores: number
+  private eventLoopDelay?: ReturnType<typeof monitorEventLoopDelay>
   private ttlTimers: Map<string, NodeJS.Timeout>
   private temporaryControlsEnabled: boolean
   private ttlConfig: {
@@ -198,6 +223,19 @@ export class RDCPServer {
     this.debugConfig = options.debugConfig ?? {}
     this.performance = options.performance ?? {}
     this.tenant = options.tenant ?? {}
+
+    // Initialize metrics baselines
+    this.lastCpu = process.cpuUsage()
+    // Use hrtime.bigint for precise intervals
+    this.lastHrTimeNs = process.hrtime.bigint()
+    this.cpuCores = Math.max(1, os.cpus()?.length || 1)
+    try {
+      this.eventLoopDelay = monitorEventLoopDelay({ resolution: 20 })
+      this.eventLoopDelay.enable()
+    } catch {
+      // monitorEventLoopDelay may be unavailable in some environments; ignore
+      // leave this.eventLoopDelay unset
+    }
 
     this.temporaryControlsEnabled =
       options.capabilities?.temporaryControls === true ||
@@ -612,6 +650,59 @@ export class RDCPServer {
     }
   }
 
+  // Measure runtime metrics and update baselines
+  private measureMetrics(): {
+    cpuPercent: number
+    rssBytes: number
+    p99DelayMs: number | undefined
+  } {
+    const nowCpu = process.cpuUsage()
+    const nowHrNs = process.hrtime.bigint()
+    const deltaCpuMicros =
+      Math.max(0, nowCpu.user - this.lastCpu.user) +
+      Math.max(0, nowCpu.system - this.lastCpu.system)
+    const deltaTimeMicros = Number(nowHrNs - this.lastHrTimeNs) / 1000
+    let cpuPercent = 0
+    if (deltaTimeMicros > 0) {
+      cpuPercent = (deltaCpuMicros / deltaTimeMicros) * (100 / this.cpuCores)
+      if (!Number.isFinite(cpuPercent) || cpuPercent < 0) cpuPercent = 0
+    }
+    this.lastCpu = nowCpu
+    this.lastHrTimeNs = nowHrNs
+
+    const rssBytes = process.memoryUsage().rss
+
+    let p99DelayMs: number | undefined
+    try {
+      const d = this.eventLoopDelay?.percentile(99)
+      if (typeof d === 'number') p99DelayMs = d / 1e6
+    } catch {
+      p99DelayMs = undefined
+    }
+    return { cpuPercent, rssBytes, p99DelayMs }
+  }
+
+  // Expose Prometheus exposition format (text)
+  public getPrometheusMetrics(): string {
+    const m = this.measureMetrics()
+    const lines: string[] = []
+    lines.push('# HELP rdcp_cpu_percent CPU percent per-core normalized.')
+    lines.push('# TYPE rdcp_cpu_percent gauge')
+    lines.push(`rdcp_cpu_percent ${m.cpuPercent.toFixed(2)}`)
+    lines.push('# HELP rdcp_memory_rss_bytes Resident set size in bytes.')
+    lines.push('# TYPE rdcp_memory_rss_bytes gauge')
+    lines.push(`rdcp_memory_rss_bytes ${m.rssBytes}`)
+    if (typeof m.p99DelayMs === 'number') {
+      lines.push('# HELP rdcp_event_loop_delay_p99_milliseconds Event loop delay P99 in milliseconds.')
+      lines.push('# TYPE rdcp_event_loop_delay_p99_milliseconds gauge')
+      lines.push(
+        `rdcp_event_loop_delay_p99_milliseconds ${m.p99DelayMs.toFixed(2)}`
+      )
+    }
+    lines.push('')
+    return lines.join('\n')
+  }
+
   /**
    * Handle RDCP status endpoint
    * Returns current debug status with tenant isolation
@@ -664,14 +755,40 @@ export class RDCPServer {
       }
     })
 
+    // Compute measured metrics
+    const mm = this.measureMetrics()
+    const cpuStr = `${mm.cpuPercent.toFixed(1)}%`
+    const memStr = `${(mm.rssBytes / (1024 * 1024)).toFixed(1)}MB`
+
     const response = {
       protocol: 'rdcp/1.0' as const,
       timestamp: new Date().toISOString(),
       categories,
       performance: {
         impact: {
-          cpu: '0.1%',
-          memory: '1MB',
+          cpu: cpuStr,
+          memory: memStr,
+        },
+        metrics: {
+          cpu: {
+            value: Number(mm.cpuPercent.toFixed(2)),
+            unit: 'percent' as const,
+            measured: true as const,
+          },
+          memory: {
+            value: mm.rssBytes,
+            unit: 'bytes' as const,
+            measured: true as const,
+          },
+          ...(mm.p99DelayMs !== undefined
+            ? {
+                eventLoopDelayP99: {
+                  value: Number(mm.p99DelayMs.toFixed(2)),
+                  unit: 'milliseconds' as const,
+                  measured: true as const,
+                },
+              }
+            : {}),
         },
         activeCategories: Object.keys(tenantConfig).filter(
           cat => tenantConfig[cat as keyof TenantDebugConfig]
