@@ -40,9 +40,11 @@ Error codes and status mapping
   - RDCP_TOKEN_EXPIRED → 401 Unauthorized
   - RDCP_FORBIDDEN → 403 Forbidden
   - RDCP_VALIDATION_ERROR → 400 Bad Request
+  - RDCP_REQUEST_ID_INVALID → 400 Bad Request (malformed X-RDCP-Request-ID)
   - RDCP_RATE_LIMITED → 429 Too Many Requests
   - RDCP_NOT_FOUND → 404 Not Found
   - RDCP_INTERNAL_ERROR → 500 Internal Server Error
+  - RDCP_AUDIT_WRITE_FAILED → 500 Internal Server Error
   - RDCP_UNAVAILABLE → 503 Service Unavailable
 
 Examples

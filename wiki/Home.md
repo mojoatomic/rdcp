@@ -75,6 +75,15 @@ app.listen(3000)
 // GET  /rdcp/v1/health
 ```
 
+## What's New (2025-09-20)
+
+- New error code: RDCP_REQUEST_ID_INVALID (400) for malformed X-RDCP-Request-ID headers
+- Adapters now always echo the correlation header as X-Request-Id on all RDCP responses; a UUID is generated when the client does not supply X-RDCP-Request-ID
+- RateLimit draft-7 headers (RateLimit, RateLimit-Policy, RateLimit-Remaining, RateLimit-Reset) are emitted consistently across adapters when enabled; 429 responses include Retry-After and structured error details
+- Audit failure behavior now supports ignore, warn, and fail modes. In warn mode, responses include Warning: 199 rdcp "audit-write-failed" when the audit sink fails
+
+See: Error-Responses.md (error codes, rate-limit details) and Basic-Usage.md (capabilities configuration and examples).
+
 ## Documentation
 
 ### Start Here
@@ -87,6 +96,7 @@ app.listen(3000)
 ### Getting Started
 - **[Installation](Installation.md)** - Install and setup the RDCP SDK
 - **[Basic Usage](Basic-Usage.md)** - Quick integration examples for all supported frameworks
+- **[Rate Limiting](Rate-Limiting.md)** - Configuration, standard headers, and structured error details
 
 ### Framework Integration
 - **[Express.js Integration](Basic-Usage#express-js)** - Complete Express.js middleware setup
@@ -157,10 +167,10 @@ Status: **Level 2: Standard** (RDCP v1.0)
 - ✅ Multi-tenancy with standard header support
 - ✅ Protocol-compliant error handling
 - ✅ Client & Server SDKs; Temporary controls (TTL) promoted to core (server + adapters + client)
-- ✅ Testing coverage: 186 passing tests across 17 test suites
+- ✅ Testing coverage: 201 passing tests across 25 test suites
 - ℹ️ Demo app includes examples for rate limiting and audit trail
 
-Last updated: 2025-09-19  
+Last updated: 2025-09-20  
 See [Protocol Compliance Report](https://github.com/mojoatomic/rdcp/blob/main/PROTOCOL-COMPLIANCE-REPORT.md) for detailed analysis.
 
 ## Requirements

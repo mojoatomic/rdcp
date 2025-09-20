@@ -43,7 +43,7 @@ app.listen(3000)
 ```
 
 Notes:
-- Request correlation: You can optionally send X-RDCP-Request-ID (UUID). If present and invalid, the adapters return RDCP_REQUEST_ID_INVALID (400).
+- Request correlation: If you provide X-RDCP-Request-ID (UUID), adapters echo it back as X-Request-Id on all RDCP responses. If omitted, a new UUID is generated and returned in X-Request-Id. If provided but invalid, adapters return RDCP_REQUEST_ID_INVALID (400).
 - Rate limit headers: When rate limiting is enabled, adapters emit standard draft-7 headers (RateLimit, RateLimit-Policy, RateLimit-Remaining, RateLimit-Reset) and Retry-After on limited responses. Legacy X-RateLimit-* headers can be enabled via headersMode: 'x'.
 - Audit failure behavior:
   - failureMode: 'ignore' – audit write failures are ignored (default)
@@ -339,6 +339,42 @@ curl -H "X-API-Key: your-api-key" \
      -H "X-RDCP-Auth-Method: api-key" \
      -H "X-RDCP-Client-ID: test-client" \
      http://localhost:3000/rdcp/v1/health
+```
+
+### Request Correlation (X-RDCP-Request-ID -> X-Request-Id)
+
+- Provide a UUID in X-RDCP-Request-ID to correlate requests; it will be echoed as X-Request-Id in the response.
+- If you don't provide X-RDCP-Request-ID, the server generates one and returns it in X-Request-Id.
+- If X-RDCP-Request-ID is not a valid UUID, the server returns RDCP_REQUEST_ID_INVALID (400).
+
+Examples:
+```bash
+# With a supplied UUID (echoed back)
+UUID=$(uuidgen)
+curl -i \
+  -H 'X-API-Key: your-api-key' \
+  -H 'X-RDCP-Auth-Method: api-key' \
+  -H 'X-RDCP-Client-ID: test-client' \
+  -H "X-RDCP-Request-ID: $UUID" \
+  http://localhost:3000/rdcp/v1/status | sed -n '1,/^$/p'
+
+# Without a supplied UUID (server generates X-Request-Id)
+curl -i \
+  -H 'X-API-Key: your-api-key' \
+  -H 'X-RDCP-Auth-Method: api-key' \
+  -H 'X-RDCP-Client-ID: test-client' \
+  http://localhost:3000/rdcp/v1/status | sed -n '1,/^$/p'
+```
+
+### RateLimit headers (draft-7)
+
+When rate limiting is enabled (capabilities.rateLimit.headers: true):
+```bash
+curl -i \
+  -H 'X-API-Key: your-api-key' \
+  -H 'X-RDCP-Auth-Method: api-key' \
+  -H 'X-RDCP-Client-ID: test-client' \
+  http://localhost:3000/.well-known/rdcp | grep -i 'ratelimit\|retry-after'
 ```
 
 ## Configuration Options
