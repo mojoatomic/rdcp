@@ -144,21 +144,24 @@ export function createRDCPMiddleware(
   }
 
   // Rate limit header capture per-request
-  const rateEvents = new Map<string, {
-    allowed: boolean
-    remaining: number
-    resetMs: number
-    limit: number
-  }>()
+  const rateEvents = new Map<
+    string,
+    {
+      allowed: boolean
+      remaining: number
+      resetMs: number
+      limit: number
+    }
+  >()
 
   // Initialize RDCP server utilities
   const rdcpServer = new RDCPServer({
     debugConfig,
     performance,
     tenant,
-    onRateLimit: (e) => {
+    onRateLimit: (e): void => {
       if (options.capabilities?.rateLimit?.headers) {
-        const key = e.requestId || `${e.endpoint}:${e.tenantId ?? 'global'}`
+        const key = e.requestId ?? `${e.endpoint}:${e.tenantId ?? 'global'}`
         rateEvents.set(key, {
           allowed: e.allowed,
           remaining: e.remaining,
@@ -194,18 +197,34 @@ export function createRDCPMiddleware(
 
       // Handle .well-known/rdcp discovery endpoint (no auth required)
       if (pathname === '/.well-known/rdcp') {
-        const discoveryResponse = rdcpServer.handleDiscovery({ basePath, requestId: reqId })
+        const discoveryResponse = rdcpServer.handleDiscovery({
+          basePath,
+          requestId: reqId,
+        })
         const ev = rateEvents.get(reqId)
         if (ev && options.capabilities?.rateLimit?.headers) {
           if (options.capabilities.rateLimit.headersMode === 'draft-7') {
-            ctx.set('RateLimit', `limit=${ev.limit}, remaining=${ev.remaining}, reset=${Math.ceil(ev.resetMs / 1000)}`)
-            ctx.set('RateLimit-Policy', `${ev.limit};w=${Math.ceil(ev.resetMs / 1000)}`)
-            if (!ev.allowed) ctx.set('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
+            ctx.set(
+              'RateLimit',
+              `limit=${ev.limit}, remaining=${ev.remaining}, reset=${Math.ceil(
+                ev.resetMs / 1000
+              )}`
+            )
+            ctx.set(
+              'RateLimit-Policy',
+              `${ev.limit};w=${Math.ceil(ev.resetMs / 1000)}`
+            )
+            if (!ev.allowed)
+              ctx.set('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
           } else {
             ctx.set('X-RateLimit-Limit', String(ev.limit))
             ctx.set('X-RateLimit-Remaining', String(ev.remaining))
-            ctx.set('X-RateLimit-Reset', String(Math.ceil((Date.now() + ev.resetMs) / 1000)))
-            if (!ev.allowed) ctx.set('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
+            ctx.set(
+              'X-RateLimit-Reset',
+              String(Math.ceil((Date.now() + ev.resetMs) / 1000))
+            )
+            if (!ev.allowed)
+              ctx.set('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
           }
         }
         ctx.type = 'application/json'
@@ -267,12 +286,18 @@ export function createRDCPMiddleware(
         } else {
           // Following Context7 patterns - body parser middleware adds body property
           const body = ctx.request.body || {}
-          response = await rdcpServer.handleControl(body, tenantContext, {
-            requestId: reqId,
-            authMethod: (ctx.headers['x-rdcp-auth-method'] as string) || undefined,
-            clientId: (ctx.headers['x-rdcp-client-id'] as string) || undefined,
-            ip: ctx.ip,
-          })
+          const meta: {
+            requestId: string
+            authMethod?: string
+            clientId?: string
+            ip?: string
+          } = { requestId: reqId }
+          const am = ctx.headers['x-rdcp-auth-method'] as string | undefined
+          const cid = ctx.headers['x-rdcp-client-id'] as string | undefined
+          if (am) meta.authMethod = am
+          if (cid) meta.clientId = cid
+          if (ctx.ip) meta.ip = ctx.ip
+          response = await rdcpServer.handleControl(body, tenantContext, meta)
         }
       } else if (pathname === `${basePath}/status`) {
         response = rdcpServer.handleStatus(tenantContext, { requestId: reqId })
@@ -284,8 +309,8 @@ export function createRDCPMiddleware(
       }
 
       // Map error to HTTP status
-      if ((response as any)?.error?.code) {
-        const code = (response as any).error.code as string
+      const code = (response as { error?: { code?: string } })?.error?.code
+      if (code) {
         if (code === 'RDCP_RATE_LIMITED') statusCode = 429
         else if (code === 'RDCP_NOT_FOUND') statusCode = 404
         else if (code === 'RDCP_AUTH_REQUIRED') statusCode = 401
@@ -296,14 +321,27 @@ export function createRDCPMiddleware(
       const ev = rateEvents.get(reqId)
       if (ev && options.capabilities?.rateLimit?.headers) {
         if (options.capabilities.rateLimit.headersMode === 'draft-7') {
-          ctx.set('RateLimit', `limit=${ev.limit}, remaining=${ev.remaining}, reset=${Math.ceil(ev.resetMs / 1000)}`)
-          ctx.set('RateLimit-Policy', `${ev.limit};w=${Math.ceil(ev.resetMs / 1000)}`)
-          if (!ev.allowed) ctx.set('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
+          ctx.set(
+            'RateLimit',
+            `limit=${ev.limit}, remaining=${ev.remaining}, reset=${Math.ceil(
+              ev.resetMs / 1000
+            )}`
+          )
+          ctx.set(
+            'RateLimit-Policy',
+            `${ev.limit};w=${Math.ceil(ev.resetMs / 1000)}`
+          )
+          if (!ev.allowed)
+            ctx.set('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
         } else {
           ctx.set('X-RateLimit-Limit', String(ev.limit))
           ctx.set('X-RateLimit-Remaining', String(ev.remaining))
-          ctx.set('X-RateLimit-Reset', String(Math.ceil((Date.now() + ev.resetMs) / 1000)))
-          if (!ev.allowed) ctx.set('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
+          ctx.set(
+            'X-RateLimit-Reset',
+            String(Math.ceil((Date.now() + ev.resetMs) / 1000))
+          )
+          if (!ev.allowed)
+            ctx.set('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
         }
       }
       ctx.status = statusCode

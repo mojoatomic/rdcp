@@ -47,7 +47,8 @@ export class FileAuditSink implements AuditSink {
   private maxFiles: number
 
   constructor(options: FileAuditOptions = {}) {
-    this.filePath = options.path || path.resolve(process.cwd(), 'rdcp-audit.log')
+    this.filePath =
+      options.path ?? path.resolve(process.cwd(), 'rdcp-audit.log')
     this.maxBytes = options.maxBytes ?? 5 * 1024 * 1024
     this.maxFiles = options.maxFiles ?? 5
   }
@@ -58,13 +59,15 @@ export class FileAuditSink implements AuditSink {
       const line = JSON.stringify(record) + '\n'
       fs.appendFileSync(this.filePath, line, { encoding: 'utf8' })
     } catch {
-      // fail-closed for audit sink; do not throw
+      // ignore write errors
     }
   }
 
   private rotateIfNeeded(): void {
     try {
-      const stat = fs.existsSync(this.filePath) ? fs.statSync(this.filePath) : null
+      const stat = fs.existsSync(this.filePath)
+        ? fs.statSync(this.filePath)
+        : null
       if (stat && stat.size >= this.maxBytes) {
         // rotate: rename current to filePath.timestamp
         const ts = new Date().toISOString().replace(/[:.]/g, '-')
@@ -85,16 +88,20 @@ export class FileAuditSink implements AuditSink {
         .readdirSync(dir)
         .filter(f => f === base || f.startsWith(`${base}.`))
         .sort((a, b) => {
-          // newest last
-          return fs.statSync(path.join(dir, a)).mtimeMs - fs.statSync(path.join(dir, b)).mtimeMs
+          return (
+            fs.statSync(path.join(dir, a)).mtimeMs -
+            fs.statSync(path.join(dir, b)).mtimeMs
+          )
         })
-      // keep latest maxFiles files (including current)
+
       while (files.length > this.maxFiles) {
         const toRemove = files.shift()
         if (toRemove) {
           try {
             fs.unlinkSync(path.join(dir, toRemove))
-          } catch {}
+          } catch {
+            // ignore unlink errors
+          }
         }
       }
     } catch {

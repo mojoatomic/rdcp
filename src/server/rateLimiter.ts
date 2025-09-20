@@ -6,7 +6,6 @@ export interface RateLimitRule {
   windowMs: number
   maxRequests: number
 }
-
 export interface RateLimitConfig {
   enabled: boolean
   defaultRule: RateLimitRule
@@ -38,10 +37,13 @@ export class TokenBucketLimiter {
     this.buckets = new Map()
   }
 
-  private resolveRule(keyParts: { endpoint: string; tenantId: string | null }): RateLimitRule {
+  private resolveRule(keyParts: {
+    endpoint: string
+    tenantId: string | null
+  }): RateLimitRule {
     const { endpoint, tenantId } = keyParts
     const fromEndpoint = this.config.perEndpoint?.[endpoint] ?? {}
-    const fromTenant = tenantId ? this.config.perTenant?.[tenantId] ?? {} : {}
+    const fromTenant = tenantId ? (this.config.perTenant?.[tenantId] ?? {}) : {}
     const rule = {
       windowMs: this.config.defaultRule.windowMs,
       maxRequests: this.config.defaultRule.maxRequests,
@@ -83,7 +85,10 @@ export class TokenBucketLimiter {
     return b
   }
 
-  check(keyParts: { endpoint: string; tenantId: string | null }): RateLimitResult {
+  check(keyParts: {
+    endpoint: string
+    tenantId: string | null
+  }): RateLimitResult {
     const rule = this.resolveRule(keyParts)
     const key = `${keyParts.tenantId ?? 'global'}|${keyParts.endpoint}`
     const b = this.bucketFor(key, rule)
@@ -95,12 +100,24 @@ export class TokenBucketLimiter {
       const deficit = Math.max(0, 1 - b.tokens)
       // time until we get 1 token again
       const resetMs = Math.ceil(deficit / b.refillPerMs)
-      return { allowed: true, remaining, resetMs, limit: b.capacity, windowMs: rule.windowMs }
+      return {
+        allowed: true,
+        remaining,
+        resetMs,
+        limit: b.capacity,
+        windowMs: rule.windowMs,
+      }
     }
     // Not allowed: compute time until next token
     const deficit = 1 - b.tokens
     const resetMs = Math.ceil(deficit / b.refillPerMs)
     const remaining = 0
-    return { allowed: false, remaining, resetMs, limit: b.capacity, windowMs: rule.windowMs }
+    return {
+      allowed: false,
+      remaining,
+      resetMs,
+      limit: b.capacity,
+      windowMs: rule.windowMs,
+    }
   }
 }

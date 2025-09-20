@@ -14,11 +14,21 @@ import {
 import { createRDCPError } from '../validation/errors.js'
 import { RDCPResponse, TenantContext } from '../utils/types.js'
 import { TokenBucketLimiter, RateLimitConfig } from './rateLimiter.js'
-import { AuditSink, NoopAuditSink, ConsoleAuditSink, FileAuditSink, FileAuditOptions } from './audit.js'
+import {
+  AuditSink,
+  NoopAuditSink,
+  ConsoleAuditSink,
+  FileAuditSink,
+  FileAuditOptions,
+} from './audit.js'
 
 /**
  * RDCP Server configuration options
  */
+type AuditRedactFn = (
+  r: import('./audit.js').AuditRecord
+) => import('./audit.js').AuditRecord
+
 export interface RDCPServerOptions {
   debugConfig?: Record<string, boolean>
   performance?: Record<string, unknown>
@@ -64,7 +74,7 @@ export interface RDCPServerOptions {
         maxFiles?: number
       }
       sampleRate?: number
-      redact?: (record: import('./audit.js').AuditRecord) => import('./audit.js').AuditRecord
+      redact?: AuditRedactFn
     }
   }
 }
@@ -179,7 +189,7 @@ export class RDCPServer {
   private auditSink: AuditSink
   private randomFn: () => number
   private auditSampleRate: number | undefined
-  private auditRedact: ((r: import('./audit.js').AuditRecord) => import('./audit.js').AuditRecord) | undefined
+  private auditRedact: AuditRedactFn | undefined
   private onRateLimit?: RDCPServerOptions['onRateLimit']
 
   constructor(options: RDCPServerOptions = {}) {
@@ -222,9 +232,15 @@ export class RDCPServer {
         this.auditSink = new ConsoleAuditSink()
       } else if (auditOpts.sink === 'file') {
         const fileOpts: FileAuditOptions = {}
-        if (auditOpts.file?.path) fileOpts.path = auditOpts.file.path
-        if (auditOpts.file?.maxBytes) fileOpts.maxBytes = auditOpts.file.maxBytes
-        if (auditOpts.file?.maxFiles) fileOpts.maxFiles = auditOpts.file.maxFiles
+        if (auditOpts.file?.path) {
+          fileOpts.path = auditOpts.file.path
+        }
+        if (auditOpts.file?.maxBytes) {
+          fileOpts.maxBytes = auditOpts.file.maxBytes
+        }
+        if (auditOpts.file?.maxFiles) {
+          fileOpts.maxFiles = auditOpts.file.maxFiles
+        }
         this.auditSink = new FileAuditSink(fileOpts)
       } else {
         this.auditSink = new NoopAuditSink()
@@ -251,10 +267,15 @@ export class RDCPServer {
    * Handle RDCP discovery endpoint
    * Returns available endpoints and capabilities
    */
-  handleDiscovery(options: DiscoveryOptions = {}): RDCPDiscoveryResponse | ReturnType<typeof createRDCPError> {
+  handleDiscovery(
+    options: DiscoveryOptions = {}
+  ): RDCPDiscoveryResponse | ReturnType<typeof createRDCPError> {
     // Rate limit: discovery
     if (this.rateLimitingEnabled && this.rateLimiter) {
-      const res = this.rateLimiter.check({ endpoint: 'discovery', tenantId: options.tenant?.tenantId ?? null })
+      const res = this.rateLimiter.check({
+        endpoint: 'discovery',
+        tenantId: options.tenant?.tenantId ?? null,
+      })
       this.onRateLimit?.({
         endpoint: 'discovery',
         tenantId: options.tenant?.tenantId ?? null,
@@ -313,11 +334,19 @@ export class RDCPServer {
   async handleControl(
     body: unknown,
     tenantContext: RDCPTenantContext,
-    req?: { requestId?: string; authMethod?: string; clientId?: string; ip?: string }
+    req?: {
+      requestId?: string
+      authMethod?: string
+      clientId?: string
+      ip?: string
+    }
   ): Promise<RDCPControlResponse | ReturnType<typeof createRDCPError>> {
     // Rate limit: control
     if (this.rateLimitingEnabled && this.rateLimiter) {
-      const res = this.rateLimiter.check({ endpoint: 'control', tenantId: tenantContext.tenantId })
+      const res = this.rateLimiter.check({
+        endpoint: 'control',
+        tenantId: tenantContext.tenantId,
+      })
       this.onRateLimit?.({
         endpoint: 'control',
         tenantId: tenantContext.tenantId,
@@ -441,7 +470,10 @@ export class RDCPServer {
       // Emit audit record (success)
       try {
         // sampling
-        const pass = this.auditSampleRate === undefined ? true : this.randomFn() < this.auditSampleRate
+        const pass =
+          this.auditSampleRate === undefined
+            ? true
+            : this.randomFn() < this.auditSampleRate
         if (pass) {
           const rec = {
             event: 'RDCP_AUDIT' as const,
@@ -536,10 +568,16 @@ export class RDCPServer {
    * Handle RDCP status endpoint
    * Returns current debug status with tenant isolation
    */
-  handleStatus(tenantContext: RDCPTenantContext, req?: { requestId?: string }): RDCPStatusResponse | ReturnType<typeof createRDCPError> {
+  handleStatus(
+    tenantContext: RDCPTenantContext,
+    req?: { requestId?: string }
+  ): RDCPStatusResponse | ReturnType<typeof createRDCPError> {
     // Rate limit: status
     if (this.rateLimitingEnabled && this.rateLimiter) {
-      const res = this.rateLimiter.check({ endpoint: 'status', tenantId: tenantContext.tenantId })
+      const res = this.rateLimiter.check({
+        endpoint: 'status',
+        tenantId: tenantContext.tenantId,
+      })
       this.onRateLimit?.({
         endpoint: 'status',
         tenantId: tenantContext.tenantId,
@@ -590,7 +628,9 @@ export class RDCPServer {
    * Handle RDCP health endpoint
    * Returns system health status (global, not tenant-specific)
    */
-  handleHealth(req?: { requestId?: string }): RDCPHealthResponse | ReturnType<typeof createRDCPError> {
+  handleHealth(req?: {
+    requestId?: string
+  }): RDCPHealthResponse | ReturnType<typeof createRDCPError> {
     // Rate limit: health
     if (this.rateLimitingEnabled && this.rateLimiter) {
       const res = this.rateLimiter.check({ endpoint: 'health', tenantId: null })

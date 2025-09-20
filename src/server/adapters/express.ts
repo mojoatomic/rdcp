@@ -86,22 +86,25 @@ export function createRDCPMiddleware(
   }
 
   // Rate limit header capture per-request
-  const rateEvents = new Map<string, {
-    allowed: boolean
-    remaining: number
-    resetMs: number
-    limit: number
-  }>()
+  const rateEvents = new Map<
+    string,
+    {
+      allowed: boolean
+      remaining: number
+      resetMs: number
+      limit: number
+    }
+  >()
 
   // Initialize RDCP server utilities
   const rdcpServer = new RDCPServer({
     debugConfig,
     performance,
     tenant,
-    onRateLimit: (e) => {
+    onRateLimit: (e): void => {
       if (options.capabilities?.rateLimit?.headers) {
         // store by requestId if available, otherwise key by endpoint+tenant
-        const key = e.requestId || `${e.endpoint}:${e.tenantId ?? 'global'}`
+        const key = e.requestId ?? `${e.endpoint}:${e.tenantId ?? 'global'}`
         rateEvents.set(key, {
           allowed: e.allowed,
           remaining: e.remaining,
@@ -138,19 +141,35 @@ export function createRDCPMiddleware(
 
       // Handle .well-known/rdcp discovery endpoint (no auth required)
       if (pathname === '/.well-known/rdcp') {
-        const discoveryResponse = rdcpServer.handleDiscovery({ basePath, requestId: reqId })
+        const discoveryResponse = rdcpServer.handleDiscovery({
+          basePath,
+          requestId: reqId,
+        })
         // Set rate limit headers if configured
         const ev = rateEvents.get(reqId)
         if (ev && options.capabilities?.rateLimit?.headers) {
           if (options.capabilities.rateLimit.headersMode === 'draft-7') {
-            res.set('RateLimit', `limit=${ev.limit}, remaining=${ev.remaining}, reset=${Math.ceil(ev.resetMs / 1000)}`)
-            res.set('RateLimit-Policy', `${ev.limit};w=${Math.ceil(ev.resetMs / 1000)}`)
-            if (!ev.allowed) res.set('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
+            res.set(
+              'RateLimit',
+              `limit=${ev.limit}, remaining=${ev.remaining}, reset=${Math.ceil(
+                ev.resetMs / 1000
+              )}`
+            )
+            res.set(
+              'RateLimit-Policy',
+              `${ev.limit};w=${Math.ceil(ev.resetMs / 1000)}`
+            )
+            if (!ev.allowed)
+              res.set('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
           } else {
             res.set('X-RateLimit-Limit', String(ev.limit))
             res.set('X-RateLimit-Remaining', String(ev.remaining))
-            res.set('X-RateLimit-Reset', String(Math.ceil((Date.now() + ev.resetMs) / 1000)))
-            if (!ev.allowed) res.set('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
+            res.set(
+              'X-RateLimit-Reset',
+              String(Math.ceil((Date.now() + ev.resetMs) / 1000))
+            )
+            if (!ev.allowed)
+              res.set('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
           }
         }
         res.json(discoveryResponse)
@@ -204,12 +223,18 @@ export function createRDCPMiddleware(
           statusCode = 405
         } else {
           const body = req.body || {}
-          response = await rdcpServer.handleControl(body, tenantContext, {
-            requestId: reqId,
-            authMethod: (req.headers['x-rdcp-auth-method'] as string) || undefined,
-            clientId: (req.headers['x-rdcp-client-id'] as string) || undefined,
-            ip: req.ip,
-          })
+          const meta: {
+            requestId: string
+            authMethod?: string
+            clientId?: string
+            ip?: string
+          } = { requestId: reqId }
+          const am = req.headers['x-rdcp-auth-method'] as string | undefined
+          const cid = req.headers['x-rdcp-client-id'] as string | undefined
+          if (am) meta.authMethod = am
+          if (cid) meta.clientId = cid
+          if (req.ip) meta.ip = req.ip
+          response = await rdcpServer.handleControl(body, tenantContext, meta)
         }
       } else if (pathname === `${basePath}/status`) {
         response = rdcpServer.handleStatus(tenantContext, { requestId: reqId })
@@ -221,8 +246,8 @@ export function createRDCPMiddleware(
       }
 
       // Map error code to HTTP status if present
-      if ((response as any)?.error?.code) {
-        const code = (response as any).error.code as string
+      const code = (response as { error?: { code?: string } })?.error?.code
+      if (code) {
         if (code === 'RDCP_RATE_LIMITED') statusCode = 429
         else if (code === 'RDCP_NOT_FOUND') statusCode = 404
         else if (code === 'RDCP_AUTH_REQUIRED') statusCode = 401
@@ -233,14 +258,27 @@ export function createRDCPMiddleware(
       const ev = rateEvents.get(reqId)
       if (ev && options.capabilities?.rateLimit?.headers) {
         if (options.capabilities.rateLimit.headersMode === 'draft-7') {
-          res.set('RateLimit', `limit=${ev.limit}, remaining=${ev.remaining}, reset=${Math.ceil(ev.resetMs / 1000)}`)
-          res.set('RateLimit-Policy', `${ev.limit};w=${Math.ceil(ev.resetMs / 1000)}`)
-          if (!ev.allowed) res.set('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
+          res.set(
+            'RateLimit',
+            `limit=${ev.limit}, remaining=${ev.remaining}, reset=${Math.ceil(
+              ev.resetMs / 1000
+            )}`
+          )
+          res.set(
+            'RateLimit-Policy',
+            `${ev.limit};w=${Math.ceil(ev.resetMs / 1000)}`
+          )
+          if (!ev.allowed)
+            res.set('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
         } else {
           res.set('X-RateLimit-Limit', String(ev.limit))
           res.set('X-RateLimit-Remaining', String(ev.remaining))
-          res.set('X-RateLimit-Reset', String(Math.ceil((Date.now() + ev.resetMs) / 1000)))
-          if (!ev.allowed) res.set('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
+          res.set(
+            'X-RateLimit-Reset',
+            String(Math.ceil((Date.now() + ev.resetMs) / 1000))
+          )
+          if (!ev.allowed)
+            res.set('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
         }
       }
       res.status(statusCode).json(response)

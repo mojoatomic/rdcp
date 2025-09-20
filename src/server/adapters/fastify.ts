@@ -109,21 +109,24 @@ export function createRDCPMiddleware(
   }
 
   // Rate limit header capture per-request
-  const rateEvents = new Map<string, {
-    allowed: boolean
-    remaining: number
-    resetMs: number
-    limit: number
-  }>()
+  const rateEvents = new Map<
+    string,
+    {
+      allowed: boolean
+      remaining: number
+      resetMs: number
+      limit: number
+    }
+  >()
 
   // Initialize RDCP server utilities
   const rdcpServer = new RDCPServer({
     debugConfig,
     performance,
     tenant,
-    onRateLimit: (e) => {
+    onRateLimit: (e): void => {
       if (options.capabilities?.rateLimit?.headers) {
-        const key = e.requestId || `${e.endpoint}:${e.tenantId ?? 'global'}`
+        const key = e.requestId ?? `${e.endpoint}:${e.tenantId ?? 'global'}`
         rateEvents.set(key, {
           allowed: e.allowed,
           remaining: e.remaining,
@@ -159,19 +162,35 @@ export function createRDCPMiddleware(
 
       // Handle .well-known/rdcp discovery endpoint (no auth required)
       if (pathname === '/.well-known/rdcp') {
-        const discoveryResponse = rdcpServer.handleDiscovery({ basePath, requestId: reqId })
+        const discoveryResponse = rdcpServer.handleDiscovery({
+          basePath,
+          requestId: reqId,
+        })
         // Headers
         const ev = rateEvents.get(reqId)
         if (ev && options.capabilities?.rateLimit?.headers) {
           if (options.capabilities.rateLimit.headersMode === 'draft-7') {
-            reply.header('RateLimit', `limit=${ev.limit}, remaining=${ev.remaining}, reset=${Math.ceil(ev.resetMs / 1000)}`)
-            reply.header('RateLimit-Policy', `${ev.limit};w=${Math.ceil(ev.resetMs / 1000)}`)
-            if (!ev.allowed) reply.header('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
+            reply.header(
+              'RateLimit',
+              `limit=${ev.limit}, remaining=${ev.remaining}, reset=${Math.ceil(
+                ev.resetMs / 1000
+              )}`
+            )
+            reply.header(
+              'RateLimit-Policy',
+              `${ev.limit};w=${Math.ceil(ev.resetMs / 1000)}`
+            )
+            if (!ev.allowed)
+              reply.header('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
           } else {
             reply.header('X-RateLimit-Limit', String(ev.limit))
             reply.header('X-RateLimit-Remaining', String(ev.remaining))
-            reply.header('X-RateLimit-Reset', String(Math.ceil((Date.now() + ev.resetMs) / 1000)))
-            if (!ev.allowed) reply.header('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
+            reply.header(
+              'X-RateLimit-Reset',
+              String(Math.ceil((Date.now() + ev.resetMs) / 1000))
+            )
+            if (!ev.allowed)
+              reply.header('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
           }
         }
         reply.type('application/json').send(discoveryResponse)
@@ -225,12 +244,19 @@ export function createRDCPMiddleware(
           statusCode = 405
         } else {
           const body = request.body || {}
-          response = await rdcpServer.handleControl(body, tenantContext, {
-            requestId: reqId,
-            authMethod: (request.headers['x-rdcp-auth-method'] as string) || undefined,
-            clientId: (request.headers['x-rdcp-client-id'] as string) || undefined,
-            ip: (request as any).ip,
-          })
+          const meta: {
+            requestId: string
+            authMethod?: string
+            clientId?: string
+            ip?: string
+          } = { requestId: reqId }
+          const am = request.headers['x-rdcp-auth-method'] as string | undefined
+          const cid = request.headers['x-rdcp-client-id'] as string | undefined
+          if (am) meta.authMethod = am
+          if (cid) meta.clientId = cid
+          const rip = (request as unknown as { ip?: string }).ip
+          if (rip) meta.ip = rip
+          response = await rdcpServer.handleControl(body, tenantContext, meta)
         }
       } else if (pathname === `${basePath}/status`) {
         response = rdcpServer.handleStatus(tenantContext, { requestId: reqId })
@@ -242,8 +268,8 @@ export function createRDCPMiddleware(
       }
 
       // Map error code to HTTP status if present
-      if ((response as any)?.error?.code) {
-        const code = (response as any).error.code as string
+      const code = (response as { error?: { code?: string } })?.error?.code
+      if (code) {
         if (code === 'RDCP_RATE_LIMITED') statusCode = 429
         else if (code === 'RDCP_NOT_FOUND') statusCode = 404
         else if (code === 'RDCP_AUTH_REQUIRED') statusCode = 401
@@ -253,14 +279,27 @@ export function createRDCPMiddleware(
       const ev = rateEvents.get(reqId)
       if (ev && options.capabilities?.rateLimit?.headers) {
         if (options.capabilities.rateLimit.headersMode === 'draft-7') {
-          reply.header('RateLimit', `limit=${ev.limit}, remaining=${ev.remaining}, reset=${Math.ceil(ev.resetMs / 1000)}`)
-          reply.header('RateLimit-Policy', `${ev.limit};w=${Math.ceil(ev.resetMs / 1000)}`)
-          if (!ev.allowed) reply.header('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
+          reply.header(
+            'RateLimit',
+            `limit=${ev.limit}, remaining=${ev.remaining}, reset=${Math.ceil(
+              ev.resetMs / 1000
+            )}`
+          )
+          reply.header(
+            'RateLimit-Policy',
+            `${ev.limit};w=${Math.ceil(ev.resetMs / 1000)}`
+          )
+          if (!ev.allowed)
+            reply.header('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
         } else {
           reply.header('X-RateLimit-Limit', String(ev.limit))
           reply.header('X-RateLimit-Remaining', String(ev.remaining))
-          reply.header('X-RateLimit-Reset', String(Math.ceil((Date.now() + ev.resetMs) / 1000)))
-          if (!ev.allowed) reply.header('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
+          reply.header(
+            'X-RateLimit-Reset',
+            String(Math.ceil((Date.now() + ev.resetMs) / 1000))
+          )
+          if (!ev.allowed)
+            reply.header('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
         }
       }
       reply.status(statusCode).type('application/json').send(response)
