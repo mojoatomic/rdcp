@@ -13,6 +13,8 @@ import {
 } from '../utils/tenant.js'
 import { createRDCPError } from '../validation/errors.js'
 import { RDCPResponse, TenantContext } from '../utils/types.js'
+import { TokenBucketLimiter } from './rateLimiter.js'
+import { AuditSink, NoopAuditSink, ConsoleAuditSink } from './audit.js'
 
 /**
  * RDCP Server configuration options
@@ -28,6 +30,20 @@ export interface RDCPServerOptions {
       minDurationMs?: number
       maxDurationMs?: number
       maxActiveTTLs?: number
+    }
+    rateLimit?: {
+      enabled?: boolean
+      headers?: boolean
+      defaultRule?: {
+        windowMs?: number
+        maxRequests?: number
+      }
+      perEndpoint?: Record<string, { windowMs?: number; maxRequests?: number }>
+      perTenant?: Record<string, { windowMs?: number; maxRequests?: number }>
+    }
+    audit?: {
+      enabled?: boolean
+      sink?: 'console' | 'none'
     }
   }
 }
@@ -134,6 +150,10 @@ export class RDCPServer {
     maxDurationMs: number
     maxActiveTTLs: number | null
   }
+  private rateLimitingEnabled: boolean
+  private rateLimiter?: TokenBucketLimiter
+  private rateLimitHeadersEnabled: boolean
+  private auditSink: AuditSink
 
   constructor(options: RDCPServerOptions = {}) {
     this.debugConfig = options.debugConfig ?? {}
@@ -143,6 +163,31 @@ export class RDCPServer {
     this.temporaryControlsEnabled =
       options.capabilities?.temporaryControls === true ||
       options.capabilities?.ttl?.enabled === true
+
+    // Rate limiting configuration
+    const rlOptions = options.capabilities?.rateLimit
+    this.rateLimitingEnabled = rlOptions?.enabled === true
+    this.rateLimitHeadersEnabled = rlOptions?.headers === true
+    if (this.rateLimitingEnabled) {
+      const defaultRule = {
+        windowMs: rlOptions?.defaultRule?.windowMs ?? 60_000,
+        maxRequests: rlOptions?.defaultRule?.maxRequests ?? 60,
+      }
+      this.rateLimiter = new TokenBucketLimiter({
+        enabled: true,
+        defaultRule,
+        perEndpoint: rlOptions?.perEndpoint,
+        perTenant: rlOptions?.perTenant,
+      })
+    }
+
+    // Audit sink
+    const auditOpts = options.capabilities?.audit
+    this.auditSink = auditOpts?.enabled
+      ? auditOpts.sink === 'console'
+        ? new ConsoleAuditSink()
+        : new NoopAuditSink()
+      : new NoopAuditSink()
 
     const minDurationMs = options.capabilities?.ttl?.minDurationMs ?? 1
     // Default: 1 hour
@@ -162,7 +207,17 @@ export class RDCPServer {
    * Handle RDCP discovery endpoint
    * Returns available endpoints and capabilities
    */
-  handleDiscovery(options: DiscoveryOptions = {}): RDCPDiscoveryResponse {
+  handleDiscovery(options: DiscoveryOptions = {}): RDCPDiscoveryResponse | ReturnType<typeof createRDCPError> {
+    // Rate limit: discovery
+    if (this.rateLimitingEnabled && this.rateLimiter) {
+      const res = this.rateLimiter.check({ endpoint: 'discovery', tenantId: options.tenant?.tenantId ?? null })
+      if (!res.allowed) {
+        return createRDCPError(
+          'RDCP_RATE_LIMITED',
+          `Discovery rate limited. Retry after ${res.resetMs}ms`
+        )
+      }
+    }
     const { basePath = '/rdcp/v1', tenant } = options
 
     const response: RDCPDiscoveryResponse = {
@@ -205,6 +260,16 @@ export class RDCPServer {
     body: unknown,
     tenantContext: RDCPTenantContext
   ): Promise<RDCPControlResponse | ReturnType<typeof createRDCPError>> {
+    // Rate limit: control
+    if (this.rateLimitingEnabled && this.rateLimiter) {
+      const res = this.rateLimiter.check({ endpoint: 'control', tenantId: tenantContext.tenantId })
+      if (!res.allowed) {
+        return createRDCPError(
+          'RDCP_RATE_LIMITED',
+          `Control rate limited. Retry after ${res.resetMs}ms`
+        )
+      }
+    }
     // Type guard to ensure body has expected shape
     const requestBody = body as {
       action?: string
@@ -308,6 +373,20 @@ export class RDCPServer {
         status: 'success' as const,
       }
 
+      // Emit audit record (success)
+      try {
+        this.auditSink.write({
+          event: 'RDCP_AUDIT',
+          timestamp: response.timestamp,
+          action: action,
+          categories,
+          tenantId: tenantContext.tenantId,
+          status: 'success',
+        })
+      } catch {
+        // do not throw from audit sink
+      }
+
       return createTenantResponse(response, tenantContext)
     } catch (error) {
       const errorMessage =
@@ -382,7 +461,17 @@ export class RDCPServer {
    * Handle RDCP status endpoint
    * Returns current debug status with tenant isolation
    */
-  handleStatus(tenantContext: RDCPTenantContext): RDCPStatusResponse {
+  handleStatus(tenantContext: RDCPTenantContext): RDCPStatusResponse | ReturnType<typeof createRDCPError> {
+    // Rate limit: status
+    if (this.rateLimitingEnabled && this.rateLimiter) {
+      const res = this.rateLimiter.check({ endpoint: 'status', tenantId: tenantContext.tenantId })
+      if (!res.allowed) {
+        return createRDCPError(
+          'RDCP_RATE_LIMITED',
+          `Status rate limited. Retry after ${res.resetMs}ms`
+        )
+      }
+    }
     // Get tenant-specific configuration
     const tenantConfig = getTenantDebugConfig(tenantContext.tenantId)
 
@@ -416,7 +505,17 @@ export class RDCPServer {
    * Handle RDCP health endpoint
    * Returns system health status (global, not tenant-specific)
    */
-  handleHealth(): RDCPHealthResponse {
+  handleHealth(): RDCPHealthResponse | ReturnType<typeof createRDCPError> {
+    // Rate limit: health
+    if (this.rateLimitingEnabled && this.rateLimiter) {
+      const res = this.rateLimiter.check({ endpoint: 'health', tenantId: null })
+      if (!res.allowed) {
+        return createRDCPError(
+          'RDCP_RATE_LIMITED',
+          `Health rate limited. Retry after ${res.resetMs}ms`
+        )
+      }
+    }
     return {
       protocol: 'rdcp/1.0',
       timestamp: new Date().toISOString(),
