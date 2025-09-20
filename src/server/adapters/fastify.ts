@@ -147,6 +147,30 @@ export function createRDCPMiddleware(
       // Extract path from Fastify request
       const pathname = request.url.split('?')[0]
 
+      // Validate optional X-RDCP-Request-ID header (must be a UUID)
+      const reqIdHeader = request.headers['x-rdcp-request-id'] as
+        | string
+        | undefined
+      if (reqIdHeader) {
+        const uuidRe =
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+        if (!uuidRe.test(reqIdHeader)) {
+          const errorResponse = createRDCPError(
+            'RDCP_REQUEST_ID_INVALID',
+            'Invalid X-RDCP-Request-ID format',
+            {
+              expected: 'uuid',
+              received: reqIdHeader,
+            }
+          )
+          const status = (ERROR_STATUS_MAP as Record<string, number>)[
+            'RDCP_REQUEST_ID_INVALID'
+          ]
+          reply.status(status).type('application/json').send(errorResponse)
+          return
+        }
+      }
+
       // Only handle RDCP endpoints
       if (
         !pathname.startsWith('/.well-known/rdcp') &&
@@ -157,7 +181,7 @@ export function createRDCPMiddleware(
 
       // Generate request ID for rate limit tracking
       const reqId =
-        (request.headers['x-rdcp-request-id'] as string) ||
+        reqIdHeader ??
         `req-${Date.now()}-${Math.random().toString(36).slice(2)}`
 
       // Handle .well-known/rdcp discovery endpoint (no auth required)
@@ -302,6 +326,12 @@ export function createRDCPMiddleware(
           if (!ev.allowed)
             reply.header('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
         }
+      }
+      // Emit warnings
+      const respWarn = response as { __rdcpWarnings?: string[] }
+      const warnings = respWarn.__rdcpWarnings
+      if (warnings?.includes('audit-write-failed')) {
+        reply.header('Warning', '199 rdcp "audit-write-failed"')
       }
       reply.status(statusCode).type('application/json').send(response)
     } catch (error) {

@@ -138,9 +138,31 @@ export function createRDCPMiddleware(
         return next() // Continue to next middleware
       }
 
+      // Validate optional X-RDCP-Request-ID header (must be a UUID)
+      const reqIdHeader = req.headers['x-rdcp-request-id'] as string | undefined
+      if (reqIdHeader) {
+        const uuidRe =
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+        if (!uuidRe.test(reqIdHeader)) {
+          const errorResponse = createRDCPError(
+            'RDCP_REQUEST_ID_INVALID',
+            'Invalid X-RDCP-Request-ID format',
+            {
+              expected: 'uuid',
+              received: reqIdHeader,
+            }
+          )
+          const status = (ERROR_STATUS_MAP as Record<string, number>)[
+            'RDCP_REQUEST_ID_INVALID'
+          ]
+          res.status(status).json(errorResponse)
+          return
+        }
+      }
+
       // Generate request ID for rate limit tracking
       const reqId =
-        (req.headers['x-rdcp-request-id'] as string) ||
+        reqIdHeader ??
         `req-${Date.now()}-${Math.random().toString(36).slice(2)}`
 
       // Handle .well-known/rdcp discovery endpoint (no auth required)
@@ -285,6 +307,12 @@ export function createRDCPMiddleware(
           if (!ev.allowed)
             res.set('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
         }
+      }
+      // Emit warnings
+      const respWarn = response as { __rdcpWarnings?: string[] }
+      const warnings = respWarn.__rdcpWarnings
+      if (warnings?.includes('audit-write-failed')) {
+        res.set('Warning', '199 rdcp "audit-write-failed"')
       }
       res.status(statusCode).json(response)
     } catch (error) {

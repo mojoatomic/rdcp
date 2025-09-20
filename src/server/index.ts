@@ -75,6 +75,7 @@ export interface RDCPServerOptions {
       }
       sampleRate?: number
       redact?: AuditRedactFn
+      failureMode?: 'ignore' | 'warn' | 'fail'
     }
   }
 }
@@ -190,6 +191,7 @@ export class RDCPServer {
   private randomFn: () => number
   private auditSampleRate: number | undefined
   private auditRedact: AuditRedactFn | undefined
+  private auditFailureMode: 'ignore' | 'warn' | 'fail' | undefined
   private onRateLimit?: RDCPServerOptions['onRateLimit']
 
   constructor(options: RDCPServerOptions = {}) {
@@ -227,6 +229,7 @@ export class RDCPServer {
     this.randomFn = options.random ?? Math.random
     this.auditSampleRate = auditOpts?.sampleRate
     this.auditRedact = auditOpts?.redact
+    this.auditFailureMode = auditOpts?.failureMode ?? 'ignore'
     if (auditOpts?.enabled) {
       if (auditOpts.sink === 'console') {
         this.auditSink = new ConsoleAuditSink()
@@ -485,7 +488,7 @@ export class RDCPServer {
         timestamp: new Date().toISOString(),
         changes,
         status: 'success' as const,
-      }
+      } as RDCPControlResponse & { __rdcpWarnings?: string[] }
 
       // Emit audit record (success)
       try {
@@ -497,7 +500,7 @@ export class RDCPServer {
         if (pass) {
           const rec = {
             event: 'RDCP_AUDIT' as const,
-            timestamp: response.timestamp,
+            timestamp: response.timestamp ?? new Date().toISOString(),
             action: action,
             categories,
             tenantId: tenantContext.tenantId,
@@ -510,8 +513,33 @@ export class RDCPServer {
           const out = this.auditRedact ? this.auditRedact(rec) : rec
           this.auditSink.write(out)
         }
-      } catch {
-        // do not throw from audit sink
+      } catch (e) {
+        // audit write failure handling per configuration
+        const fm = this.auditFailureMode ?? 'ignore'
+        if (fm === 'fail') {
+          const sinkType =
+            this.auditSink instanceof FileAuditSink
+              ? 'file'
+              : this.auditSink instanceof ConsoleAuditSink
+                ? 'console'
+                : 'none'
+          return createRDCPError(
+            'RDCP_AUDIT_WRITE_FAILED',
+            'Audit sink write failed',
+            {
+              sink: sinkType,
+              reason: e instanceof Error ? e.message : 'unknown',
+              ...(req?.requestId ? { requestId: req.requestId } : {}),
+            }
+          )
+        }
+        if (fm === 'warn') {
+          response.__rdcpWarnings = [
+            ...(response.__rdcpWarnings ?? []),
+            'audit-write-failed',
+          ]
+        }
+        // ignore mode: swallow
       }
 
       return createTenantResponse(response, tenantContext)
