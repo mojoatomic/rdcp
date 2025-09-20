@@ -97,6 +97,7 @@ See: Error-Responses.md (error codes, rate-limit details) and Basic-Usage.md (ca
 - **[Installation](Installation.md)** - Install and setup the RDCP SDK
 - **[Basic Usage](Basic-Usage.md)** - Quick integration examples for all supported frameworks
 - **[Rate Limiting](Rate-Limiting.md)** - Configuration, standard headers, and structured error details
+- **[Monitoring & Metrics](Monitoring.md)** - /status measured metrics and optional Prometheus /metrics
 
 ### Framework Integration
 - **[Express.js Integration](Basic-Usage#express-js)** - Complete Express.js middleware setup
