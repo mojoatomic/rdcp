@@ -7,7 +7,11 @@
 import { Request, Response, NextFunction, Router } from 'express'
 import * as express from 'express'
 import { RDCPServer } from '../index.js'
-import { RDCPErrorClass, createRDCPError } from '../../validation/errors.js'
+import {
+  RDCPErrorClass,
+  createRDCPError,
+  ERROR_STATUS_MAP,
+} from '../../validation/errors.js'
 import { extractTenantContext, RDCPTenantContext } from '../../utils/tenant.js'
 import { logger } from '../../utils/logger.js'
 
@@ -247,12 +251,13 @@ export function createRDCPMiddleware(
 
       // Map error code to HTTP status if present
       const code = (response as { error?: { code?: string } })?.error?.code
-      if (code) {
-        if (code === 'RDCP_RATE_LIMITED') statusCode = 429
-        else if (code === 'RDCP_NOT_FOUND') statusCode = 404
-        else if (code === 'RDCP_AUTH_REQUIRED') statusCode = 401
-        else if (code === 'RDCP_FORBIDDEN') statusCode = 403
-        else if (code.startsWith('RDCP_')) statusCode = 400
+      if (code && typeof code === 'string') {
+        const mapped = (ERROR_STATUS_MAP as Record<string, number>)[code]
+        if (typeof mapped === 'number') {
+          statusCode = mapped
+        } else if (code.startsWith('RDCP_')) {
+          statusCode = 400
+        }
       }
       // Rate limit headers
       const ev = rateEvents.get(reqId)

@@ -11,7 +11,7 @@ import {
   RDCPTenantContext,
   TenantDebugConfig,
 } from '../utils/tenant.js'
-import { createRDCPError } from '../validation/errors.js'
+import { createRDCPError, createRateLimitError } from '../validation/errors.js'
 import { RDCPResponse, TenantContext } from '../utils/types.js'
 import { TokenBucketLimiter, RateLimitConfig } from './rateLimiter.js'
 import {
@@ -287,8 +287,18 @@ export class RDCPServer {
         ...(options.requestId ? { requestId: options.requestId } : {}),
       })
       if (!res.allowed) {
-        return createRDCPError(
-          'RDCP_RATE_LIMITED',
+        const retryAfterSec = Math.ceil(res.resetMs / 1000)
+        const resetEpoch = Math.ceil((Date.now() + res.resetMs) / 1000)
+        const policy = `${res.limit};w=${Math.ceil(res.windowMs / 1000)}`
+        return createRateLimitError(
+          {
+            limit: res.limit,
+            remaining: Math.max(0, res.remaining),
+            reset: resetEpoch,
+            retryAfterSec,
+            policy,
+            ...(options.requestId ? { requestId: options.requestId } : {}),
+          },
           `Discovery rate limited. Retry after ${res.resetMs}ms`
         )
       }
@@ -358,8 +368,18 @@ export class RDCPServer {
         ...(req?.requestId ? { requestId: req.requestId } : {}),
       })
       if (!res.allowed) {
-        return createRDCPError(
-          'RDCP_RATE_LIMITED',
+        const retryAfterSec = Math.ceil(res.resetMs / 1000)
+        const resetEpoch = Math.ceil((Date.now() + res.resetMs) / 1000)
+        const policy = `${res.limit};w=${Math.ceil(res.windowMs / 1000)}`
+        return createRateLimitError(
+          {
+            limit: res.limit,
+            remaining: Math.max(0, res.remaining),
+            reset: resetEpoch,
+            retryAfterSec,
+            policy,
+            ...(req?.requestId ? { requestId: req.requestId } : {}),
+          },
           `Control rate limited. Retry after ${res.resetMs}ms`
         )
       }
@@ -589,8 +609,18 @@ export class RDCPServer {
         ...(req?.requestId ? { requestId: req.requestId } : {}),
       })
       if (!res.allowed) {
-        return createRDCPError(
-          'RDCP_RATE_LIMITED',
+        const retryAfterSec = Math.ceil(res.resetMs / 1000)
+        const resetEpoch = Math.ceil((Date.now() + res.resetMs) / 1000)
+        const policy = `${res.limit};w=${Math.ceil(res.windowMs / 1000)}`
+        return createRateLimitError(
+          {
+            limit: res.limit,
+            remaining: Math.max(0, res.remaining),
+            reset: resetEpoch,
+            retryAfterSec,
+            policy,
+            ...(req?.requestId ? { requestId: req.requestId } : {}),
+          },
           `Status rate limited. Retry after ${res.resetMs}ms`
         )
       }
@@ -645,8 +675,18 @@ export class RDCPServer {
         ...(req?.requestId ? { requestId: req.requestId } : {}),
       })
       if (!res.allowed) {
-        return createRDCPError(
-          'RDCP_RATE_LIMITED',
+        const retryAfterSec = Math.ceil(res.resetMs / 1000)
+        const resetEpoch = Math.ceil((Date.now() + res.resetMs) / 1000)
+        const policy = `${res.limit};w=${Math.ceil(res.windowMs / 1000)}`
+        return createRateLimitError(
+          {
+            limit: res.limit,
+            remaining: Math.max(0, res.remaining),
+            reset: resetEpoch,
+            retryAfterSec,
+            policy,
+            ...(req?.requestId ? { requestId: req.requestId } : {}),
+          },
           `Health rate limited. Retry after ${res.resetMs}ms`
         )
       }
