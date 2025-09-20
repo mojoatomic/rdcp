@@ -41,6 +41,20 @@ export interface RDCPFastifyMiddlewareOptions {
       maxDurationMs?: number
       maxActiveTTLs?: number
     }
+    rateLimit?: {
+      enabled?: boolean
+      headers?: boolean
+      headersMode?: 'x' | 'draft-7'
+      defaultRule?: { windowMs?: number; maxRequests?: number }
+      perEndpoint?: Record<string, { windowMs?: number; maxRequests?: number }>
+      perTenant?: Record<string, { windowMs?: number; maxRequests?: number }>
+    }
+    audit?: {
+      enabled?: boolean
+      sink?: 'console' | 'file' | 'none'
+      file?: { path?: string; maxBytes?: number; maxFiles?: number }
+      sampleRate?: number
+    }
   }
 }
 
@@ -108,8 +122,8 @@ export function createRDCPMiddleware(
     performance,
     tenant,
     onRateLimit: (e) => {
-      if ((options.capabilities as any)?.rateLimit?.headers) {
-        const key = (e as any).requestId || `${e.endpoint}:${e.tenantId ?? 'global'}`
+      if (options.capabilities?.rateLimit?.headers) {
+        const key = e.requestId || `${e.endpoint}:${e.tenantId ?? 'global'}`
         rateEvents.set(key, {
           allowed: e.allowed,
           remaining: e.remaining,
@@ -148,11 +162,17 @@ export function createRDCPMiddleware(
         const discoveryResponse = rdcpServer.handleDiscovery({ basePath, requestId: reqId })
         // Headers
         const ev = rateEvents.get(reqId)
-        if (ev && (options.capabilities as any)?.rateLimit?.headers) {
-          reply.header('X-RateLimit-Limit', String(ev.limit))
-          reply.header('X-RateLimit-Remaining', String(ev.remaining))
-          reply.header('X-RateLimit-Reset', String(Math.ceil((Date.now() + ev.resetMs) / 1000)))
-          if (!ev.allowed) reply.header('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
+        if (ev && options.capabilities?.rateLimit?.headers) {
+          if (options.capabilities.rateLimit.headersMode === 'draft-7') {
+            reply.header('RateLimit', `limit=${ev.limit}, remaining=${ev.remaining}, reset=${Math.ceil(ev.resetMs / 1000)}`)
+            reply.header('RateLimit-Policy', `${ev.limit};w=${Math.ceil(ev.resetMs / 1000)}`)
+            if (!ev.allowed) reply.header('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
+          } else {
+            reply.header('X-RateLimit-Limit', String(ev.limit))
+            reply.header('X-RateLimit-Remaining', String(ev.remaining))
+            reply.header('X-RateLimit-Reset', String(Math.ceil((Date.now() + ev.resetMs) / 1000)))
+            if (!ev.allowed) reply.header('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
+          }
         }
         reply.type('application/json').send(discoveryResponse)
         return
@@ -226,11 +246,17 @@ export function createRDCPMiddleware(
         else if (code.startsWith('RDCP_')) statusCode = 400
       }
       const ev = rateEvents.get(reqId)
-      if (ev && (options.capabilities as any)?.rateLimit?.headers) {
-        reply.header('X-RateLimit-Limit', String(ev.limit))
-        reply.header('X-RateLimit-Remaining', String(ev.remaining))
-        reply.header('X-RateLimit-Reset', String(Math.ceil((Date.now() + ev.resetMs) / 1000)))
-        if (!ev.allowed) reply.header('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
+      if (ev && options.capabilities?.rateLimit?.headers) {
+        if (options.capabilities.rateLimit.headersMode === 'draft-7') {
+          reply.header('RateLimit', `limit=${ev.limit}, remaining=${ev.remaining}, reset=${Math.ceil(ev.resetMs / 1000)}`)
+          reply.header('RateLimit-Policy', `${ev.limit};w=${Math.ceil(ev.resetMs / 1000)}`)
+          if (!ev.allowed) reply.header('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
+        } else {
+          reply.header('X-RateLimit-Limit', String(ev.limit))
+          reply.header('X-RateLimit-Remaining', String(ev.remaining))
+          reply.header('X-RateLimit-Reset', String(Math.ceil((Date.now() + ev.resetMs) / 1000)))
+          if (!ev.allowed) reply.header('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
+        }
       }
       reply.status(statusCode).type('application/json').send(response)
     } catch (error) {

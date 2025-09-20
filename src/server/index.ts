@@ -31,7 +31,11 @@ export interface RDCPServerOptions {
     remaining: number
     resetMs: number
     limit: number
+    windowMs: number
+    requestId?: string
   }) => void
+  // Random source (for sampling); defaults to Math.random
+  random?: () => number
   capabilities?: {
     temporaryControls?: boolean
     ttl?: {
@@ -43,6 +47,7 @@ export interface RDCPServerOptions {
     rateLimit?: {
       enabled?: boolean
       headers?: boolean
+      headersMode?: 'x' | 'draft-7'
       defaultRule?: {
         windowMs?: number
         maxRequests?: number
@@ -58,6 +63,8 @@ export interface RDCPServerOptions {
         maxBytes?: number
         maxFiles?: number
       }
+      sampleRate?: number
+      redact?: (record: import('./audit.js').AuditRecord) => import('./audit.js').AuditRecord
     }
   }
 }
@@ -168,7 +175,11 @@ export class RDCPServer {
   private rateLimitingEnabled: boolean
   private rateLimiter?: TokenBucketLimiter
   private rateLimitHeadersEnabled: boolean
+  private rateLimitHeadersMode: 'x' | 'draft-7'
   private auditSink: AuditSink
+  private randomFn: () => number
+  private auditSampleRate: number | undefined
+  private auditRedact?: (r: import('./audit.js').AuditRecord) => import('./audit.js').AuditRecord
   private onRateLimit?: RDCPServerOptions['onRateLimit']
 
   constructor(options: RDCPServerOptions = {}) {
@@ -186,6 +197,7 @@ export class RDCPServer {
     const rlOptions = options.capabilities?.rateLimit
     this.rateLimitingEnabled = rlOptions?.enabled === true
     this.rateLimitHeadersEnabled = rlOptions?.headers === true
+    this.rateLimitHeadersMode = rlOptions?.headersMode ?? 'x'
     if (this.rateLimitingEnabled) {
       const defaultRule = {
         windowMs: rlOptions?.defaultRule?.windowMs ?? 60_000,
@@ -202,6 +214,9 @@ export class RDCPServer {
 
     // Audit sink
     const auditOpts = options.capabilities?.audit
+    this.randomFn = options.random ?? Math.random
+    this.auditSampleRate = auditOpts?.sampleRate
+    this.auditRedact = auditOpts?.redact
     if (auditOpts?.enabled) {
       if (auditOpts.sink === 'console') {
         this.auditSink = new ConsoleAuditSink()
@@ -423,14 +438,20 @@ export class RDCPServer {
 
       // Emit audit record (success)
       try {
-        this.auditSink.write({
-          event: 'RDCP_AUDIT',
-          timestamp: response.timestamp,
-          action: action,
-          categories,
-          tenantId: tenantContext.tenantId,
-          status: 'success',
-        })
+        // sampling
+        const pass = this.auditSampleRate === undefined ? true : this.randomFn() < this.auditSampleRate
+        if (pass) {
+          const rec = {
+            event: 'RDCP_AUDIT' as const,
+            timestamp: response.timestamp,
+            action: action,
+            categories,
+            tenantId: tenantContext.tenantId,
+            status: 'success' as const,
+          }
+          const out = this.auditRedact ? this.auditRedact(rec) : rec
+          this.auditSink.write(out)
+        }
       } catch {
         // do not throw from audit sink
       }

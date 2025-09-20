@@ -11,6 +11,9 @@ export interface AuditRecord {
   status: 'success' | 'failed'
   // optional fields for future extension
   requestId?: string
+  authMethod?: string
+  clientId?: string
+  ip?: string
 }
 
 export interface AuditSink {

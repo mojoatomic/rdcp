@@ -9,6 +9,33 @@ Goals
 - Provide persistent, structured audit logging with retention and optional tamper-evidence
 - Keep disabled-mode overhead near zero
 
+Header Semantics
+- X-RateLimit-* (default): X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset, Retry-After
+- Standard (optional, draft-7): RateLimit: "limit=<n>, remaining=<n>, reset=<sec>", RateLimit-Policy: "<n>;w=<sec>"
+
+Config Examples
+```ts
+const middleware = createRDCPMiddleware({
+  authenticator,
+  capabilities: {
+    rateLimit: {
+      enabled: true,
+      headers: true,
+      headersMode: 'draft-7', // or 'x'
+      defaultRule: { windowMs: 60000, maxRequests: 120 },
+      perEndpoint: { control: { windowMs: 10000, maxRequests: 10 } },
+      perTenant: { 'tenant-A': { windowMs: 60000, maxRequests: 30 } }
+    },
+    audit: {
+      enabled: true,
+      sink: 'file',
+      file: { path: 'rdcp-audit.log', maxBytes: 5 * 1024 * 1024, maxFiles: 5 },
+      sampleRate: 0.5,
+    },
+  }
+})
+```
+
 Scope (MVP)
 - Rate limiting
   - Config surface: global defaults; per-endpoint overrides; per-tenant overrides

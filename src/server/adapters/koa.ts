@@ -78,6 +78,20 @@ export interface RDCPKoaMiddlewareOptions {
       maxDurationMs?: number
       maxActiveTTLs?: number
     }
+    rateLimit?: {
+      enabled?: boolean
+      headers?: boolean
+      headersMode?: 'x' | 'draft-7'
+      defaultRule?: { windowMs?: number; maxRequests?: number }
+      perEndpoint?: Record<string, { windowMs?: number; maxRequests?: number }>
+      perTenant?: Record<string, { windowMs?: number; maxRequests?: number }>
+    }
+    audit?: {
+      enabled?: boolean
+      sink?: 'console' | 'file' | 'none'
+      file?: { path?: string; maxBytes?: number; maxFiles?: number }
+      sampleRate?: number
+    }
   }
 }
 
@@ -143,8 +157,8 @@ export function createRDCPMiddleware(
     performance,
     tenant,
     onRateLimit: (e) => {
-      if ((options.capabilities as any)?.rateLimit?.headers) {
-        const key = (e as any).requestId || `${e.endpoint}:${e.tenantId ?? 'global'}`
+      if (options.capabilities?.rateLimit?.headers) {
+        const key = e.requestId || `${e.endpoint}:${e.tenantId ?? 'global'}`
         rateEvents.set(key, {
           allowed: e.allowed,
           remaining: e.remaining,
@@ -182,11 +196,17 @@ export function createRDCPMiddleware(
       if (pathname === '/.well-known/rdcp') {
         const discoveryResponse = rdcpServer.handleDiscovery({ basePath, requestId: reqId })
         const ev = rateEvents.get(reqId)
-        if (ev && (options.capabilities as any)?.rateLimit?.headers) {
-          ctx.set('X-RateLimit-Limit', String(ev.limit))
-          ctx.set('X-RateLimit-Remaining', String(ev.remaining))
-          ctx.set('X-RateLimit-Reset', String(Math.ceil((Date.now() + ev.resetMs) / 1000)))
-          if (!ev.allowed) ctx.set('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
+        if (ev && options.capabilities?.rateLimit?.headers) {
+          if (options.capabilities.rateLimit.headersMode === 'draft-7') {
+            ctx.set('RateLimit', `limit=${ev.limit}, remaining=${ev.remaining}, reset=${Math.ceil(ev.resetMs / 1000)}`)
+            ctx.set('RateLimit-Policy', `${ev.limit};w=${Math.ceil(ev.resetMs / 1000)}`)
+            if (!ev.allowed) ctx.set('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
+          } else {
+            ctx.set('X-RateLimit-Limit', String(ev.limit))
+            ctx.set('X-RateLimit-Remaining', String(ev.remaining))
+            ctx.set('X-RateLimit-Reset', String(Math.ceil((Date.now() + ev.resetMs) / 1000)))
+            if (!ev.allowed) ctx.set('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
+          }
         }
         ctx.type = 'application/json'
         ctx.body = discoveryResponse
@@ -269,11 +289,17 @@ export function createRDCPMiddleware(
       }
       // Rate limit headers
       const ev = rateEvents.get(reqId)
-      if (ev && (options.capabilities as any)?.rateLimit?.headers) {
-        ctx.set('X-RateLimit-Limit', String(ev.limit))
-        ctx.set('X-RateLimit-Remaining', String(ev.remaining))
-        ctx.set('X-RateLimit-Reset', String(Math.ceil((Date.now() + ev.resetMs) / 1000)))
-        if (!ev.allowed) ctx.set('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
+      if (ev && options.capabilities?.rateLimit?.headers) {
+        if (options.capabilities.rateLimit.headersMode === 'draft-7') {
+          ctx.set('RateLimit', `limit=${ev.limit}, remaining=${ev.remaining}, reset=${Math.ceil(ev.resetMs / 1000)}`)
+          ctx.set('RateLimit-Policy', `${ev.limit};w=${Math.ceil(ev.resetMs / 1000)}`)
+          if (!ev.allowed) ctx.set('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
+        } else {
+          ctx.set('X-RateLimit-Limit', String(ev.limit))
+          ctx.set('X-RateLimit-Remaining', String(ev.remaining))
+          ctx.set('X-RateLimit-Reset', String(Math.ceil((Date.now() + ev.resetMs) / 1000)))
+          if (!ev.allowed) ctx.set('Retry-After', String(Math.ceil(ev.resetMs / 1000)))
+        }
       }
       ctx.status = statusCode
       ctx.type = 'application/json'
