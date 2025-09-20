@@ -33,6 +33,7 @@ app.use(
         sink: 'file',
         file: { path: 'rdcp-audit.log', maxBytes: 5 * 1024 * 1024, maxFiles: 5 },
         sampleRate: 0.5,
+        failureMode: 'warn', // or 'ignore' (default) | 'fail'
       },
     },
   })
@@ -40,6 +41,14 @@ app.use(
 
 app.listen(3000)
 ```
+
+Notes:
+- Request correlation: You can optionally send X-RDCP-Request-ID (UUID). If present and invalid, the adapters return RDCP_REQUEST_ID_INVALID (400).
+- Rate limit headers: When rate limiting is enabled, adapters emit standard draft-7 headers (RateLimit, RateLimit-Policy, RateLimit-Remaining, RateLimit-Reset) and Retry-After on limited responses. Legacy X-RateLimit-* headers can be enabled via headersMode: 'x'.
+- Audit failure behavior:
+  - failureMode: 'ignore' – audit write failures are ignored (default)
+  - failureMode: 'warn' – adapters add Warning: 199 rdcp "audit-write-failed"
+  - failureMode: 'fail' – server returns RDCP_AUDIT_WRITE_FAILED (500) with details { sink, reason, requestId? }
 
 This guide shows how to quickly integrate RDCP SDK with your application across all supported frameworks.
 
