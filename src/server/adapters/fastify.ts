@@ -49,6 +49,10 @@ export interface RDCPFastifyMiddlewareOptions {
       perEndpoint?: Record<string, { windowMs?: number; maxRequests?: number }>
       perTenant?: Record<string, { windowMs?: number; maxRequests?: number }>
     }
+    metrics?: {
+      enabled?: boolean
+      endpointPath?: string
+    }
     audit?: {
       enabled?: boolean
       sink?: 'console' | 'file' | 'none'
@@ -173,11 +177,22 @@ export function createRDCPMiddleware(
       }
 
       // Only handle RDCP endpoints
+      const metricsPath = options.capabilities?.metrics?.endpointPath ?? '/metrics'
+      const isMetrics = options.capabilities?.metrics?.enabled === true && pathname === metricsPath
       if (
         !pathname.startsWith('/.well-known/rdcp') &&
-        !pathname.startsWith(basePath)
+        !pathname.startsWith(basePath) &&
+        !isMetrics
       ) {
         return // Continue to next handler
+      }
+
+      // Prometheus metrics endpoint (no auth)
+      if (isMetrics) {
+        const text = rdcpServer.getPrometheusMetrics()
+        reply.header('Content-Type', 'text/plain; version=0.0.4; charset=utf-8')
+        reply.send(text)
+        return
       }
 
       // Generate request ID for rate limit tracking

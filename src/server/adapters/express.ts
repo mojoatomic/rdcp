@@ -46,6 +46,10 @@ export interface RDCPMiddlewareOptions {
       perEndpoint?: Record<string, { windowMs?: number; maxRequests?: number }>
       perTenant?: Record<string, { windowMs?: number; maxRequests?: number }>
     }
+    metrics?: {
+      enabled?: boolean
+      endpointPath?: string
+    }
     audit?: {
       enabled?: boolean
       sink?: 'console' | 'file' | 'none'
@@ -132,11 +136,22 @@ export function createRDCPMiddleware(
       const pathname = req.path
 
       // Only handle RDCP endpoints
+      const metricsPath = options.capabilities?.metrics?.endpointPath ?? '/metrics'
+      const isMetrics = options.capabilities?.metrics?.enabled === true && pathname === metricsPath
       if (
         !pathname.startsWith('/.well-known/rdcp') &&
-        !pathname.startsWith(basePath)
+        !pathname.startsWith(basePath) &&
+        !isMetrics
       ) {
         return next() // Continue to next middleware
+      }
+
+      // Prometheus metrics endpoint (no auth)
+      if (isMetrics) {
+        const text = rdcpServer.getPrometheusMetrics()
+        res.set('Content-Type', 'text/plain; version=0.0.4; charset=utf-8')
+        res.send(text)
+        return
       }
 
       // Validate optional X-RDCP-Request-ID header (must be a UUID)
