@@ -26,7 +26,7 @@ jobs:
         run: npm ci
 
       - name: Install OpenTelemetry plugin dependencies
-        run: npm ci --prefix packages/otel-plugin
+        run: npm install --prefix packages/otel-plugin --no-audit --no-fund
 
       - name: Build OpenTelemetry plugin
         run: npm run build --prefix packages/otel-plugin
