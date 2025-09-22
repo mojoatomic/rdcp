@@ -14,6 +14,7 @@ A JWKS endpoint publishes the public keys used to verify JWTs signed with asymme
   - GET /.well-known/jwks.json (no auth)
 - Headers: `Cache-Control: public, max-age=<seconds>`, `ETag: "<hash>"`
 - Conditional GET supported: send `If-None-Match` with the ETag to receive `304 Not Modified` when unchanged
+- Optional headers: `Last-Modified` and `Vary` (configurable via adapter options)
 
 Example (Express):
 ```js path=null start=null
@@ -54,6 +55,31 @@ ring.rotateJwtKey(k1)
 ```
 
 Adapters automatically publish active+previous (within grace) public keys at /.well-known/jwks.json when enabled.
+
+## Client caching with ETag (recommended)
+Implement conditional GETs to avoid fetching unchanged JWKS. Example (browser/node fetch):
+```js path=null start=null
+let cachedEtag = undefined
+let cachedBody = undefined
+
+async function fetchJWKS(baseUrl) {
+  const headers = {}
+  if (cachedEtag) headers['If-None-Match'] = cachedEtag
+  const res = await fetch(`${baseUrl}/.well-known/jwks.json`, { headers })
+  if (res.status === 304 && cachedBody) {
+    return { fromCache: true, jwks: cachedBody }
+  }
+  if (!res.ok) throw new Error(`JWKS fetch failed: ${res.status}`)
+  cachedEtag = res.headers.get('ETag') || undefined
+  const data = await res.json()
+  cachedBody = data
+  return { fromCache: false, jwks: data }
+}
+```
+
+Optional headers for advanced caching:
+- Last-Modified: when enabled, servers include this; clients can also send If-Modified-Since
+- Vary: indicates cache key variance; defaults to none for JWKS; may be set for advanced setups
 
 ## Migration: HS256 → RS256
 1) Plan a rotation window

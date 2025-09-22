@@ -32,4 +32,25 @@ describe('Koa adapter - JWKS endpoint', () => {
       .set('If-None-Match', res.headers['etag'])
     expect(res2.status).toBe(304)
   })
+
+  it('includes Last-Modified and Vary when enabled', async () => {
+    const app = new Koa()
+    const mw = adapters.koa.createRDCPMiddleware({
+      authenticator: denyAuth,
+      capabilities: {
+        security: {
+          tokenLifecycle: {
+            enabled: true,
+            jwks: { enabled: true, maxAgeSeconds: 90, emitLastModified: true, varyHeader: 'Accept' },
+          },
+        },
+      },
+    })
+    app.use(mw)
+
+    const res = await request(app.callback()).get('/.well-known/jwks.json')
+    expect(res.status).toBe(200)
+    expect(typeof res.headers['last-modified']).toBe('string')
+    expect(res.headers['vary']).toBe('Accept')
+  })
 })

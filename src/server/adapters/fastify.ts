@@ -68,6 +68,8 @@ export interface RDCPFastifyMiddlewareOptions {
         jwks?: {
           enabled?: boolean
           maxAgeSeconds?: number
+          varyHeader?: string
+          emitLastModified?: boolean
         }
       }
     }
@@ -287,6 +289,13 @@ export function createRDCPMiddleware(
           (request.headers['if-none-match'] as string | undefined) ?? ''
         reply.header('ETag', prepared.etag)
         reply.header('Cache-Control', `public, max-age=${maxAge}`)
+        const jwksOpts = options.capabilities?.security?.tokenLifecycle?.jwks
+        if (jwksOpts?.emitLastModified) {
+          reply.header('Last-Modified', new Date().toUTCString())
+        }
+        if (jwksOpts?.varyHeader) {
+          reply.header('Vary', jwksOpts.varyHeader)
+        }
         reply.header('Content-Type', 'application/json')
         if (ifNoneMatch && etagMatches(ifNoneMatch, prepared.etag)) {
           reply.code(304).send()

@@ -40,4 +40,30 @@ describe('Fastify adapter - JWKS endpoint', () => {
 
     await app.close()
   })
+
+  it('includes Last-Modified and Vary when enabled', async () => {
+    const app = fastify()
+    const mw = adapters.fastify.createRDCPMiddleware({
+      authenticator: denyAuth,
+      capabilities: {
+        security: {
+          tokenLifecycle: {
+            enabled: true,
+            jwks: { enabled: true, maxAgeSeconds: 60, emitLastModified: true, varyHeader: 'Accept' },
+          },
+        },
+      },
+    })
+
+    app.get('/.well-known/jwks.json', async (req, reply) => {
+      await mw(req, reply)
+    })
+
+    await app.ready()
+    const res = await request(app.server).get('/.well-known/jwks.json')
+    expect(res.status).toBe(200)
+    expect(typeof res.headers['last-modified']).toBe('string')
+    expect(res.headers['vary']).toBe('Accept')
+    await app.close()
+  })
 })

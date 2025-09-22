@@ -78,6 +78,20 @@ const rdcpPlugin = fastifyAdapter.createRDCPPlugin({
 await fastify.register(rdcpPlugin)
 ```
 
+#### JWKS explicit route example (Fastify)
+```javascript
+// Ensure token lifecycle + JWKS is enabled in options passed to createRDCPMiddleware
+const mw = fastifyAdapter.createRDCPMiddleware({
+  authenticator,
+  capabilities: { security: { tokenLifecycle: { enabled: true, jwks: { enabled: true } } } }
+})
+
+// Delegate route to RDCP middleware
+fastify.get('/.well-known/jwks.json', async (request, reply) => {
+  await mw(request, reply)
+})
+```
+
 ### Koa Usage
 ```javascript
 const Koa = require('koa')
@@ -99,6 +113,18 @@ const rdcpMiddleware = koaAdapter.createRDCPMiddlewareWithErrorBoundary({
 })
 
 app.use(rdcpMiddleware)
+```
+
+#### JWKS explicit route example (Koa)
+```javascript
+// If you prefer to only delegate the JWKS path to RDCP middleware:
+app.use(async (ctx, next) => {
+  if (ctx.path === '/.well-known/jwks.json') {
+    // rdcpMiddleware has signature (ctx, next)
+    return rdcpMiddleware(ctx, next)
+  }
+  await next()
+})
 ```
 
 ## RDCP Endpoints Handled
