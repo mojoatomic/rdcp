@@ -37,6 +37,7 @@ import { RDCPServer } from '../index.js'
 import { createRDCPError, ERROR_STATUS_MAP } from '../../validation/errors.js'
 import { RDCPTenantContext } from '../../utils/tenant.js'
 import { logger } from '../../utils/logger.js'
+import { createKeyring } from '../keyring.js'
 
 /**
  * Extended Koa Request interface for body parsing
@@ -95,6 +96,12 @@ export interface RDCPKoaMiddlewareOptions {
       sink?: 'console' | 'file' | 'none'
       file?: { path?: string; maxBytes?: number; maxFiles?: number }
       sampleRate?: number
+    }
+    security?: {
+      tokenLifecycle?: {
+        enabled?: boolean
+        graceWindowMs?: number
+      }
     }
   }
 }
@@ -176,6 +183,60 @@ export function createRDCPMiddleware(
     },
     capabilities: options.capabilities ?? {},
   })
+
+  // Optional keyring for token lifecycle (JWT only for now)
+  const keyring = options.capabilities?.security?.tokenLifecycle?.enabled
+    ? createKeyring({
+        jwt: {
+          active: [
+            {
+              kid: 'env-hs256',
+              alg: 'HS256',
+              secret: process.env.JWT_SECRET ?? 'change-in-production',
+            },
+          ],
+          previous: [],
+          graceWindowMs:
+            options.capabilities?.security?.tokenLifecycle?.graceWindowMs ??
+            7 * 24 * 60 * 60 * 1000,
+        },
+        api: { active: [], previous: [], graceWindowMs: 30 * 24 * 60 * 60 * 1000 },
+      })
+    : undefined
+
+  const wrappedAuthenticator = async (c: Context): Promise<boolean> => {
+    if (!keyring) return !!(await Promise.resolve(authenticator(c)))
+    const method = (c.headers['x-rdcp-auth-method'] as string) || ''
+    if (method === 'bearer') {
+      const authHeader = c.headers['authorization'] as string | undefined
+      if (authHeader?.startsWith('Bearer ')) {
+        const token = authHeader.slice(7)
+        const issuers = (process.env.JWT_ISSUER ?? '')
+          .split(',')
+          .map(s => s.trim())
+          .filter(Boolean)
+        const audiences = (process.env.JWT_AUDIENCE ?? '')
+          .split(',')
+          .map(s => s.trim())
+          .filter(Boolean)
+        let audienceOption: undefined | string | [string, ...string[]]
+        if (audiences.length === 1) audienceOption = audiences[0]
+        else if (audiences.length > 1)
+          audienceOption = [audiences[0], ...audiences.slice(1)]
+        let issuerOption: undefined | string | [string, ...string[]]
+        if (issuers.length === 1) issuerOption = issuers[0]
+        else if (issuers.length > 1)
+          issuerOption = [issuers[0], ...issuers.slice(1)]
+        const result = await keyring.verifyJwt(token, {
+          algorithms: ['HS256'],
+          audience: audienceOption,
+          issuer: issuerOption,
+        })
+        if (result.ok) return true
+      }
+    }
+    return !!(await Promise.resolve(authenticator(c)))
+  }
 
   // Koa middleware function - async pattern following Context7
   return async function rdcpMiddleware(
@@ -278,7 +339,7 @@ export function createRDCPMiddleware(
 
       // All other RDCP endpoints require authentication
       try {
-        const isAuthenticated = await authenticator(ctx)
+        const isAuthenticated = await wrappedAuthenticator(ctx)
         if (!isAuthenticated) {
           const errorResponse = createRDCPError(
             'RDCP_AUTH_REQUIRED',
