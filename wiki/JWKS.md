@@ -59,6 +59,16 @@ Adapters automatically publish active+previous (within grace) public keys at /.w
 ## Client caching with ETag (recommended)
 
 ### Using the built-in helper (SDK utils)
+
+Optional TTL override (skip network when cache is new):
+```ts path=null start=null
+import { createJwksFetcher } from '@rdcp/server'
+
+// ttlMs: use cached JWKS for up to 30s without hitting the network
+const jwksFetcher = createJwksFetcher({ ttlMs: 30_000 })
+const res = await jwksFetcher.fetch('http://localhost:3000')
+console.log('fromCache?', res.fromCache)
+```
 ```ts path=null start=null
 import { createJwksFetcher } from '@rdcp/server'
 

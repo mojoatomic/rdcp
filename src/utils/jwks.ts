@@ -14,9 +14,12 @@ export class JwksFetcher {
   private etag: string | undefined
   private body: JwksBody | undefined
   private readonly doFetch: typeof fetch
+  private readonly ttlMs: number | undefined
+  private lastUpdatedAt: number | undefined
 
-  constructor(opts?: { fetchImpl?: typeof fetch }) {
+  constructor(opts?: { fetchImpl?: typeof fetch; ttlMs?: number }) {
     this.doFetch = opts?.fetchImpl ?? fetch
+    this.ttlMs = opts?.ttlMs
   }
 
   /**
@@ -25,6 +28,21 @@ export class JwksFetcher {
    * - Returns cached body when server replies 304
    */
   async fetch(baseUrl: string): Promise<JwksFetchResult> {
+    // TTL override: return cached body without network if within ttl window
+    if (
+      this.ttlMs !== undefined &&
+      this.ttlMs > 0 &&
+      this.body &&
+      this.lastUpdatedAt !== undefined &&
+      Date.now() - this.lastUpdatedAt < this.ttlMs
+    ) {
+      const result: JwksFetchResult =
+        this.etag !== undefined
+          ? { jwks: this.body, etag: this.etag, fromCache: true }
+          : { jwks: this.body, fromCache: true }
+      return result
+    }
+
     const headers: Record<string, string> = {}
     if (this.etag) headers['If-None-Match'] = this.etag
 
@@ -32,6 +50,7 @@ export class JwksFetcher {
     const res = await this.doFetch(url, { headers })
 
     if (res.status === 304 && this.body) {
+      // Do not update lastUpdatedAt on 304; TTL remains based on last 200 update
       const result: JwksFetchResult =
         this.etag !== undefined
           ? { jwks: this.body, etag: this.etag, fromCache: true }
@@ -54,6 +73,7 @@ export class JwksFetcher {
 
     this.etag = newEtag
     this.body = body
+    this.lastUpdatedAt = Date.now()
     if (this.etag !== undefined) {
       return { jwks: body, etag: this.etag, fromCache: false }
     }
