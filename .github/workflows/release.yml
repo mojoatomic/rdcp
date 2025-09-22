@@ -35,7 +35,8 @@ jobs:
             echo "Installing @rdcp.dev/server@$CURRENT_VERSION from registry"
             npm install --prefix packages/otel-plugin @rdcp.dev/server@"$CURRENT_VERSION" --no-audit --no-fund
           else
-            echo "@rdcp.dev/server@$CURRENT_VERSION not yet in registry; installing local package for build"
+            echo "@rdcp.dev/server@$CURRENT_VERSION not yet in registry; building and installing local package for build"
+            npm run build
             npm install --prefix packages/otel-plugin --no-save --no-audit --no-fund ./
           fi
 
