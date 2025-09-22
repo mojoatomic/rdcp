@@ -318,6 +318,32 @@ console.log('System Health:', health.status)
 
 ---
 
+## Utilities
+
+### JWKS helper with ETag caching and backoff
+```ts path=null start=null
+import { createJwksFetcher } from '@rdcp/server'
+
+const jwksFetcher = createJwksFetcher()
+
+async function fetchWithBackoff(baseUrl: string, attempts = 3): Promise<void> {
+  let lastErr: unknown
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const res = await jwksFetcher.fetch(baseUrl)
+      console.log('jwks keys', res.jwks.keys.length, 'fromCache', res.fromCache)
+      return
+    } catch (e) {
+      lastErr = e
+      await new Promise(r => setTimeout(r, Math.min(2000, 250 * (1 << i))))
+    }
+  }
+  throw lastErr
+}
+```
+
+---
+
 ## Documentation
 
 - Error responses and codes: wiki/Error-Responses.md

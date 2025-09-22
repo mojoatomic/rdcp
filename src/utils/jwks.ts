@@ -71,3 +71,54 @@ export function createJwksFetcher(opts?: {
 }): JwksFetcher {
   return new JwksFetcher(opts)
 }
+
+/**
+ * Filter JWKs by kty/alg/use constraints (all optional).
+ */
+export function filterJwksKeys(
+  jwks: JwksBody,
+  opts: {
+    kty?: readonly string[]
+    alg?: readonly string[]
+    use?: readonly string[]
+  } = {}
+): JWK[] {
+  const keys = jwks.keys || []
+  return keys.filter(k => {
+    const r = k as unknown as Record<string, unknown>
+    if (opts.kty?.length) {
+      const kty = r.kty
+      if (typeof kty !== 'string' || !opts.kty.includes(kty)) return false
+    }
+    if (opts.alg?.length) {
+      const alg = r.alg
+      if (typeof alg !== 'string' || !opts.alg.includes(alg)) return false
+    }
+    if (opts.use?.length) {
+      const use = r.use
+      if (typeof use !== 'string' || !opts.use.includes(use)) return false
+    }
+    return true
+  })
+}
+
+/**
+ * Find a JWK by kid with optional constraints.
+ */
+export function findJwkByKid(
+  jwks: JwksBody,
+  kid: string,
+  opts: {
+    kty?: readonly string[]
+    alg?: readonly string[]
+    use?: readonly string[]
+  } = {}
+): JWK | undefined {
+  const keys = filterJwksKeys(jwks, opts)
+  for (const k of keys) {
+    const r = k as unknown as Record<string, unknown>
+    const kk = r.kid
+    if (typeof kk === 'string' && kk === kid) return k
+  }
+  return undefined
+}
