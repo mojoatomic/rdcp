@@ -212,8 +212,8 @@ export function createRDCPMiddleware(
         options.capabilities?.metrics?.enabled === true &&
         pathname === metricsPath
       const isJwks =
-        options.capabilities?.security?.tokenLifecycle?.jwks?.enabled === true &&
-        pathname === '/.well-known/jwks.json'
+        options.capabilities?.security?.tokenLifecycle?.jwks?.enabled ===
+          true && pathname === '/.well-known/jwks.json'
       if (
         !pathname.startsWith('/.well-known/rdcp') &&
         !pathname.startsWith(basePath) &&
