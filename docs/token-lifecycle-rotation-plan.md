@@ -35,7 +35,7 @@ References:
 - JWT flow (Standard security):
   - Sign: select active signing key, set `kid`, sign with allowed alg (default RS256)
   - Verify: resolve by `kid`; if missing, attempt alg + key metadata (configurable), otherwise reject
-  - JWKS: expose public keys at `/.well-known/jwks.json` with cache headers; omit private material
+  - JWKS: expose public keys at `/.well-known/jwks.json` with cache headers; omit private material; no 'oct' (HS*) key material is ever exposed
   - Rotation: add new key → move previous active into `previous` with retirementAt → after grace, drop
 
 - API Key flow (Basic security):
@@ -112,7 +112,10 @@ References:
    - src/server/keyring.ts with signJwt, verifyJwt, rotate, hashApiKey, verifyApiKey
    - No external persistence (in-memory)
    - Use existing jsonwebtoken for tests; allow swapping to jose later
-2) JWKS + signing headers
+2) JWKS + signing headers (scaffold now, JOSE later)
+   - Adapters: GET `/.well-known/jwks.json` behind capabilities.security.tokenLifecycle.jwks.enabled
+   - For now, return `{ keys: [] }` and Cache-Control: public, max-age=300 (only expose asymmetric public keys in future)
+   - Plan to adopt JOSE for generating public JWKs from RS/EC keys and kid, with stable cache keys and ETag
 3) Rotation workflow + admin surfaces
 4) Hardening and docs
 

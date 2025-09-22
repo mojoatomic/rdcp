@@ -61,6 +61,10 @@ export interface RDCPMiddlewareOptions {
       tokenLifecycle?: {
         enabled?: boolean
         graceWindowMs?: number
+        jwks?: {
+          enabled?: boolean
+          maxAgeSeconds?: number
+        }
       }
     }
   }
@@ -207,10 +211,14 @@ export function createRDCPMiddleware(
       const isMetrics =
         options.capabilities?.metrics?.enabled === true &&
         pathname === metricsPath
+      const isJwks =
+        options.capabilities?.security?.tokenLifecycle?.jwks?.enabled === true &&
+        pathname === '/.well-known/jwks.json'
       if (
         !pathname.startsWith('/.well-known/rdcp') &&
         !pathname.startsWith(basePath) &&
-        !isMetrics
+        !isMetrics &&
+        !isJwks
       ) {
         return next() // Continue to next middleware
       }
@@ -220,6 +228,18 @@ export function createRDCPMiddleware(
         const text = rdcpServer.getPrometheusMetrics()
         res.set('Content-Type', 'text/plain; version=0.0.4; charset=utf-8')
         res.send(text)
+        return
+      }
+
+      // JWKS endpoint (no auth) - scaffold (asymmetric keys only in future)
+      if (isJwks) {
+        const jwks = { keys: [] as unknown[] }
+        const maxAge =
+          options.capabilities?.security?.tokenLifecycle?.jwks?.maxAgeSeconds ??
+          300
+        res.set('Content-Type', 'application/json')
+        res.set('Cache-Control', `public, max-age=${maxAge}`)
+        res.json(jwks)
         return
       }
 
