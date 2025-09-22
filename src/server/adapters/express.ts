@@ -231,12 +231,14 @@ export function createRDCPMiddleware(
         return
       }
 
-      // JWKS endpoint (no auth) - scaffold (asymmetric keys only in future)
+      // JWKS endpoint (no auth)
       if (isJwks) {
-        const jwks = { keys: [] as unknown[] }
         const maxAge =
           options.capabilities?.security?.tokenLifecycle?.jwks?.maxAgeSeconds ??
           300
+        const jwks = keyring
+          ? await keyring.exportPublicJWKS()
+          : { keys: [] as unknown[] }
         res.set('Content-Type', 'application/json')
         res.set('Cache-Control', `public, max-age=${maxAge}`)
         res.json(jwks)

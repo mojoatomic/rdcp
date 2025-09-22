@@ -5,16 +5,23 @@ import jwt, {
   VerifyOptions,
   Algorithm,
 } from 'jsonwebtoken'
+import { exportJWK, importSPKI, JWK } from 'jose'
 
 // Types for JWT keys
 export type JwtAlg = 'HS256' | 'RS256' | 'ES256' | string
 
-export interface JwtSigningKey {
-  kid: string
-  alg: JwtAlg
-  // For MVP we support symmetric secrets; asymmetric can be added later
-  secret: string
-}
+export type JwtSigningKey =
+  | {
+      kid: string
+      alg: JwtAlg
+      secret: string
+    }
+  | {
+      kid: string
+      alg: JwtAlg
+      publicKeyPem: string
+      privateKeyPem?: string
+    }
 
 export interface PreviousJwtKey {
   key: JwtSigningKey
@@ -69,6 +76,7 @@ export interface Keyring {
     token: string,
     options?: Pick<VerifyOptions, 'algorithms' | 'audience' | 'issuer'>
   ) => Promise<VerifyJwtResult>
+  exportPublicJWKS: () => Promise<{ keys: JWK[] }>
   rotateJwtKey: (newKey: JwtSigningKey) => void
   issueApiKey: (opts?: {
     prefix?: string
@@ -157,7 +165,14 @@ export function createKeyring(initial: KeyringConfig): Keyring {
         audience: options?.audience,
         issuer: options?.issuer,
       }
-      const payload = jwt.verify(token, selected.secret, verifyOpts)
+      // Determine verification key based on key type
+      let verifyKey: string
+      if ('secret' in selected) {
+        verifyKey = selected.secret
+      } else {
+        verifyKey = selected.publicKeyPem
+      }
+      const payload = jwt.verify(token, verifyKey, verifyOpts)
       return { ok: true, header: decoded.header, payload }
     } catch (e) {
       return {
@@ -168,6 +183,27 @@ export function createKeyring(initial: KeyringConfig): Keyring {
         },
       }
     }
+  }
+
+  async function exportPublicJWKS(): Promise<{ keys: JWK[] }> {
+    const keys: JWK[] = []
+    const collect = async (k: JwtSigningKey) => {
+      if ('publicKeyPem' in k) {
+        try {
+          const keyLike = await importSPKI(k.publicKeyPem, k.alg)
+          const base = (await exportJWK(keyLike)) as JWK
+          const jwk: JWK = { ...base, kid: k.kid, use: 'sig', alg: k.alg }
+          keys.push(jwk)
+        } catch {
+          // ignore export errors
+        }
+      }
+    }
+    for (const k of state.jwt.active) await collect(k)
+    for (const p of state.jwt.previous) {
+      if (inGraceWindow(p.retirementAt)) await collect(p.key)
+    }
+    return { keys }
   }
 
   function rotateJwtKey(newKey: JwtSigningKey): void {
@@ -221,6 +257,7 @@ export function createKeyring(initial: KeyringConfig): Keyring {
 
   return {
     verifyJwt,
+    exportPublicJWKS,
     rotateJwtKey,
     issueApiKey,
     verifyApiKey,
