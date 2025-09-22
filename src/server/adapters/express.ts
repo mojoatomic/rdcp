@@ -15,6 +15,7 @@ import {
 import { extractTenantContext, RDCPTenantContext } from '../../utils/tenant.js'
 import { logger } from '../../utils/logger.js'
 import { createKeyring } from '../keyring.js'
+import { prepareJWKSResponse, etagMatches } from '../../utils/etag.js'
 
 /**
  * RDCP Authenticator function interface
@@ -239,9 +240,17 @@ export function createRDCPMiddleware(
         const jwks = keyring
           ? await keyring.exportPublicJWKS()
           : { keys: [] as unknown[] }
-        res.set('Content-Type', 'application/json')
+        const prepared = prepareJWKSResponse(jwks)
+        const ifNoneMatch =
+          (req.headers['if-none-match'] as string | undefined) ?? ''
+        res.set('ETag', prepared.etag)
         res.set('Cache-Control', `public, max-age=${maxAge}`)
-        res.json(jwks)
+        res.set('Content-Type', 'application/json')
+        if (ifNoneMatch && etagMatches(ifNoneMatch, prepared.etag)) {
+          res.status(304).end()
+          return
+        }
+        res.status(200).send(prepared.body)
         return
       }
 

@@ -38,6 +38,7 @@ import { createRDCPError, ERROR_STATUS_MAP } from '../../validation/errors.js'
 import { RDCPTenantContext } from '../../utils/tenant.js'
 import { logger } from '../../utils/logger.js'
 import { createKeyring } from '../keyring.js'
+import { prepareJWKSResponse, etagMatches } from '../../utils/etag.js'
 
 /**
  * Extended Koa Request interface for body parsing
@@ -290,9 +291,19 @@ export function createRDCPMiddleware(
         const jwks = keyring
           ? await keyring.exportPublicJWKS()
           : { keys: [] as unknown[] }
-        ctx.set('Content-Type', 'application/json')
+        const prepared = prepareJWKSResponse(jwks)
+        const ifNoneMatch =
+          (ctx.headers['if-none-match'] as string | undefined) ?? ''
+        ctx.set('ETag', prepared.etag)
         ctx.set('Cache-Control', `public, max-age=${maxAge}`)
-        ctx.body = jwks
+        ctx.set('Content-Type', 'application/json')
+        if (ifNoneMatch && etagMatches(ifNoneMatch, prepared.etag)) {
+          ctx.status = 304
+          ctx.body = null
+          return
+        }
+        ctx.status = 200
+        ctx.body = prepared.body
         return
       }
 

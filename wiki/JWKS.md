@@ -12,7 +12,8 @@ A JWKS endpoint publishes the public keys used to verify JWTs signed with asymme
   - security.tokenLifecycle.jwks.maxAgeSeconds: 300 (default)
 - Endpoint:
   - GET /.well-known/jwks.json (no auth)
-  - Headers: `Cache-Control: public, max-age=<seconds>`
+- Headers: `Cache-Control: public, max-age=<seconds>`, `ETag: "<hash>"`
+- Conditional GET supported: send `If-None-Match` with the ETag to receive `304 Not Modified` when unchanged
 
 Example (Express):
 ```js path=null start=null

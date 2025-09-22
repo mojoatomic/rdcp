@@ -16,6 +16,7 @@ import { createRDCPError, ERROR_STATUS_MAP } from '../../validation/errors.js'
 import { extractTenantContext, RDCPTenantContext } from '../../utils/tenant.js'
 import { logger } from '../../utils/logger.js'
 import { createKeyring } from '../keyring.js'
+import { prepareJWKSResponse, etagMatches } from '../../utils/etag.js'
 
 /**
  * RDCP Authenticator function interface for Fastify
@@ -281,9 +282,17 @@ export function createRDCPMiddleware(
         const jwks = keyring
           ? await keyring.exportPublicJWKS()
           : { keys: [] as unknown[] }
-        reply.header('Content-Type', 'application/json')
+        const prepared = prepareJWKSResponse(jwks)
+        const ifNoneMatch =
+          (request.headers['if-none-match'] as string | undefined) ?? ''
+        reply.header('ETag', prepared.etag)
         reply.header('Cache-Control', `public, max-age=${maxAge}`)
-        reply.send(jwks)
+        reply.header('Content-Type', 'application/json')
+        if (ifNoneMatch && etagMatches(ifNoneMatch, prepared.etag)) {
+          reply.code(304).send()
+          return
+        }
+        reply.code(200).send(prepared.body)
         return
       }
 
