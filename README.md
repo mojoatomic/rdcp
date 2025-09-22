@@ -372,6 +372,20 @@ const maybeByKid = findJwkByKid(res1.jwks, 'my-kid', { kty: ['RSA'] })
 - Full JOSE verification example and FAQ: see wiki/JWKS.md
 - Deno/Bun examples: see wiki/Examples-Deno-Bun.md
 
+#### How to try the example (ts-node)
+
+- If you have ts-node available:
+  - npx ts-node examples/jwks-client-cache-demo.ts
+- Env:
+  - BASE_URL=http://localhost:3000 (or your server)
+  - JWKS_TTL_MS=30000 to demo cache hits
+  - ROTATE_URL=http://localhost:3000/rotate (optional demo endpoint if you have one)
+- Behavior:
+  - First fetch returns 200, caches the body and ETag
+  - Second fetch within ttlMs returns from cache without network
+  - A no-ttlMs fetcher revalidates with If-None-Match, returns fromCache=true on 304
+  - After rotation, next fetch returns 200 with a new ETag
+
 ---
 
 ## Documentation
