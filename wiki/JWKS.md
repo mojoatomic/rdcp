@@ -108,6 +108,20 @@ Optional headers for advanced caching:
 - Last-Modified: when enabled, servers include this; clients can also send If-Modified-Since
 - Vary: indicates cache key variance; defaults to none for JWKS; may be set for advanced setups
 
+### How to try the example (ts-node)
+
+- If you have ts-node available:
+  - npx ts-node examples/jwks-client-cache-demo.ts
+- Env:
+  - BASE_URL=http://localhost:3000 (or your server)
+  - JWKS_TTL_MS=30000 to demo cache hits
+  - ROTATE_URL=http://localhost:3000/rotate (optional demo endpoint if you have one)
+- Behavior:
+  - First fetch returns 200, caches the body and ETag
+  - Second fetch within ttlMs returns from cache without network
+  - A no-ttlMs fetcher revalidates with If-None-Match, returns fromCache=true on 304
+  - After rotation, next fetch returns 200 with a new ETag
+
 ## Constructing a KeyLike with JOSE and verifying JWT
 
 When consuming JWKS, you typically need a KeyLike for verification. Use importJWK for keys from JWKS (recommended), or importSPKI if you have a PEM public key.
