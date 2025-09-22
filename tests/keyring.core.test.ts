@@ -87,6 +87,36 @@ describe('Keyring (core) — JWT + API keys', () => {
     }
   })
 
+  it('supports rotateJwtKey and keeps old key valid during grace', async () => {
+    const ring = createKeyring({
+      jwt: {
+        active: [{ kid: 'kA', alg: 'HS256', secret: 'secret-A' }],
+        previous: [],
+        graceWindowMs: 60_000,
+      },
+      api: { active: [], previous: [], graceWindowMs: 60_000 },
+    })
+
+    // rotate to new key kB
+    ring.rotateJwtKey({ kid: 'kB', alg: 'HS256', secret: 'secret-B' })
+
+    const oldToken = jwt.sign({ sub: 'old' }, 'secret-A', {
+      algorithm: 'HS256',
+      keyid: 'kA',
+      expiresIn: '1h',
+    })
+    const newToken = jwt.sign({ sub: 'new' }, 'secret-B', {
+      algorithm: 'HS256',
+      keyid: 'kB',
+      expiresIn: '1h',
+    })
+
+    const rOld = await ring.verifyJwt(oldToken, { algorithms: ['HS256'] })
+    const rNew = await ring.verifyJwt(newToken, { algorithms: ['HS256'] })
+    expect(rOld.ok).toBe(true)
+    expect(rNew.ok).toBe(true)
+  })
+
   it('rejects JWT with unknown kid', async () => {
     const ring = createKeyring({
       jwt: {

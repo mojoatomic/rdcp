@@ -69,9 +69,10 @@ export interface Keyring {
     token: string,
     options?: Pick<VerifyOptions, 'algorithms' | 'audience' | 'issuer'>
   ) => Promise<VerifyJwtResult>
-  issueApiKey: (opts?: {
-    prefix?: string
-  }) => Promise<{ keyId: string; key: string }>
+  rotateJwtKey: (newKey: JwtSigningKey) => void
+  issueApiKey: (
+    opts?: { prefix?: string }
+  ) => Promise<{ keyId: string; key: string }>
   verifyApiKey: (cleartext: string) => Promise<boolean>
 }
 
@@ -169,9 +170,21 @@ export function createKeyring(initial: KeyringConfig): Keyring {
     }
   }
 
-  async function issueApiKey(opts?: {
-    prefix?: string
-  }): Promise<{ keyId: string; key: string }> {
+  function rotateJwtKey(newKey: JwtSigningKey): void {
+    const current = state.jwt.active[0]
+    if (current) {
+      state.jwt.previous.push({
+        key: current,
+        retirementAt: new Date(Date.now() + state.jwt.graceWindowMs),
+      })
+    }
+    // promote new key to front
+    state.jwt.active.unshift(newKey)
+  }
+
+  async function issueApiKey(
+    opts?: { prefix?: string }
+  ): Promise<{ keyId: string; key: string }> {
     const prefix = opts?.prefix ?? 'rdcp_sk_'
     const random = crypto.randomBytes(24).toString('base64url')
     const key = `${prefix}${random}`
@@ -208,6 +221,7 @@ export function createKeyring(initial: KeyringConfig): Keyring {
 
   return {
     verifyJwt,
+    rotateJwtKey,
     issueApiKey,
     verifyApiKey,
   }
