@@ -318,6 +318,76 @@ console.log('System Health:', health.status)
 
 ---
 
+## Utilities
+
+### JWKS helper with ETag caching and backoff
+```ts path=null start=null
+import { createJwksFetcher } from '@rdcp/server'
+
+const jwksFetcher = createJwksFetcher()
+
+async function fetchWithBackoff(baseUrl: string, attempts = 3): Promise<void> {
+  let lastErr: unknown
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const res = await jwksFetcher.fetch(baseUrl)
+      console.log('jwks keys', res.jwks.keys.length, 'fromCache', res.fromCache)
+      return
+    } catch (e) {
+      lastErr = e
+      await new Promise(r => setTimeout(r, Math.min(2000, 250 * (1 << i))))
+    }
+  }
+  throw lastErr
+}
+```
+
+#### TTL and revalidation
+- ttlMs allows returning a cached JWKS immediately without a network call while the cache is fresh.
+- 304 responses do not extend the TTL window — only a fresh 200 response updates lastUpdatedAt.
+- Use a modest ttlMs relative to the server's Cache-Control max-age.
+
+```ts path=null start=null
+import { createJwksFetcher } from '@rdcp/server'
+
+// Skip network when cache younger than 30s
+const fetcher = createJwksFetcher({ ttlMs: 30_000 })
+const res1 = await fetcher.fetch('http://localhost:3000') // 200, caches body + ETag
+const res2 = await fetcher.fetch('http://localhost:3000') // served from cache, no network
+
+// For strict revalidation each call, construct without ttlMs
+const reval = createJwksFetcher()
+const r1 = await reval.fetch('http://localhost:3000') // 200
+const r2 = await reval.fetch('http://localhost:3000') // 304 -> fromCache: true
+```
+
+#### Validation utilities: filter keys and select by kid
+```ts path=null start=null
+import { filterJwksKeys, findJwkByKid } from '@rdcp/server'
+
+const rsaSigOnly = filterJwksKeys(res1.jwks, { kty: ['RSA'], use: ['sig'] })
+const maybeByKid = findJwkByKid(res1.jwks, 'my-kid', { kty: ['RSA'] })
+```
+
+- Full JOSE verification example and FAQ: see wiki/JWKS.md
+- Deno/Bun examples: see wiki/Examples-Deno-Bun.md
+
+#### How to try the example (ts-node)
+
+- If you have ts-node available:
+  - npx ts-node examples/jwks-client-cache-demo.ts
+- Env:
+  - BASE_URL=http://localhost:3000 (or your server)
+  - JWKS_TTL_MS=30000 to demo cache hits
+  - ROTATE_URL=http://localhost:3000/rotate (optional demo endpoint if you have one)
+- Behavior:
+  - First fetch returns 200, caches the body and ETag
+  - Second fetch within ttlMs returns from cache without network
+  - A no-ttlMs fetcher revalidates with If-None-Match, returns fromCache=true on 304
+  - After rotation, next fetch returns 200 with a new ETag
+
+---
+
 ## Documentation
 
 - Error responses and codes: wiki/Error-Responses.md

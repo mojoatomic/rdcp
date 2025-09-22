@@ -693,7 +693,9 @@ export class RDCPServer {
     lines.push('# TYPE rdcp_memory_rss_bytes gauge')
     lines.push(`rdcp_memory_rss_bytes ${m.rssBytes}`)
     if (typeof m.p99DelayMs === 'number') {
-      lines.push('# HELP rdcp_event_loop_delay_p99_milliseconds Event loop delay P99 in milliseconds.')
+      lines.push(
+        '# HELP rdcp_event_loop_delay_p99_milliseconds Event loop delay P99 in milliseconds.'
+      )
       lines.push('# TYPE rdcp_event_loop_delay_p99_milliseconds gauge')
       lines.push(
         `rdcp_event_loop_delay_p99_milliseconds ${m.p99DelayMs.toFixed(2)}`

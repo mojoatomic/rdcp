@@ -76,6 +76,9 @@ export {
   // HTTP Client
   RDCPHttpClient,
   RDCPClientError,
+  // JWKS helper
+  createJwksFetcher,
+  JwksFetcher,
   // Tenant utilities
   extractTenantContext,
   createTenantResponse,
@@ -110,6 +113,7 @@ export * from './debug.js'
 
 import { RDCPHttpClient } from './utils/http.js'
 import { extractTenantContext, createTenantResponse } from './utils/tenant.js'
+import { createJwksFetcher } from './utils/jwks.js'
 import { createRDCPError } from './validation/errors.js'
 import { validateRDCPAuth } from './auth/index.js'
 import { extractApiKey as extractApiKeyFromBasic } from './auth/basic.js'
@@ -184,6 +188,7 @@ export const utils = {
   extractTenantContext,
   createTenantResponse,
   createRDCPError,
+  createJwksFetcher,
 }
 
 /**

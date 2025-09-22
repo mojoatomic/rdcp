@@ -15,6 +15,8 @@ import { RDCPServer } from '../index.js'
 import { createRDCPError, ERROR_STATUS_MAP } from '../../validation/errors.js'
 import { extractTenantContext, RDCPTenantContext } from '../../utils/tenant.js'
 import { logger } from '../../utils/logger.js'
+import { createKeyring } from '../keyring.js'
+import { prepareJWKSResponse, etagMatches } from '../../utils/etag.js'
 
 /**
  * RDCP Authenticator function interface for Fastify
@@ -58,6 +60,18 @@ export interface RDCPFastifyMiddlewareOptions {
       sink?: 'console' | 'file' | 'none'
       file?: { path?: string; maxBytes?: number; maxFiles?: number }
       sampleRate?: number
+    }
+    security?: {
+      tokenLifecycle?: {
+        enabled?: boolean
+        graceWindowMs?: number
+        jwks?: {
+          enabled?: boolean
+          maxAgeSeconds?: number
+          varyHeader?: string
+          emitLastModified?: boolean
+        }
+      }
     }
   }
 }
@@ -142,6 +156,66 @@ export function createRDCPMiddleware(
     capabilities: options.capabilities ?? {},
   })
 
+  // Optional keyring for token lifecycle (JWT only for now)
+  const keyring = options.capabilities?.security?.tokenLifecycle?.enabled
+    ? createKeyring({
+        jwt: {
+          active: [
+            {
+              kid: 'env-hs256',
+              alg: 'HS256',
+              secret: process.env.JWT_SECRET ?? 'change-in-production',
+            },
+          ],
+          previous: [],
+          graceWindowMs:
+            options.capabilities?.security?.tokenLifecycle?.graceWindowMs ??
+            7 * 24 * 60 * 60 * 1000,
+        },
+        api: {
+          active: [],
+          previous: [],
+          graceWindowMs: 30 * 24 * 60 * 60 * 1000,
+        },
+      })
+    : undefined
+
+  const wrappedAuthenticator = async (
+    req: FastifyRequest
+  ): Promise<boolean> => {
+    if (!keyring) return !!(await Promise.resolve(authenticator(req)))
+    const method = (req.headers['x-rdcp-auth-method'] as string) || ''
+    if (method === 'bearer') {
+      const authHeader = req.headers['authorization'] as string | undefined
+      if (authHeader?.startsWith('Bearer ')) {
+        const token = authHeader.slice(7)
+        const issuers = (process.env.JWT_ISSUER ?? '')
+          .split(',')
+          .map(s => s.trim())
+          .filter(Boolean)
+        const audiences = (process.env.JWT_AUDIENCE ?? '')
+          .split(',')
+          .map(s => s.trim())
+          .filter(Boolean)
+        let audienceOption: undefined | string | [string, ...string[]]
+        if (audiences.length === 1) audienceOption = audiences[0]
+        else if (audiences.length > 1)
+          audienceOption = [audiences[0], ...audiences.slice(1)]
+        let issuerOption: undefined | string | [string, ...string[]]
+        if (issuers.length === 1) issuerOption = issuers[0]
+        else if (issuers.length > 1)
+          issuerOption = [issuers[0], ...issuers.slice(1)]
+        const result = await keyring.verifyJwt(token, {
+          algorithms: ['HS256'],
+          audience: audienceOption,
+          issuer: issuerOption,
+        })
+        if (result.ok) return true
+      }
+    }
+    return !!(await Promise.resolve(authenticator(req)))
+  }
+
   // Fastify middleware function - preHandler pattern (Context7 pattern)
   return async function rdcpMiddleware(
     request: FastifyRequest,
@@ -177,12 +251,19 @@ export function createRDCPMiddleware(
       }
 
       // Only handle RDCP endpoints
-      const metricsPath = options.capabilities?.metrics?.endpointPath ?? '/metrics'
-      const isMetrics = options.capabilities?.metrics?.enabled === true && pathname === metricsPath
+      const metricsPath =
+        options.capabilities?.metrics?.endpointPath ?? '/metrics'
+      const isMetrics =
+        options.capabilities?.metrics?.enabled === true &&
+        pathname === metricsPath
+      const isJwks =
+        options.capabilities?.security?.tokenLifecycle?.jwks?.enabled ===
+          true && pathname === '/.well-known/jwks.json'
       if (
         !pathname.startsWith('/.well-known/rdcp') &&
         !pathname.startsWith(basePath) &&
-        !isMetrics
+        !isMetrics &&
+        !isJwks
       ) {
         return // Continue to next handler
       }
@@ -192,6 +273,35 @@ export function createRDCPMiddleware(
         const text = rdcpServer.getPrometheusMetrics()
         reply.header('Content-Type', 'text/plain; version=0.0.4; charset=utf-8')
         reply.send(text)
+        return
+      }
+
+      // JWKS endpoint (no auth)
+      if (isJwks) {
+        const maxAge =
+          options.capabilities?.security?.tokenLifecycle?.jwks?.maxAgeSeconds ??
+          300
+        const jwks = keyring
+          ? await keyring.exportPublicJWKS()
+          : { keys: [] as unknown[] }
+        const prepared = prepareJWKSResponse(jwks)
+        const ifNoneMatch =
+          (request.headers['if-none-match'] as string | undefined) ?? ''
+        reply.header('ETag', prepared.etag)
+        reply.header('Cache-Control', `public, max-age=${maxAge}`)
+        const jwksOpts = options.capabilities?.security?.tokenLifecycle?.jwks
+        if (jwksOpts?.emitLastModified) {
+          reply.header('Last-Modified', new Date().toUTCString())
+        }
+        if (jwksOpts?.varyHeader) {
+          reply.header('Vary', jwksOpts.varyHeader)
+        }
+        reply.header('Content-Type', 'application/json')
+        if (ifNoneMatch && etagMatches(ifNoneMatch, prepared.etag)) {
+          reply.code(304).send()
+          return
+        }
+        reply.code(200).send(prepared.body)
         return
       }
 
@@ -240,7 +350,7 @@ export function createRDCPMiddleware(
 
       // All other RDCP endpoints require authentication
       try {
-        const isAuthenticated = await authenticator(request)
+        const isAuthenticated = await wrappedAuthenticator(request)
         if (!isAuthenticated) {
           const errorResponse = createRDCPError(
             'RDCP_AUTH_REQUIRED',
