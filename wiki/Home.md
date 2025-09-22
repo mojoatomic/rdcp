@@ -125,6 +125,7 @@ See: Error-Responses.md (error codes, rate-limit details) and Basic-Usage.md (ca
 - **[Multi-Tenancy](Authentication-Setup.md#multi-tenancy-support)** - Tenant isolation and context management
 - **[Error Responses](Error-Responses.md)** - Standardized error schema, codes, and assertions
 - **[Testing Helpers](Testing-Helpers.md)** - JWT scopes, mTLS simulation, hybrid and tenant patterns
+- **[Token Lifecycle & Key Rotation (Design Plan)](https://github.com/mojoatomic/rdcp/blob/main/docs/token-lifecycle-rotation-plan.md)** - Keyring, JWKS, rotation policy, and audit
 - **[Logging (Hybrid Fallback)](Logging.md)** - Debug-by-default with env-gated warnings
 
 ### Migration & Advanced
