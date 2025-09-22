@@ -177,8 +177,11 @@ export function createRDCPMiddleware(
       }
 
       // Only handle RDCP endpoints
-      const metricsPath = options.capabilities?.metrics?.endpointPath ?? '/metrics'
-      const isMetrics = options.capabilities?.metrics?.enabled === true && pathname === metricsPath
+      const metricsPath =
+        options.capabilities?.metrics?.endpointPath ?? '/metrics'
+      const isMetrics =
+        options.capabilities?.metrics?.enabled === true &&
+        pathname === metricsPath
       if (
         !pathname.startsWith('/.well-known/rdcp') &&
         !pathname.startsWith(basePath) &&
