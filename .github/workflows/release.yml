@@ -28,6 +28,9 @@ jobs:
       - name: Install OpenTelemetry plugin dependencies
         run: npm install --prefix packages/otel-plugin --no-audit --no-fund
 
+      - name: Link local server into otel-plugin for build
+        run: npm install --prefix packages/otel-plugin @rdcp.dev/server@file:../.. --no-audit --no-fund
+
       - name: Build OpenTelemetry plugin
         run: npm run build --prefix packages/otel-plugin
 
