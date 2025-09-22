@@ -1,4 +1,4 @@
-// Source-based test for @rdcp/otel-plugin
+// Source-based test for @rdcp.dev/otel-plugin
 // Tests TypeScript source directly without module system issues
 
 import { OpenTelemetryProvider } from '../src/provider'
@@ -37,7 +37,7 @@ jest.mock('@opentelemetry/api', () => ({
   }
 }))
 
-describe('@rdcp/otel-plugin Source Tests', () => {
+describe('@rdcp.dev/otel-plugin Source Tests', () => {
   describe('OpenTelemetryProvider', () => {
     it('can be instantiated and has expected methods', () => {
       const provider = new OpenTelemetryProvider()

@@ -28,7 +28,7 @@ export type { TraceProvider, TraceContext } from '@rdcp.dev/server'
  * Package version and info
  */
 export const RDCP_OTEL_PLUGIN_VERSION = '1.0.0'
-export const RDCP_OTEL_PLUGIN_NAME = '@rdcp/otel-plugin'
+export const RDCP_OTEL_PLUGIN_NAME = '@rdcp.dev/otel-plugin'
 
 /**
  * Default export for convenience
