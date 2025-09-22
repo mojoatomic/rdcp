@@ -5,7 +5,7 @@ import jwt, {
   VerifyOptions,
   Algorithm,
 } from 'jsonwebtoken'
-import { exportJWK, importSPKI, JWK } from 'jose'
+import { exportJWK, importSPKI, JWK, generateKeyPair, exportSPKI, exportPKCS8 } from 'jose'
 
 // Types for JWT keys
 export type JwtAlg = 'HS256' | 'RS256' | 'ES256' | string
@@ -78,6 +78,7 @@ export interface Keyring {
   ) => Promise<VerifyJwtResult>
   exportPublicJWKS: () => Promise<{ keys: JWK[] }>
   rotateJwtKey: (newKey: JwtSigningKey) => void
+  rotateNewRS256Key: (kid: string) => Promise<void>
   issueApiKey: (opts?: {
     prefix?: string
   }) => Promise<{ keyId: string; key: string }>
@@ -106,6 +107,13 @@ function sha256Hex(input: string): string {
 function scryptHash(secret: string, salt: string): string {
   const key = crypto.scryptSync(secret, salt, 32)
   return key.toString('hex')
+}
+
+export async function generateRS256Keypair(kid: string): Promise<JwtSigningKey> {
+  const { publicKey, privateKey } = await generateKeyPair('RS256')
+  const pubPem = await exportSPKI(publicKey)
+  const privPem = await exportPKCS8(privateKey)
+  return { kid, alg: 'RS256', publicKeyPem: pubPem, privateKeyPem: privPem }
 }
 
 export function createKeyring(initial: KeyringConfig): Keyring {
@@ -218,6 +226,13 @@ export function createKeyring(initial: KeyringConfig): Keyring {
     state.jwt.active.unshift(newKey)
   }
 
+  async function rotateNewRS256Key(kid: string): Promise<void> {
+    const { publicKey, privateKey } = await generateKeyPair('RS256')
+    const pubPem = await exportSPKI(publicKey)
+    const privPem = await exportPKCS8(privateKey)
+    rotateJwtKey({ kid, alg: 'RS256', publicKeyPem: pubPem, privateKeyPem: privPem })
+  }
+
   async function issueApiKey(opts?: {
     prefix?: string
   }): Promise<{ keyId: string; key: string }> {
@@ -259,6 +274,7 @@ export function createKeyring(initial: KeyringConfig): Keyring {
     verifyJwt,
     exportPublicJWKS,
     rotateJwtKey,
+    rotateNewRS256Key,
     issueApiKey,
     verifyApiKey,
   }
