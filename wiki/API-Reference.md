@@ -52,7 +52,7 @@ Client entrypoint (@rdcp/server/client)
   - getStatus(), getHealth()
   - testConnection(), getCategories(), clearCache()
 
-OpenTelemetry plugin (@rdcp/otel-plugin)
+OpenTelemetry plugin (@rdcp.dev/otel-plugin)
 - setupRDCPWithOpenTelemetry(config?)
 - OpenTelemetryProvider
 - createOpenTelemetryProvider(), disableRDCPOpenTelemetry(), isRDCPOpenTelemetryActive()

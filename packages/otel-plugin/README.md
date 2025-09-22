@@ -1,13 +1,13 @@
-# @rdcp/otel-plugin
+# @rdcp.dev/otel-plugin
 
 **OpenTelemetry integration plugin for RDCP SDK** - Enterprise-grade trace correlation
 
-[![npm version](https://img.shields.io/npm/v/@rdcp/otel-plugin)](https://www.npmjs.com/package/@rdcp/otel-plugin)
+[![npm version](https://img.shields.io/npm/v/@rdcp.dev/otel-plugin)](https://www.npmjs.com/package/@rdcp.dev/otel-plugin)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## 🎯 Overview
 
-The `@rdcp/otel-plugin` provides seamless integration between the RDCP SDK and OpenTelemetry, enabling automatic trace correlation in debug logs. This enterprise-grade plugin allows you to correlate debug output with distributed traces across your entire system.
+The `@rdcp.dev/otel-plugin` provides seamless integration between the RDCP SDK and OpenTelemetry, enabling automatic trace correlation in debug logs. This enterprise-grade plugin allows you to correlate debug output with distributed traces across your entire system.
 
 ### Key Benefits
 
@@ -22,14 +22,14 @@ The `@rdcp/otel-plugin` provides seamless integration between the RDCP SDK and O
 ### Installation
 
 ```bash
-npm install @rdcp/otel-plugin @opentelemetry/api
+npm install @rdcp.dev/otel-plugin @opentelemetry/api
 ```
 
 ### Basic Usage
 
 ```typescript
-import { debug, enableDebugCategories } from '@rdcp/server'
-import { setupRDCPWithOpenTelemetry } from '@rdcp/otel-plugin'
+import { debug, enableDebugCategories } from '@rdcp.dev/server'
+import { setupRDCPWithOpenTelemetry } from '@rdcp.dev/otel-plugin'
 
 // Enable OpenTelemetry integration
 setupRDCPWithOpenTelemetry()
@@ -54,7 +54,7 @@ debug.api('Request processed', { method: 'GET', path: '/users/123' })
 Enables OpenTelemetry integration with optional configuration.
 
 ```typescript
-import { setupRDCPWithOpenTelemetry } from '@rdcp/otel-plugin'
+import { setupRDCPWithOpenTelemetry } from '@rdcp.dev/otel-plugin'
 
 // Basic setup
 setupRDCPWithOpenTelemetry()
@@ -79,7 +79,7 @@ setupRDCPWithOpenTelemetry({
 Disables OpenTelemetry integration.
 
 ```typescript
-import { disableRDCPOpenTelemetry } from '@rdcp/otel-plugin'
+import { disableRDCPOpenTelemetry } from '@rdcp.dev/otel-plugin'
 
 disableRDCPOpenTelemetry()
 ```
@@ -89,7 +89,7 @@ disableRDCPOpenTelemetry()
 Checks if OpenTelemetry integration is currently active.
 
 ```typescript
-import { isRDCPOpenTelemetryActive } from '@rdcp/otel-plugin'
+import { isRDCPOpenTelemetryActive } from '@rdcp.dev/otel-plugin'
 
 if (isRDCPOpenTelemetryActive()) {
   console.log('OpenTelemetry integration is active')
@@ -103,8 +103,8 @@ if (isRDCPOpenTelemetryActive()) {
 For advanced use cases, you can create your own trace provider:
 
 ```typescript
-import { createOpenTelemetryProvider, setupRDCPWithOpenTelemetry } from '@rdcp/otel-plugin'
-import type { TraceProvider } from '@rdcp/otel-plugin'
+import { createOpenTelemetryProvider, setupRDCPWithOpenTelemetry } from '@rdcp.dev/otel-plugin'
+import type { TraceProvider } from '@rdcp.dev/otel-plugin'
 
 // Create provider instance
 const provider = createOpenTelemetryProvider()
@@ -121,7 +121,7 @@ if (provider.isConfigured()) {
 
 ```typescript
 import { NodeSDK } from '@opentelemetry/sdk-node'
-import { setupRDCPWithOpenTelemetry } from '@rdcp/otel-plugin'
+import { setupRDCPWithOpenTelemetry } from '@rdcp.dev/otel-plugin'
 
 // Initialize OpenTelemetry first
 const sdk = new NodeSDK({
@@ -138,7 +138,7 @@ setupRDCPWithOpenTelemetry()
 ```typescript
 import { trace } from '@opentelemetry/api'
 import { BasicTracerProvider } from '@opentelemetry/sdk-trace-base'
-import { setupRDCPWithOpenTelemetry } from '@rdcp/otel-plugin'
+import { setupRDCPWithOpenTelemetry } from '@rdcp.dev/otel-plugin'
 
 // Initialize OpenTelemetry
 const provider = new BasicTracerProvider()
@@ -150,11 +150,11 @@ setupRDCPWithOpenTelemetry()
 
 ## 🏗️ Architecture
 
-This plugin implements the `TraceProvider` interface from `@rdcp/server`, providing a clean abstraction between RDCP and OpenTelemetry:
+This plugin implements the `TraceProvider` interface from `@rdcp.dev/server`, providing a clean abstraction between RDCP and OpenTelemetry:
 
 ```
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────────┐
-│   Your App     │    │   @rdcp/server   │    │ @rdcp/otel-plugin   │
+│   Your App     │    │   @rdcp.dev/server   │    │ @rdcp.dev/otel-plugin   │
 │                │    │                  │    │                     │
 │ debug.api(...)─┼────►│ TraceProvider ───┼────►│ OpenTelemetryProvider│
 │                │    │ Interface        │    │                     │

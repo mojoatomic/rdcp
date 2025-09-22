@@ -113,7 +113,7 @@ sdk.start()
 
 // RDCP setup with OpenTelemetry correlation
 const { debug, enableDebugCategories } = require('@rdcp/server')
-const { setupRDCPWithOpenTelemetry } = require('@rdcp/otel-plugin')
+const { setupRDCPWithOpenTelemetry } = require('@rdcp.dev/otel-plugin')
 
 // Enable categories in development
 enableDebugCategories(['API_ROUTES', 'DATABASE'])
@@ -220,7 +220,7 @@ sdk.start()
 
 // RDCP setup with DataDog correlation
 const { debug, enableDebugCategories } = require('@rdcp/server')
-const { setupRDCPWithOpenTelemetry } = require('@rdcp/otel-plugin')
+const { setupRDCPWithOpenTelemetry } = require('@rdcp.dev/otel-plugin')
 
 // Enable categories in development
 enableDebugCategories(['API_ROUTES', 'DATABASE'])
@@ -383,7 +383,7 @@ sdk.start()
 
 // RDCP with New Relic correlation
 const { RDCPClient } = require('@rdcp/server')
-const { setupRDCPWithOpenTelemetry } = require('@rdcp/otel-plugin')
+const { setupRDCPWithOpenTelemetry } = require('@rdcp.dev/otel-plugin')
 
 const rdcp = new RDCPClient({
   apiKey: process.env.RDCP_API_KEY,
@@ -571,7 +571,7 @@ sdk.start()
 
 // RDCP with Honeycomb correlation
 const { RDCPClient } = require('@rdcp/server')
-const { setupRDCPWithOpenTelemetry } = require('@rdcp/otel-plugin')
+const { setupRDCPWithOpenTelemetry } = require('@rdcp.dev/otel-plugin')
 
 const rdcp = new RDCPClient({
   apiKey: process.env.RDCP_API_KEY,
@@ -697,7 +697,7 @@ sdk.start()
 
 // RDCP with AWS X-Ray correlation
 const { RDCPClient } = require('@rdcp/server')
-const { setupRDCPWithOpenTelemetry } = require('@rdcp/otel-plugin')
+const { setupRDCPWithOpenTelemetry } = require('@rdcp.dev/otel-plugin')
 
 const rdcp = new RDCPClient({
   apiKey: process.env.RDCP_API_KEY,
@@ -900,7 +900,7 @@ sdk.start()
 
 // RDCP setup
 const { RDCPClient } = require('@rdcp/server')
-const { setupRDCPWithOpenTelemetry } = require('@rdcp/otel-plugin')
+const { setupRDCPWithOpenTelemetry } = require('@rdcp.dev/otel-plugin')
 
 const rdcp = new RDCPClient({
   apiKey: process.env.RDCP_API_KEY,

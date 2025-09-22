@@ -39,13 +39,13 @@ rdcp.debug.database('User query executed', {
 
 ### Step 1: Install (30 seconds)
 ```bash
-npm install @rdcp/server @rdcp/otel-plugin @opentelemetry/api
+npm install @rdcp/server @rdcp.dev/otel-plugin @opentelemetry/api
 ```
 
 ### Step 2: Enable Correlation (2 minutes)
 ```javascript
 // Add these 3 lines to your existing RDCP setup
-const { setupRDCPWithOpenTelemetry } = require('@rdcp/otel-plugin')
+const { setupRDCPWithOpenTelemetry } = require('@rdcp.dev/otel-plugin')
 
 // Your existing RDCP client
 const rdcp = new RDCPClient({ /* your config */ })
@@ -87,7 +87,7 @@ Choose your observability backend:
 ### Plugin Architecture Benefits
 ```
 ┌─────────────────┐    ┌──────────────────────┐
-│   @rdcp/server  │    │  @rdcp/otel-plugin   │
+│   @rdcp/server  │    │  @rdcp.dev/otel-plugin   │
 │                 │    │                      │
 │ ✅ Works standalone│    │ ✅ Optional enhancement│
 │ ✅ Zero OTel deps │    │ ✅ Peer dependencies   │
@@ -109,7 +109,7 @@ Choose your observability backend:
 ```javascript
 const express = require('express')
 const { RDCPClient } = require('@rdcp/server')
-const { setupRDCPWithOpenTelemetry } = require('@rdcp/otel-plugin')
+const { setupRDCPWithOpenTelemetry } = require('@rdcp.dev/otel-plugin')
 
 const app = express()
 const rdcp = new RDCPClient({ /* config */ })
@@ -131,7 +131,7 @@ app.get('/users/:id', async (req, res) => {
 ```javascript
 // app/api/users/route.js
 import { RDCPClient } from '@rdcp/server'
-import { setupRDCPWithOpenTelemetry } from '@rdcp/otel-plugin'
+import { setupRDCPWithOpenTelemetry } from '@rdcp.dev/otel-plugin'
 
 const rdcp = new RDCPClient({ /* config */ })
 setupRDCPWithOpenTelemetry(rdcp)

@@ -13,7 +13,7 @@ The goal is to create a flexible, enterprise-grade integration that allows custo
 ### Core Package Structure
 ```
 @rdcp/server                 # Core RDCP functionality (current)
-@rdcp/otel-plugin           # OpenTelemetry integration (planned)
+@rdcp.dev/otel-plugin           # OpenTelemetry integration (planned)
 @rdcp/examples              # Integration examples (planned)
 ```
 
@@ -75,7 +75,7 @@ export class RDCPDebugger {
 ---
 
 ### Phase 2: OpenTelemetry Plugin Package ⏳ (Planned)
-**Goal**: Create separate `@rdcp/otel-plugin` package
+**Goal**: Create separate `@rdcp.dev/otel-plugin` package
 
 #### Plugin Implementation
 ```typescript
@@ -135,7 +135,7 @@ rdcp.debug.database('Query executed', { sql: 'SELECT...' })
 ```typescript
 // Customer code - With OpenTelemetry correlation
 import { RDCPClient } from '@rdcp/server'
-import { setupRDCPWithOpenTelemetry } from '@rdcp/otel-plugin'
+import { setupRDCPWithOpenTelemetry } from '@rdcp.dev/otel-plugin'
 
 const rdcp = new RDCPClient({
   apiKey: process.env.RDCP_API_KEY,
@@ -193,7 +193,7 @@ Works with any OpenTelemetry-compatible backend:
 - [x] Maintain RDCP v1.0 compliance
 
 ### Phase 2: Plugin Package ✅ (COMPLETED)
-- [x] Create `@rdcp/otel-plugin` package structure
+- [x] Create `@rdcp.dev/otel-plugin` package structure
 - [x] Implement `OpenTelemetryProvider` class following Context7 patterns
 - [x] Create easy setup function (`setupRDCPWithOpenTelemetry`)
 - [x] Add peer dependency management (OpenTelemetry API)
@@ -231,7 +231,7 @@ Works with any OpenTelemetry-compatible backend:
 - ✅ Enhanced debug system with trace correlation
 - ✅ Protocol discovery shows OpenTelemetry status
 
-**Plugin Package (`@rdcp/otel-plugin`):**
+**Plugin Package (`@rdcp.dev/otel-plugin`):**
 - ✅ `OpenTelemetryProvider` class
 - ✅ `setupRDCPWithOpenTelemetry()` one-line setup
 - ✅ Enterprise configuration options

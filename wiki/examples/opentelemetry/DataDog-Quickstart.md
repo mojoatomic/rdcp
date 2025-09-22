@@ -22,7 +22,7 @@ npm install @opentelemetry/sdk-node @opentelemetry/api \
   @opentelemetry/exporter-trace-otlp-http \
   @opentelemetry/instrumentation-http @opentelemetry/instrumentation-express \
   @opentelemetry/resources @opentelemetry/semantic-conventions \
-  express @rdcp/server @rdcp/otel-plugin
+  express @rdcp/server @rdcp.dev/otel-plugin
 ```
 
 2) Create otel-init.js (initialize OTel + Datadog OTLP HTTP)
@@ -64,7 +64,7 @@ sdk.start().then(() => {
 require('./otel-init') // initialize OTel before app code
 const express = require('express')
 const { RDCPClient } = require('@rdcp/server')
-const { setupRDCPWithOpenTelemetry } = require('@rdcp/otel-plugin')
+const { setupRDCPWithOpenTelemetry } = require('@rdcp.dev/otel-plugin')
 
 const app = express()
 app.use(express.json())

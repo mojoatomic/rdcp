@@ -38,7 +38,7 @@ sdk.start()
 // Now import your application code
 const express = require('express')
 const { debug, enableDebugCategories } = require('@rdcp/server')
-const { setupRDCPWithOpenTelemetry } = require('@rdcp/otel-plugin')
+const { setupRDCPWithOpenTelemetry } = require('@rdcp.dev/otel-plugin')
 
 const app = express()
 app.use(express.json())
@@ -173,7 +173,7 @@ app.listen(port, () => {
   "dependencies": {
     "express": "^4.18.2",
     "@rdcp/server": "latest",
-    "@rdcp/otel-plugin": "latest",
+"@rdcp.dev/otel-plugin": "latest",
     "@opentelemetry/sdk-node": "^0.45.0",
     "@opentelemetry/api": "^1.6.0",
     "@opentelemetry/instrumentation-express": "^0.34.0",
@@ -254,7 +254,7 @@ export async function register() {
 **📁 File: `lib/rdcp.js` (RDCP Client Setup)**
 ```javascript
 import { debug, enableDebugCategories } from '@rdcp/server'
-import { setupRDCPWithOpenTelemetry } from '@rdcp/otel-plugin'
+import { setupRDCPWithOpenTelemetry } from '@rdcp.dev/otel-plugin'
 
 // Enable categories in development
 enableDebugCategories(['API_ROUTES', 'DATABASE'])
@@ -474,7 +474,7 @@ module.exports = nextConfig
     "react": "^18",
     "react-dom": "^18",
     "@rdcp/server": "latest",
-    "@rdcp/otel-plugin": "latest",
+"@rdcp.dev/otel-plugin": "latest",
     "@opentelemetry/sdk-node": "^0.45.0",
     "@opentelemetry/api": "^1.6.0",
     "@opentelemetry/instrumentation-http": "^0.45.0",
@@ -511,7 +511,7 @@ sdk.start()
 // Now import application code
 const fastify = require('fastify')({ logger: true })
 const { debug, enableDebugCategories } = require('@rdcp/server')
-const { setupRDCPWithOpenTelemetry } = require('@rdcp/otel-plugin')
+const { setupRDCPWithOpenTelemetry } = require('@rdcp.dev/otel-plugin')
 
 // Initialize RDCP with OpenTelemetry
 // Enable categories in development
@@ -707,7 +707,7 @@ const Koa = require('koa')
 const Router = require('@koa/router')
 const bodyParser = require('koa-bodyparser')
 const { debug, enableDebugCategories } = require('@rdcp/server')
-const { setupRDCPWithOpenTelemetry } = require('@rdcp/otel-plugin')
+const { setupRDCPWithOpenTelemetry } = require('@rdcp.dev/otel-plugin')
 
 const app = new Koa()
 const router = new Router()

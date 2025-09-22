@@ -4,7 +4,7 @@ A comprehensive demonstration application that validates RDCP SDK + OpenTelemetr
 
 What this shows:
 - RDCP protocol endpoints implemented in Express
-- OpenTelemetry integration via @rdcp/otel-plugin
+- OpenTelemetry integration via @rdcp.dev/otel-plugin
 - Visual trace correlation in Jaeger
 - Performance characteristics matching the docs
 - Framework examples that run as-is
