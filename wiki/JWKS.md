@@ -108,6 +108,61 @@ Optional headers for advanced caching:
 - Last-Modified: when enabled, servers include this; clients can also send If-Modified-Since
 - Vary: indicates cache key variance; defaults to none for JWKS; may be set for advanced setups
 
+## Constructing a KeyLike with JOSE and verifying JWT
+
+When consuming JWKS, you typically need a KeyLike for verification. Use importJWK for keys from JWKS (recommended), or importSPKI if you have a PEM public key.
+
+From JWKS (recommended):
+```ts path=null start=null
+import { importJWK, jwtVerify } from 'jose'
+import { findJwkByKid, filterJwksKeys } from '@rdcp/server/utils'
+
+async function verify(token: string, jwks: { keys: unknown[] }) {
+  // Select a key by kid and constraints (e.g., RSA signature keys)
+  const kty = ['RSA'] as const
+  const use = ['sig'] as const
+
+  // Option A: exact kid match if the token header has kid
+  const kid = JSON.parse(Buffer.from(token.split('.')[0], 'base64').toString()).kid as string | undefined
+  const jwk = kid
+    ? findJwkByKid(jwks as any, kid, { kty, use })
+    : filterJwksKeys(jwks as any, { kty, use })[0]
+
+  if (!jwk) throw new Error('No suitable JWK found')
+
+  const key = await importJWK(jwk, (jwk as any).alg)
+  const { payload } = await jwtVerify(token, key, {
+    algorithms: [(jwk as any).alg || 'RS256'],
+    issuer: 'https://issuer.example',
+    audience: 'your-audience',
+  })
+  return payload
+}
+```
+
+From PEM (SPKI) when you already have a public key string:
+```ts path=null start=null
+import { importSPKI, jwtVerify } from 'jose'
+
+async function verifyWithPem(token: string, publicPem: string) {
+  const key = await importSPKI(publicPem, 'RS256')
+  const { payload } = await jwtVerify(token, key, {
+    algorithms: ['RS256'],
+  })
+  return payload
+}
+```
+
+## FAQ
+
+- Does a 304 response extend the TTL window?
+  - No. TTL (ttlMs) only updates when a fresh 200 response is received. 304 keeps the previous lastUpdatedAt value. Use a modest ttlMs relative to JWKS Cache-Control max-age.
+- Should I prefer ETag or Last-Modified?
+  - Prefer ETag as the primary validator. Last-Modified is optional; If-None-Match (ETag) remains authoritative for conditional GETs.
+- What alg/kty/use should I filter for?
+  - For RSA RS256: kty=['RSA'], alg=['RS256'], use=['sig'].
+  - For EC ES256: kty=['EC'], alg=['ES256'], use=['sig'].
+
 ## Migration: HS256 → RS256
 1) Plan a rotation window
 - Choose a grace window (e.g., 7 days) to overlap old (HS) and new (RS) issuance.
