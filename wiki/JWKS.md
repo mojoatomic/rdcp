@@ -57,6 +57,23 @@ ring.rotateJwtKey(k1)
 Adapters automatically publish active+previous (within grace) public keys at /.well-known/jwks.json when enabled.
 
 ## Client caching with ETag (recommended)
+
+### Using the built-in helper (SDK utils)
+```ts path=null start=null
+import { createJwksFetcher } from '@rdcp/server'
+
+const jwksFetcher = createJwksFetcher()
+
+// On startup
+const initial = await jwksFetcher.fetch('http://localhost:3000')
+console.log('JWKS keys:', initial.jwks.keys.length)
+
+// Later calls reuse ETag automatically and return from cache on 304
+const next = await jwksFetcher.fetch('http://localhost:3000')
+console.log('fromCache?', next.fromCache)
+```
+
+### Roll-your-own ETag cache
 Implement conditional GETs to avoid fetching unchanged JWKS. Example (browser/node fetch):
 ```js path=null start=null
 let cachedEtag = undefined
