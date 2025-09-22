@@ -61,7 +61,10 @@ function startServer(): Promise<{
   })
 }
 
-describe('JWKS client cache (ttlMs + ETag/304)', () => {
+const __nodeMajor = parseInt(process.versions.node.split('.')[0], 10)
+const __maybeDescribe = __nodeMajor < 18 ? describe.skip : describe
+
+__maybeDescribe('JWKS client cache (ttlMs + ETag/304)', () => {
   let baseUrl = ''
   let closeServer: () => Promise<void>
   let getHits: () => number
