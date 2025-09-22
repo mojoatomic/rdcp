@@ -5,7 +5,14 @@ import jwt, {
   VerifyOptions,
   Algorithm,
 } from 'jsonwebtoken'
-import { exportJWK, importSPKI, JWK, generateKeyPair, exportSPKI, exportPKCS8 } from 'jose'
+import {
+  exportJWK,
+  importSPKI,
+  JWK,
+  generateKeyPair,
+  exportSPKI,
+  exportPKCS8,
+} from 'jose'
 
 // Types for JWT keys
 export type JwtAlg = 'HS256' | 'RS256' | 'ES256' | string
@@ -109,7 +116,9 @@ function scryptHash(secret: string, salt: string): string {
   return key.toString('hex')
 }
 
-export async function generateRS256Keypair(kid: string): Promise<JwtSigningKey> {
+export async function generateRS256Keypair(
+  kid: string
+): Promise<JwtSigningKey> {
   const { publicKey, privateKey } = await generateKeyPair('RS256')
   const pubPem = await exportSPKI(publicKey)
   const privPem = await exportPKCS8(privateKey)
@@ -230,7 +239,12 @@ export function createKeyring(initial: KeyringConfig): Keyring {
     const { publicKey, privateKey } = await generateKeyPair('RS256')
     const pubPem = await exportSPKI(publicKey)
     const privPem = await exportPKCS8(privateKey)
-    rotateJwtKey({ kid, alg: 'RS256', publicKeyPem: pubPem, privateKeyPem: privPem })
+    rotateJwtKey({
+      kid,
+      alg: 'RS256',
+      publicKeyPem: pubPem,
+      privateKeyPem: privPem,
+    })
   }
 
   async function issueApiKey(opts?: {
