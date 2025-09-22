@@ -9,8 +9,8 @@ import {
   createOpenTelemetryProvider
 } from '../src/setup'
 
-// Mock the @rdcp/server dependency for source testing
-jest.mock('@rdcp/server', () => ({
+// Mock the @rdcp.dev/server dependency for source testing
+jest.mock('@rdcp.dev/server', () => ({
   setTraceProvider: jest.fn(),
   getTraceProviderStatus: jest.fn(() => ({ enabled: true, provider: 'opentelemetry' }))
 }))

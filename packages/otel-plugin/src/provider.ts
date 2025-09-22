@@ -3,7 +3,7 @@
 // WARP: TypeScript-first, no any types, under 100 lines (Auth adapter limit)
 
 import { trace, propagation, context } from '@opentelemetry/api'
-import type { TraceProvider, TraceContext } from '@rdcp/server'
+import type { TraceProvider, TraceContext } from '@rdcp.dev/server'
 
 /**
  * OpenTelemetry provider implementation that integrates with RDCP trace correlation

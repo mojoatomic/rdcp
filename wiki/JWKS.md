@@ -43,7 +43,7 @@ RDCP server includes helpers via the keyring:
 
 Programmatic example:
 ```ts path=null start=null
-import { createKeyring, generateRS256Keypair } from '@rdcp/server/server/keyring'
+import { createKeyring, generateRS256Keypair } from '@rdcp.dev/server/server/keyring'
 
 const ring = createKeyring({
   jwt: { active: [], previous: [], graceWindowMs: 7 * 24 * 60 * 60 * 1000 },
@@ -62,7 +62,7 @@ Adapters automatically publish active+previous (within grace) public keys at /.w
 
 Optional TTL override (skip network when cache is new):
 ```ts path=null start=null
-import { createJwksFetcher } from '@rdcp/server'
+import { createJwksFetcher } from '@rdcp.dev/server'
 
 // ttlMs: use cached JWKS for up to 30s without hitting the network
 const jwksFetcher = createJwksFetcher({ ttlMs: 30_000 })
@@ -70,7 +70,7 @@ const res = await jwksFetcher.fetch('http://localhost:3000')
 console.log('fromCache?', res.fromCache)
 ```
 ```ts path=null start=null
-import { createJwksFetcher } from '@rdcp/server'
+import { createJwksFetcher } from '@rdcp.dev/server'
 
 const jwksFetcher = createJwksFetcher()
 
@@ -129,7 +129,7 @@ When consuming JWKS, you typically need a KeyLike for verification. Use importJW
 From JWKS (recommended):
 ```ts path=null start=null
 import { importJWK, jwtVerify } from 'jose'
-import { findJwkByKid, filterJwksKeys } from '@rdcp/server/utils'
+import { findJwkByKid, filterJwksKeys } from '@rdcp.dev/server/utils'
 
 async function verify(token: string, jwks: { keys: unknown[] }) {
   // Select a key by kid and constraints (e.g., RSA signature keys)

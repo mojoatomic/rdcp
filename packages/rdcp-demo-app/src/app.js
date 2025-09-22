@@ -8,7 +8,7 @@ const {
   setTraceProvider,
   validateRDCPAuth,
   createRDCPError
-} = require('@rdcp/server')
+} = require('@rdcp.dev/server')
 const { OpenTelemetryProvider } = require('@rdcp/otel-plugin')
 
 // Set up trace provider for trace correlation in RDCP debug logs

@@ -22,7 +22,7 @@ export {
 
 // Re-export types from @rdcp/server for convenience
 // Context7: Common pattern in OpenTelemetry plugins
-export type { TraceProvider, TraceContext } from '@rdcp/server'
+export type { TraceProvider, TraceContext } from '@rdcp.dev/server'
 
 /**
  * Package version and info

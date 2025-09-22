@@ -11,19 +11,19 @@ This guide covers installing and setting up the RDCP SDK in your Node.js applica
 ## Install via npm
 
 ```bash
-npm install @rdcp/server
+npm install @rdcp.dev/server
 ```
 
 ## Install via yarn
 
 ```bash
-yarn add @rdcp/server
+yarn add @rdcp.dev/server
 ```
 
 ## Install via pnpm
 
 ```bash
-pnpm add @rdcp/server
+pnpm add @rdcp.dev/server
 ```
 
 ## Verify Installation
@@ -32,7 +32,7 @@ Create a test file to verify the SDK is installed correctly:
 
 ```javascript
 // test-rdcp.js
-const { adapters, auth } = require('@rdcp/server')
+const { adapters, auth } = require('@rdcp.dev/server')
 
 console.log('✅ RDCP SDK installed successfully!')
 console.log('Available adapters:', Object.keys(adapters))
@@ -85,22 +85,22 @@ The RDCP SDK provides multiple export paths for different use cases:
 
 ```javascript
 // Main SDK exports
-const { adapters, auth, utils } = require('@rdcp/server')
+const { adapters, auth, utils } = require('@rdcp.dev/server')
 
 // Framework-specific adapters
-const express = require('@rdcp/server/server/adapters/express')
-const fastify = require('@rdcp/server/server/adapters/fastify') 
-const koa = require('@rdcp/server/server/adapters/koa')
+const express = require('@rdcp.dev/server/server/adapters/express')
+const fastify = require('@rdcp.dev/server/server/adapters/fastify')
+const koa = require('@rdcp.dev/server/server/adapters/koa')
 
 // Authentication modules
-const auth = require('@rdcp/server/auth')
+const auth = require('@rdcp.dev/server/auth')
 
 // Endpoint implementations
-const { protocolDiscovery, debugSystemDiscovery } = require('@rdcp/server/endpoints/discovery')
-const { runtimeControl } = require('@rdcp/server/endpoints/control')
+const { protocolDiscovery, debugSystemDiscovery } = require('@rdcp.dev/server/endpoints/discovery')
+const { runtimeControl } = require('@rdcp.dev/server/endpoints/control')
 
 // Utilities
-const { extractTenantContext } = require('@rdcp/server/utils/tenant')
+const { extractTenantContext } = require('@rdcp.dev/server/utils/tenant')
 ```
 
 ## TypeScript Support
@@ -108,7 +108,7 @@ const { extractTenantContext } = require('@rdcp/server/utils/tenant')
 The SDK includes full TypeScript type definitions:
 
 ```typescript
-import { adapters, auth } from '@rdcp/server'
+import { adapters, auth } from '@rdcp.dev/server'
 import type { RDCPClientConfig, ControlRequest } from '@rdcp/server'
 
 const middleware = adapters.express.createRDCPMiddleware({

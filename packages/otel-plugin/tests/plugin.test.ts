@@ -10,14 +10,14 @@ import {
   createOpenTelemetryProvider
 } from '../src/setup'
 
-// Mock @rdcp/server - Context7: Common pattern in OpenTelemetry plugin tests
-jest.mock('@rdcp/server', () => ({
+// Mock @rdcp.dev/server - Context7: Common pattern in OpenTelemetry plugin tests
+jest.mock('@rdcp.dev/server', () => ({
   setTraceProvider: jest.fn(),
   getTraceProviderStatus: jest.fn(() => ({ enabled: true, provider: 'opentelemetry' }))
 }))
 
 // Get mocked functions
-const { setTraceProvider: mockSetTraceProvider, getTraceProviderStatus: mockGetTraceProviderStatus } = require('@rdcp/server')
+const { setTraceProvider: mockSetTraceProvider, getTraceProviderStatus: mockGetTraceProviderStatus } = require('@rdcp.dev/server')
 
 // Mock OpenTelemetry API - Context7: Following OpenTelemetry test patterns
 const mockActiveSpan = {
