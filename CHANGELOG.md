@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2025-09-22
+
+Features
+- JWKS endpoints with strong ETag and conditional GET (If-None-Match → 304) for Express, Fastify, Koa
+- Configurable Cache-Control; optional Last-Modified and Vary headers
+- JwksFetcher helper with ETag revalidation and ttlMs cache override (304 does not extend TTL)
+- JWKS utilities: canonicalize/stable stringify + strong SHA-256 base64url ETag
+- Filter utilities: filterJwksKeys and findJwkByKid for safe key selection
+
+Examples & Docs
+- ts-node demo: examples/jwks-client-cache-demo.ts with how-to run
+- Deno/Bun examples in wiki/Examples-Deno-Bun.md
+- JWKS wiki updates: JOSE verification snippet, TTL FAQ, and demo run instructions
+- README: TTL semantics + backoff and key-filter usage
+
+Tests
+- E2E: JWKS endpoints return ETag and 304 when unchanged across adapters
+- E2E: Client cache demo exercises ttlMs, 304 revalidation, ETag change after rotation
+- Unit: ETag changes when JWKS content changes (post-rotation)
+
 ## [1.1.0] - 2025-09-20
 
 Features
