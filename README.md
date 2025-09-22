@@ -342,6 +342,36 @@ async function fetchWithBackoff(baseUrl: string, attempts = 3): Promise<void> {
 }
 ```
 
+#### TTL and revalidation
+- ttlMs allows returning a cached JWKS immediately without a network call while the cache is fresh.
+- 304 responses do not extend the TTL window — only a fresh 200 response updates lastUpdatedAt.
+- Use a modest ttlMs relative to the server's Cache-Control max-age.
+
+```ts path=null start=null
+import { createJwksFetcher } from '@rdcp/server'
+
+// Skip network when cache younger than 30s
+const fetcher = createJwksFetcher({ ttlMs: 30_000 })
+const res1 = await fetcher.fetch('http://localhost:3000') // 200, caches body + ETag
+const res2 = await fetcher.fetch('http://localhost:3000') // served from cache, no network
+
+// For strict revalidation each call, construct without ttlMs
+const reval = createJwksFetcher()
+const r1 = await reval.fetch('http://localhost:3000') // 200
+const r2 = await reval.fetch('http://localhost:3000') // 304 -> fromCache: true
+```
+
+#### Validation utilities: filter keys and select by kid
+```ts path=null start=null
+import { filterJwksKeys, findJwkByKid } from '@rdcp/server'
+
+const rsaSigOnly = filterJwksKeys(res1.jwks, { kty: ['RSA'], use: ['sig'] })
+const maybeByKid = findJwkByKid(res1.jwks, 'my-kid', { kty: ['RSA'] })
+```
+
+- Full JOSE verification example and FAQ: see wiki/JWKS.md
+- Deno/Bun examples: see wiki/Examples-Deno-Bun.md
+
 ---
 
 ## Documentation

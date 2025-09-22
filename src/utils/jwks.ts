@@ -88,6 +88,7 @@ export class JwksFetcher {
 
 export function createJwksFetcher(opts?: {
   fetchImpl?: typeof fetch
+  ttlMs?: number
 }): JwksFetcher {
   return new JwksFetcher(opts)
 }
