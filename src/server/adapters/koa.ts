@@ -200,7 +200,11 @@ export function createRDCPMiddleware(
             options.capabilities?.security?.tokenLifecycle?.graceWindowMs ??
             7 * 24 * 60 * 60 * 1000,
         },
-        api: { active: [], previous: [], graceWindowMs: 30 * 24 * 60 * 60 * 1000 },
+        api: {
+          active: [],
+          previous: [],
+          graceWindowMs: 30 * 24 * 60 * 60 * 1000,
+        },
       })
     : undefined
 
