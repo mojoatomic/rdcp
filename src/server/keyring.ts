@@ -187,7 +187,7 @@ export function createKeyring(initial: KeyringConfig): Keyring {
 
   async function exportPublicJWKS(): Promise<{ keys: JWK[] }> {
     const keys: JWK[] = []
-    const collect = async (k: JwtSigningKey) => {
+    const collect = async (k: JwtSigningKey): Promise<void> => {
       if ('publicKeyPem' in k) {
         try {
           const keyLike = await importSPKI(k.publicKeyPem, k.alg)
