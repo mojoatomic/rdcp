@@ -1,5 +1,10 @@
 import crypto from 'crypto'
-import jwt, { JwtPayload, JwtHeader, VerifyOptions, Algorithm } from 'jsonwebtoken'
+import jwt, {
+  JwtPayload,
+  JwtHeader,
+  VerifyOptions,
+  Algorithm,
+} from 'jsonwebtoken'
 
 // Types for JWT keys
 export type JwtAlg = 'HS256' | 'RS256' | 'ES256' | string
@@ -51,7 +56,10 @@ export interface VerifyJwtResultOk {
 
 export interface VerifyJwtResultErr {
   ok: false
-  error: { code: 'RDCP_JWT_KEY_NOT_FOUND' | 'RDCP_JWT_INVALID'; message: string }
+  error: {
+    code: 'RDCP_JWT_KEY_NOT_FOUND' | 'RDCP_JWT_INVALID'
+    message: string
+  }
 }
 
 export type VerifyJwtResult = VerifyJwtResultOk | VerifyJwtResultErr
@@ -61,7 +69,9 @@ export interface Keyring {
     token: string,
     options?: Pick<VerifyOptions, 'algorithms' | 'audience' | 'issuer'>
   ) => Promise<VerifyJwtResult>
-  issueApiKey: (opts?: { prefix?: string }) => Promise<{ keyId: string; key: string }>
+  issueApiKey: (opts?: {
+    prefix?: string
+  }) => Promise<{ keyId: string; key: string }>
   verifyApiKey: (cleartext: string) => Promise<boolean>
 }
 
@@ -107,11 +117,15 @@ export function createKeyring(initial: KeyringConfig): Keyring {
     token: string,
     options?: Pick<VerifyOptions, 'algorithms' | 'audience' | 'issuer'>
   ): Promise<VerifyJwtResult> {
-    const decoded = jwt.decode(token, { complete: true }) as
-      | { header: JwtHeader; payload: JwtPayload | string }
-      | null
-    if (!decoded || !decoded.header) {
-      return { ok: false, error: { code: 'RDCP_JWT_INVALID', message: 'Invalid token' } }
+    const decoded = jwt.decode(token, { complete: true }) as {
+      header: JwtHeader
+      payload: JwtPayload | string
+    } | null
+    if (!decoded?.header) {
+      return {
+        ok: false,
+        error: { code: 'RDCP_JWT_INVALID', message: 'Invalid token' },
+      }
     }
     const kid = decoded.header.kid
     let selected: JwtSigningKey | undefined
@@ -119,7 +133,9 @@ export function createKeyring(initial: KeyringConfig): Keyring {
     if (kid) {
       selected = state.jwt.active.find(k => k.kid === kid)
       if (!selected) {
-        const prev = state.jwt.previous.find(p => p.key.kid === kid && inGraceWindow(p.retirementAt))
+        const prev = state.jwt.previous.find(
+          p => p.key.kid === kid && inGraceWindow(p.retirementAt)
+        )
         if (prev) selected = prev.key
       }
     }
@@ -127,7 +143,10 @@ export function createKeyring(initial: KeyringConfig): Keyring {
     if (!selected) {
       return {
         ok: false,
-        error: { code: 'RDCP_JWT_KEY_NOT_FOUND', message: 'Signing key not found or retired' },
+        error: {
+          code: 'RDCP_JWT_KEY_NOT_FOUND',
+          message: 'Signing key not found or retired',
+        },
       }
     }
 
@@ -140,11 +159,19 @@ export function createKeyring(initial: KeyringConfig): Keyring {
       const payload = jwt.verify(token, selected.secret, verifyOpts)
       return { ok: true, header: decoded.header, payload }
     } catch (e) {
-      return { ok: false, error: { code: 'RDCP_JWT_INVALID', message: 'Signature verification failed' } }
+      return {
+        ok: false,
+        error: {
+          code: 'RDCP_JWT_INVALID',
+          message: 'Signature verification failed',
+        },
+      }
     }
   }
 
-  async function issueApiKey(opts?: { prefix?: string }): Promise<{ keyId: string; key: string }> {
+  async function issueApiKey(opts?: {
+    prefix?: string
+  }): Promise<{ keyId: string; key: string }> {
     const prefix = opts?.prefix ?? 'rdcp_sk_'
     const random = crypto.randomBytes(24).toString('base64url')
     const key = `${prefix}${random}`
@@ -168,7 +195,9 @@ export function createKeyring(initial: KeyringConfig): Keyring {
     const rec = state.api.active.find(r => r.keyId === candidateId)
     if (!rec) {
       // try previous in grace
-      const prev = state.api.previous.find(p => p.key.keyId === candidateId && inGraceWindow(p.retirementAt))
+      const prev = state.api.previous.find(
+        p => p.key.keyId === candidateId && inGraceWindow(p.retirementAt)
+      )
       if (!prev) return false
       const h = scryptHash(cleartext, prev.key.salt)
       return timingSafeEqualStr(h, prev.key.hash)
