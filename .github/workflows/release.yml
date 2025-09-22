@@ -25,6 +25,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install OpenTelemetry plugin dependencies
+        run: npm ci --prefix packages/otel-plugin
+
+      - name: Build OpenTelemetry plugin
+        run: npm run build --prefix packages/otel-plugin
+
       - name: Install demo app dependencies (for e2e tests)
         run: npm ci --prefix packages/rdcp-demo-app
 
