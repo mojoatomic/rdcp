@@ -55,13 +55,13 @@
   },
   "peerDependencies": {
     "@opentelemetry/api": "^1.9.0",
-    "@rdcp/server": "file:../.."
+    "@rdcp.dev/server": "file:../.."
   },
   "peerDependenciesMeta": {
     "@opentelemetry/api": {
       "optional": false
     },
-    "@rdcp/server": {
+    "@rdcp.dev/server": {
       "optional": false
     }
   },

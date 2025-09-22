@@ -3,7 +3,7 @@
 ## Deno
 ```ts path=null start=null
 // Deno can import npm packages via the npm: prefix
-import { createJwksFetcher } from 'npm:@rdcp/server'
+import { createJwksFetcher } from 'npm:@rdcp.dev/server'
 
 const fetcher = createJwksFetcher({ ttlMs: 30_000 })
 
@@ -27,7 +27,7 @@ await fetchWithBackoff(Deno.env.get('BASE_URL') ?? 'http://localhost:3000')
 
 ## Bun
 ```ts path=null start=null
-import { createJwksFetcher } from '@rdcp/server'
+import { createJwksFetcher } from '@rdcp.dev/server'
 
 const fetcher = createJwksFetcher({ ttlMs: 30_000 })
 

@@ -24,14 +24,14 @@
 ### Installation
 
 ```bash
-npm install @rdcp/server
+npm install @rdcp.dev/server
 ```
 
 ### Express.js Setup (30 seconds)
 
 ```javascript
 const express = require('express')
-const { adapters, auth } = require('@rdcp/server')
+const { adapters, auth } = require('@rdcp.dev/server')
 
 const app = express()
 app.use(express.json())
@@ -85,7 +85,7 @@ curl -X POST -H "X-API-Key: your-api-key" \
 ### Express.js
 
 ```javascript
-const { adapters, auth } = require('@rdcp/server')
+const { adapters, auth } = require('@rdcp.dev/server')
 
 app.use(adapters.express.createRDCPMiddleware({
   authenticator: auth.validateRDCPAuth
@@ -125,7 +125,7 @@ app.use(rdcpMiddleware)
 
 ```javascript
 // pages/api/rdcp/[...rdcp].js
-import { adapters, auth } from '@rdcp/server'
+import { adapters, auth } from '@rdcp.dev/server'
 
 const rdcpHandler = adapters.express.createRDCPMiddleware({
   authenticator: auth.validateRDCPAuth

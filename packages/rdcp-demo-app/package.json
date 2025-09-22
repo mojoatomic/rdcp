@@ -39,7 +39,7 @@
     "@opentelemetry/exporter-trace-otlp-http": "^0.52.1",
     "@opentelemetry/resources": "^1.9.0",
     "@opentelemetry/semantic-conventions": "^1.23.0",
-    "@rdcp/server": "file:../..",
+    "@rdcp.dev/server": "file:../..",
     "@rdcp/otel-plugin": "file:../otel-plugin"
   },
   "devDependencies": {

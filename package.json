@@ -1,6 +1,6 @@
 {
-  "name": "@rdcp/server",
-  "version": "1.2.0",
+  "name": "@rdcp.dev/server",
+  "version": "1.2.1",
   "description": "JavaScript/TypeScript SDK for Runtime Debug Control Protocol v1.0 endpoints",
   "keywords": [
     "rdcp",
@@ -75,7 +75,7 @@
     "demo:proof": "bash scripts/demo-proof.sh",
     "lint": "eslint src examples --no-error-on-unmatched-pattern --ext .js,.ts --fix",
     "lint:ci": "eslint src examples --no-error-on-unmatched-pattern --ext .js,.ts --max-warnings=0",
-    "pretest": "npm run build && ( [ \"$CI\" = \"true\" ] || npm ci --prefix packages/rdcp-demo-app )",
+    "pretest": "npm run build && ( [ \"$CI\" = \"true\" ] || npm install --prefix packages/rdcp-demo-app --no-audit --no-fund )",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",

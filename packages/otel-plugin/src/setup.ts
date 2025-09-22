@@ -2,9 +2,9 @@
 // Following Context7 OpenTelemetry setup patterns and WARP.md guidelines
 // WARP: TypeScript-first, no any types, under 150 lines (validation file limit)
 
-import { setTraceProvider } from '@rdcp/server'
+import { setTraceProvider } from '@rdcp.dev/server'
 import { OpenTelemetryProvider } from './provider'
-import type { TraceProvider } from '@rdcp/server'
+import type { TraceProvider } from '@rdcp.dev/server'
 
 /**
  * Configuration options for RDCP OpenTelemetry integration
@@ -89,7 +89,7 @@ export function disableRDCPOpenTelemetry(): void {
 export function isRDCPOpenTelemetryActive(): boolean {
   try {
     // This will be available once @rdcp/server exports getTraceProviderStatus
-    const { getTraceProviderStatus } = require('@rdcp/server')
+    const { getTraceProviderStatus } = require('@rdcp.dev/server')
     const status = getTraceProviderStatus()
     return status.enabled && status.provider === 'opentelemetry'
   } catch {
