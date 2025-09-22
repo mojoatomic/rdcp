@@ -76,7 +76,7 @@ app.get('/users/:id', async (req, res) => {
 **Goal**: Connect debug logs to distributed traces
 
 ```javascript
-const { setupRDCPWithOpenTelemetry } = require('@rdcp/otel-plugin')
+const { setupRDCPWithOpenTelemetry } = require('@rdcp.dev/otel-plugin')
 
 // Add OpenTelemetry setup (see Framework Examples for complete setup)
 setupRDCPWithOpenTelemetry(rdcp)
@@ -235,7 +235,7 @@ app.get('/orders/:id', async (req, res) => {
 
 ### Phase 2: Add OpenTelemetry Correlation (3 minutes)
 ```javascript
-const { setupRDCPWithOpenTelemetry } = require('@rdcp/otel-plugin')
+const { setupRDCPWithOpenTelemetry } = require('@rdcp.dev/otel-plugin')
 
 setupRDCPWithOpenTelemetry(rdcp)
 
@@ -315,7 +315,7 @@ app.get('/products/:id', async (req, res) => {
 ```javascript
 // Keep existing OpenTelemetry setup exactly as-is
 const { RDCPClient } = require('@rdcp/server')
-const { setupRDCPWithOpenTelemetry } = require('@rdcp/otel-plugin')
+const { setupRDCPWithOpenTelemetry } = require('@rdcp.dev/otel-plugin')
 
 const rdcp = new RDCPClient({
   apiKey: process.env.RDCP_API_KEY || 'dev-key-32-characters-minimum-length'
@@ -410,7 +410,7 @@ const enableRDCP = process.env.ENABLE_RDCP === 'true' || process.env.NODE_ENV ==
 
 if (enableRDCP) {
   const { RDCPClient } = require('@rdcp/server')
-  const { setupRDCPWithOpenTelemetry } = require('@rdcp/otel-plugin')
+const { setupRDCPWithOpenTelemetry } = require('@rdcp.dev/otel-plugin')
   
   const rdcp = new RDCPClient({
     apiKey: process.env.RDCP_API_KEY || 'dev-key-32-characters-minimum-length'

@@ -20,7 +20,7 @@ Implemented capabilities:
   - POST /rdcp/v1/control
   - GET /rdcp/v1/status
   - GET /rdcp/v1/health
-- OpenTelemetry integration via @rdcp/otel-plugin
+- OpenTelemetry integration via @rdcp.dev/otel-plugin
   - OTLP HTTP exporter (configurable)
   - Works with Jaeger all-in-one (via docker-compose)
   - RDCP debug logs enriched with trace correlation when available
@@ -30,14 +30,14 @@ Implemented capabilities:
   - Script that executes framework examples against the running server
 
 Monorepo integration:
-- Local dependency on @rdcp/server and @rdcp/otel-plugin (file: links) so the demo always runs against the actual code
+- Local dependency on @rdcp/server and @rdcp.dev/otel-plugin (file: links) so the demo always runs against the actual code
 
 ---
 
 ## Project layout
 
 packages/rdcp-demo-app/
-- package.json – local deps on @rdcp/server, @rdcp/otel-plugin; scripts for dev/otel/benchmark/examples
+- package.json – local deps on @rdcp/server, @rdcp.dev/otel-plugin; scripts for dev/otel/benchmark/examples
 - src/
   - server.js – Express server wiring RDCP endpoints + business routes
   - opentelemetry.js – NodeSDK setup, OTLP exporter, RDCP plugin integration
@@ -60,7 +60,7 @@ packages/rdcp-demo-app/
 
 2) OpenTelemetry integration
 - src/opentelemetry.js configures NodeSDK + OTLP HTTP exporter (default http://localhost:4318).
-- @rdcp/otel-plugin is enabled (setupRDCPWithOpenTelemetry) to enrich RDCP debug logs with trace context (traceId/spanId) when available.
+- @rdcp.dev/otel-plugin is enabled (setupRDCPWithOpenTelemetry) to enrich RDCP debug logs with trace context (traceId/spanId) when available.
 - You can verify traces in Jaeger UI when the exporter is pointed at a running Jaeger collector.
 
 3) Business routes

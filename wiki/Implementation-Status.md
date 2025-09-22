@@ -6,7 +6,7 @@ Last updated: 2025-09-20
 - ✅ In-memory Jaeger demo validated (Dependencies graph visible)
   - Edge confirmed: upstream-service → rdcp-demo-app
   - Helper scripts: `run-inmemory-demo.sh` (start/seed) and `stop-inmemory-demo.sh` (cleanup)
-- ✅ OpenTelemetry integration (Node) via `@rdcp/otel-plugin`
+- ✅ OpenTelemetry integration (Node) via `@rdcp.dev/otel-plugin`
   - Auto-instrumentations enabled; trace correlation in RDCP debug logs
   - Verified export to Jaeger OTLP HTTP
 - ✅ RDCP header enforcement for /rdcp/v1/* (401 RDCP_AUTH_REQUIRED on missing/invalid headers)

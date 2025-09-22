@@ -12,7 +12,7 @@ Prerequisites
   - Example: NEW_RELIC_LICENSE_KEY=NRII-... (keep secret)
 - Node.js 16+
 - Packages: @opentelemetry/sdk-node, @opentelemetry/exporter-otlp-http, @opentelemetry/instrumentation-http, @opentelemetry/instrumentation-express
-- RDCP packages: @rdcp/server and @rdcp/otel-plugin
+- RDCP packages: @rdcp/server and @rdcp.dev/otel-plugin
 
 1) Choose your New Relic region
 New Relic OTLP ingest endpoints:
@@ -82,7 +82,7 @@ sdk.start()
 
 // RDCP + OpenTelemetry correlation
 const { RDCPClient } = require('@rdcp/server')
-const { setupRDCPWithOpenTelemetry } = require('@rdcp/otel-plugin')
+const { setupRDCPWithOpenTelemetry } = require('@rdcp.dev/otel-plugin')
 
 const rdcp = new RDCPClient({
   apiKey: process.env.RDCP_API_KEY,

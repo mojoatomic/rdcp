@@ -1,7 +1,7 @@
-// Basic integration test for @rdcp/otel-plugin
+// Basic integration test for @rdcp.dev/otel-plugin
 // Tests the core functionality without complex mocking
 
-describe('@rdcp/otel-plugin Integration', () => {
+describe('@rdcp.dev/otel-plugin Integration', () => {
   it('exports all expected functions and classes', () => {
     const plugin = require('../dist/index.js')
     
@@ -16,7 +16,7 @@ describe('@rdcp/otel-plugin Integration', () => {
     const plugin = require('../dist/index.js')
     
     expect(plugin.RDCP_OTEL_PLUGIN_VERSION).toBe('1.0.0')
-    expect(plugin.RDCP_OTEL_PLUGIN_NAME).toBe('@rdcp/otel-plugin')
+    expect(plugin.RDCP_OTEL_PLUGIN_NAME).toBe('@rdcp.dev/otel-plugin')
   })
 
   it('default export includes all expected functions', () => {
@@ -29,7 +29,7 @@ describe('@rdcp/otel-plugin Integration', () => {
     expect(defaultExport.isRDCPOpenTelemetryActive).toBeDefined()
     expect(defaultExport.createOpenTelemetryProvider).toBeDefined()
     expect(defaultExport.version).toBe('1.0.0')
-    expect(defaultExport.name).toBe('@rdcp/otel-plugin')
+    expect(defaultExport.name).toBe('@rdcp.dev/otel-plugin')
   })
 
   it('OpenTelemetryProvider can be instantiated', () => {

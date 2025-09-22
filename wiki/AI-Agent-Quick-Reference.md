@@ -31,7 +31,7 @@ Install dependencies:
 # If consuming from npm registry
 npm install @rdcp/server
 # Optional (if you use OpenTelemetry correlation)
-npm install @rdcp/otel-plugin @opentelemetry/api
+npm install @rdcp.dev/otel-plugin @opentelemetry/api
 ```
 
 Minimal server wiring:
@@ -46,7 +46,7 @@ const {
 // Optional: enable OpenTelemetry correlation if you have OTel
 let hasOTel = false
 try {
-  const { OpenTelemetryProvider } = require('@rdcp/otel-plugin')
+  const { OpenTelemetryProvider } = require('@rdcp.dev/otel-plugin')
   setTraceProvider(new OpenTelemetryProvider())
   hasOTel = true
 } catch (_) {}
@@ -90,7 +90,7 @@ curl -s \
 Implementation decision tree
 
 - If the project already uses OpenTelemetry
-  - Install @rdcp/otel-plugin and setTraceProvider(new OpenTelemetryProvider()).
+- Install @rdcp.dev/otel-plugin and setTraceProvider(new OpenTelemetryProvider()).
   - Launch your service with NodeSDK bootstrap (example below) or integrate with your existing OTel setup.
   - Validate traces in your backend (Jaeger quick path included above).
 
@@ -114,7 +114,7 @@ const { getNodeAutoInstrumentations } = require('@opentelemetry/auto-instrumenta
 const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http')
 const { Resource } = require('@opentelemetry/resources')
 const { SemanticResourceAttributes } = require('@opentelemetry/semantic-conventions')
-const { setupRDCPWithOpenTelemetry } = require('@rdcp/otel-plugin')
+const { setupRDCPWithOpenTelemetry } = require('@rdcp.dev/otel-plugin')
 
 const serviceName = process.env.OTEL_SERVICE_NAME || 'my-rdcp-service'
 const otlp = process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'http://localhost:4318'

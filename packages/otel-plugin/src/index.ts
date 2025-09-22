@@ -1,4 +1,4 @@
-// @rdcp/otel-plugin - OpenTelemetry integration for RDCP SDK
+// @rdcp.dev/otel-plugin - OpenTelemetry integration for RDCP SDK
 // Context7: Following OpenTelemetry package export patterns
 // WARP: TypeScript-first, no any types, under 50 lines (type definition limit)
 
@@ -28,7 +28,7 @@ export type { TraceProvider, TraceContext } from '@rdcp.dev/server'
  * Package version and info
  */
 export const RDCP_OTEL_PLUGIN_VERSION = '1.0.0'
-export const RDCP_OTEL_PLUGIN_NAME = '@rdcp/otel-plugin'
+export const RDCP_OTEL_PLUGIN_NAME = '@rdcp.dev/otel-plugin'
 
 /**
  * Default export for convenience
