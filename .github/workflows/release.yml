@@ -28,10 +28,16 @@ jobs:
       - name: Install OpenTelemetry plugin dependencies
         run: npm install --prefix packages/otel-plugin --no-audit --no-fund
 
-      - name: Install @rdcp.dev/server (registry) into otel-plugin for build
+      - name: Install @rdcp.dev/server for otel-plugin build (registry if available, otherwise local)
         run: |
           CURRENT_VERSION=$(node -p "require('./package.json').version")
-          npm install --prefix packages/otel-plugin @rdcp.dev/server@"$CURRENT_VERSION" --no-audit --no-fund
+          if npm view @rdcp.dev/server@"$CURRENT_VERSION" version >/dev/null 2>&1; then
+            echo "Installing @rdcp.dev/server@$CURRENT_VERSION from registry"
+            npm install --prefix packages/otel-plugin @rdcp.dev/server@"$CURRENT_VERSION" --no-audit --no-fund
+          else
+            echo "@rdcp.dev/server@$CURRENT_VERSION not yet in registry; installing local package for build"
+            npm install --prefix packages/otel-plugin --no-save --no-audit --no-fund ./
+          fi
 
       - name: Build OpenTelemetry plugin
         run: npm run build --prefix packages/otel-plugin
