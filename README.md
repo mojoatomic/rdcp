@@ -222,6 +222,38 @@ setupRDCPWithOpenTelemetry({
 })
 ```
 
+#### Verify it’s working (dev)
+
+```javascript
+import { NodeSDK } from '@opentelemetry/sdk-node'
+import { trace } from '@opentelemetry/api'
+import { setupRDCPWithOpenTelemetry } from '@rdcp.dev/otel-plugin'
+import { enableDebugCategories, debug } from '@rdcp.dev/server'
+
+// Start a minimal OpenTelemetry SDK (dev verification)
+const sdk = new NodeSDK()
+await sdk.start()
+
+// Enable RDCP ↔ OTel correlation
+setupRDCPWithOpenTelemetry()
+
+// Turn on a debug category so logs emit
+enableDebugCategories(['DATABASE'])
+
+// Create an active span and emit a RDCP debug log
+trace.getTracer('verify').startActiveSpan('sample-span', span => {
+  debug.database('Query executed', { sql: 'SELECT 1' })
+  span.end()
+})
+
+// Expected console output includes a trace suffix like:
+// 🔌 [DB] [trace:90abcdef] Query executed [ { sql: 'SELECT 1' } ]
+```
+
+Quickstart and examples:
+- Overview: https://github.com/mojoatomic/rdcp/wiki/examples/opentelemetry/Overview.md
+- Framework Examples: https://github.com/mojoatomic/rdcp/wiki/examples/opentelemetry/Framework-Examples.md
+
 ---
 
 ## Operational Control Examples
