@@ -250,9 +250,16 @@ trace.getTracer('verify').startActiveSpan('sample-span', span => {
 // 🔌 [DB] [trace:90abcdef] Query executed [ { sql: 'SELECT 1' } ]
 ```
 
+Troubleshooting
+- Ensure a tracer provider is initialized before calling setupRDCPWithOpenTelemetry (e.g., NodeSDK.start() or your own provider setup)
+- Make sure a debug category is enabled (e.g., enableDebugCategories(['DATABASE'])) so logs emit
+- Check console output for the [trace:xxxxxxxx] suffix; if missing, verify your OpenTelemetry span is active
+- In production, confirm your exporter setup (OTLP/HTTP, etc.) and that traces appear in your backend
+
 Quickstart and examples:
 - Overview: https://github.com/mojoatomic/rdcp/wiki/examples/opentelemetry/Overview.md
 - Framework Examples: https://github.com/mojoatomic/rdcp/wiki/examples/opentelemetry/Framework-Examples.md
+- Backend Configurations: https://github.com/mojoatomic/rdcp/wiki/examples/opentelemetry/Backend-Configurations.md
 
 ---
 
