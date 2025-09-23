@@ -3,7 +3,7 @@
   "projectTitle": "RDCP SDK",
   "description": "A JavaScript/TypeScript SDK implementing the Runtime Debug Control Protocol (RDCP) for immediate operational control over application behavior through standardized HTTP endpoints, defining a new category of Operational Infrastructure Control (OIC).",
   "branch": "main",
-  "folders": [],
+  "folders": ["docs", "wiki"],
   "excludeFolders": [
     "node_modules",
     "dist",
@@ -51,7 +51,8 @@
     "LICENSE.md",
     "license.md",
     "CODE_OF_CONDUCT.md",
-    "code_of_conduct.md"
+    "code_of_conduct.md",
+    "README-Wiki-Setup.md"
   ],
   "rules": [
     "Use the '@rdcp.dev/server' package (not '@rdcp/server')",
