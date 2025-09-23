@@ -532,3 +532,11 @@ MIT License — see [LICENSE](LICENSE) for details.
 - Rate Limiting: https://github.com/mojoatomic/rdcp/wiki/Rate-Limiting
 - API Reference: https://github.com/mojoatomic/rdcp/wiki/API-Reference
 - OpenTelemetry Plugin: https://github.com/mojoatomic/rdcp/wiki/OpenTelemetry-Integration-Roadmap
+
+---
+
+## Maintainers
+
+- Wiki source of truth: the separate GitHub Wiki repo. Use the local `.wiki-edit` working copy (tracks https://github.com/mojoatomic/rdcp.wiki.git) to edit wiki pages.
+- Workflow: make changes in `.wiki-edit/`, commit (use single-quoted messages), and `git push origin master` to publish the wiki.
+- Do not create a `wiki/` folder in this repo (removed to prevent drift). The main repo's `context7.json` indexes `docs/` only; the wiki has its own `context7.json`.
