@@ -21,7 +21,7 @@ export class FileJwksCache implements JwksCacheStore {
   private baseDir: string
 
   constructor(baseDir?: string) {
-    this.baseDir = baseDir || join(tmpdir(), 'rdcp-jwks-cache')
+    this.baseDir = baseDir ?? join(tmpdir(), 'rdcp-jwks-cache')
   }
 
   private keyToPath(url: string): string {
@@ -35,8 +35,18 @@ export class FileJwksCache implements JwksCacheStore {
       const data = await fs.readFile(p, 'utf8')
       const parsed = JSON.parse(data) as unknown
       // Minimal shape validation without any types
-      const obj = parsed as { jwks?: { keys?: unknown[] }; lastFetched?: number; etag?: string; ttlMs?: number }
-      if (!obj.jwks || !Array.isArray(obj.jwks.keys) || typeof obj.lastFetched !== 'number') return undefined
+      const obj = parsed as {
+        jwks?: { keys?: unknown[] }
+        lastFetched?: number
+        etag?: string
+        ttlMs?: number
+      }
+      if (
+        !obj.jwks ||
+        !Array.isArray(obj.jwks.keys) ||
+        typeof obj.lastFetched !== 'number'
+      )
+        return undefined
       const ret: JwksCacheEntry = {
         jwks: { keys: obj.jwks.keys as JWK[] },
         lastFetched: obj.lastFetched,
@@ -68,3 +78,4 @@ export class FileJwksCache implements JwksCacheStore {
     }
   }
 }
+//

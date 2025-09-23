@@ -93,6 +93,15 @@ describe('JWKS client cache (ttlMs + ETag/304)', () => {
     expect(h2).toBe(h1) // no new network call
   })
 
+  it('dedupes inflight requests (single network call on concurrent first fetch)', async () => {
+    const fetcher = new JwksFetcher()
+    const h0 = getHits()
+    const N = 10
+    await Promise.all(Array.from({ length: N }).map(() => fetcher.fetch(baseUrl)))
+    const h1 = getHits()
+    expect(h1).toBe(h0 + 1)
+  })
+
   it('uses If-None-Match and returns fromCache on 304; ETag changes after rotation', async () => {
     const fetcher = new JwksFetcher() // no ttlMs -> always revalidate via ETag
 
@@ -120,5 +129,28 @@ describe('JWKS client cache (ttlMs + ETag/304)', () => {
     // confirm RSA keys are present post-rotation
     const rsa = filterJwksKeys(r3.jwks, { kty: ['RSA'] })
     expect(rsa.length).toBeGreaterThan(0)
+  })
+
+  it('loads from persisted cache on new instance (no network when fresh)', async () => {
+    const fs = await import('node:fs/promises')
+    const path = await import('node:path')
+    const os = await import('node:os')
+
+    const cacheDir = await fs.mkdtemp(path.join(os.tmpdir(), 'rdcp-jwks-test-'))
+
+    // First instance with cachePath writes to cache
+    const f1 = new JwksFetcher({ ttlMs: 60_000, cachePath: cacheDir })
+    const h0 = getHits()
+    const r1 = await f1.fetch(baseUrl)
+    expect(r1.fromCache).toBe(false)
+    const h1 = getHits()
+    expect(h1).toBe(h0 + 1)
+
+    // New instance with same cachePath should serve from persisted cache without network
+    const f2 = new JwksFetcher({ ttlMs: 60_000, cachePath: cacheDir })
+    const r2 = await f2.fetch(baseUrl)
+    const h2 = getHits()
+    expect(r2.fromCache).toBe(true)
+    expect(h2).toBe(h1)
   })
 })
