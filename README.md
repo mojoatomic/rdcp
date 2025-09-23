@@ -179,6 +179,28 @@ const enterpriseAuth = async (req) => {
 
 ### JWKS Infrastructure
 
+RDCP ships a lightweight JWKS client with caching and ETag revalidation.
+
+- TTL cache: set `ttlMs` to serve from memory without network while fresh
+- ETag revalidation: when `ttlMs` is not set, client uses `If-None-Match` and returns cached body on `304`
+- Inflight dedupe: concurrent requests for the same `(url + etag)` share one network call
+- Persisted cache (optional): set `cachePath` to enable file-backed cache across process restarts
+- Background refresh: when nearing expiry, a non-blocking refresh is triggered (configurable via `refreshThresholdMs`)
+
+```javascript
+import { createJwksFetcher } from '@rdcp.dev/server'
+
+// In-memory TTL + persisted cache + background refresh
+const jwks = createJwksFetcher({
+  ttlMs: 60_000,             // serve from cache for up to 60s
+  cachePath: '.rdcp-cache',  // enable file-backed cache
+  refreshThresholdMs: 10_000 // preemptive refresh when <10s remain
+})
+
+const res = await jwks.fetch('https://issuer.example.com')
+// res: { jwks, etag?, fromCache }
+```
+
 ```javascript
 const { createJwksFetcher } = require('@rdcp.dev/server')
 

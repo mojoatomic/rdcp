@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+Features
+- JWKS client: inflight request deduplication per (url + etag)
+- JWKS client: optional persisted cache (file-backed via cachePath) and pluggable store
+- JWKS client: background refresh when nearing TTL expiry (refreshThresholdMs)
+
+Docs
+- README: document JWKS TTL/ETag behavior, persisted cache, and background refresh usage
+
+Tests
+- Add concurrency dedupe test and persisted cache-load test for JWKS client
+
 ## [1.2.0] - 2025-09-22
 
 Features
