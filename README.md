@@ -179,6 +179,8 @@ const enterpriseAuth = async (req) => {
 
 ### JWKS Infrastructure
 
+See also: [JWKS Cache Stores (Production Patterns)](docs/jwks-cache-stores.md)
+
 RDCP ships a lightweight JWKS client with caching and ETag revalidation.
 
 - TTL cache: set `ttlMs` to serve from memory without network while fresh
