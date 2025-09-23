@@ -1,33 +1,107 @@
-# RDCP SDK
+# RDCP SDK - Operational Infrastructure Control (OIC)
 
-**Complete JavaScript/TypeScript SDK for implementing Runtime Debug Control Protocol (RDCP) v1.0 compliant endpoints.**
+First-of-its-kind JavaScript/TypeScript SDK implementing the Runtime Debug Control Protocol (RDCP) for operational infrastructure control.
 
 [![npm version](https://badge.fury.io/js/@rdcp.dev%2Fserver.svg)](https://badge.fury.io/js/@rdcp.dev%2Fserver)
 [![CI](https://github.com/mojoatomic/rdcp/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/mojoatomic/rdcp/actions/workflows/ci.yml)
 [![Protocol Compliance](https://img.shields.io/badge/RDCP-v1.0%20Compliant-green)](https://github.com/mojoatomic/rdcp/blob/main/PROTOCOL-COMPLIANCE-REPORT.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-## Features
+---
 
-✅ **Complete RDCP v1.0 Protocol Compliance**  
-✅ **All 3 Security Levels** - Basic (API Key), Standard (JWT), Enterprise (mTLS)  
-✅ **Multi-Framework Support** - Express, Fastify, Koa, Next.js  
-✅ **Client & Server SDKs** - Full bidirectional RDCP implementation  
-✅ **Multi-Tenancy Support** - Organization, namespace, and process isolation  
-✅ **Zero Configuration** - Works out of the box with sensible defaults  
-✅ **TypeScript Support** - Full type definitions included  
+## The Infrastructure Gap
+
+Production incidents demand immediate operational changes—enabling debug logging, adjusting trace levels, or modifying runtime behavior. Traditional infrastructure forces a binary choice:
+
+- Deploy new code/configuration → risk introducing bugs during incidents
+- Use vendor-specific interfaces → limited to monitoring platform capabilities
+
+RDCP represents a third approach: standardized HTTP endpoints for runtime operational control.
+
+### The Technical Gap
+
+Existing infrastructure falls into categories that don't address immediate operational control:
+
+- Configuration management (Ansible, Chef) requires deployments
+- Observability platforms (DataDog, New Relic) provide monitoring but limited operational control
+- Service meshes manage traffic routing but not application behavior
+
+None provide standardized protocols for immediate runtime operational changes.
+
+### What Makes This Different
+
+RDCP operates at the application control plane level—between the application and its operational environment. It's not configuration (static) or monitoring (passive) but active operational control that happens immediately without deployment cycles.
+
+### The Protocol Approach
+
+Rather than requiring integration with specific platforms, RDCP defines standard HTTP endpoints that any system can implement. This creates interoperability where operational control tools can work across different applications without vendor lock-in.
 
 ---
 
-## Quick Start
+## Operational Infrastructure Control (OIC)
 
-### Installation
+RDCP is the first implementation of a new infrastructure category: Operational Infrastructure Control (OIC).
+
+- Not configuration management (requires deployments)
+- Not monitoring platforms (limited operational control)
+- Not service mesh (handles traffic, not application behavior)
+
+Instead: a distinct infrastructure layer providing immediate operational control over application behavior through standardized protocols.
+
+### Enterprise Requirements Drive Complexity
+
+Authentication tiers, tenant isolation, and audit features exist because operational control in production involves compliance requirements, multi-customer isolation, and security concerns that simple debugging tools don't address.
+
+### The Technical Innovation
 
 ```bash
-npm install @rdcp.dev/server
+# Instead of deploying code changes
+# (risky during incidents)
+
+# Send HTTP requests to running systems
+curl -X POST /rdcp/v1/control \
+  -H "Content-Type: application/json" \
+  -d '{"action":"enable","categories":["DATABASE"],"temporary":"5m"}'
 ```
 
-### Express.js Setup (30 seconds)
+Debug output activates immediately, provides operational visibility, then automatically disables after 5 minutes.
+
+---
+
+## Enterprise Infrastructure Features
+
+### Multi-Tier Authentication
+
+- Basic: API key authentication for internal systems
+- Standard: JWT with scope-based authorization for SaaS platforms
+- Enterprise: mTLS certificate validation with optional JWT context
+
+See Authentication Setup: https://github.com/mojoatomic/rdcp/wiki/Authentication-Setup
+
+### Multi-Tenant Operational Isolation
+
+Complete separation of operational state per customer. Customer A's changes cannot affect Customer B's behavior.
+
+```bash
+curl -X POST /rdcp/v1/control \
+  -H "X-RDCP-Tenant-ID: customer-123" \
+  -H "Authorization: Bearer $JWT_WITH_TENANT_SCOPE" \
+  -H "Content-Type: application/json" \
+  -d '{"action":"enable","categories":["API_ROUTES"],"temporary":"30m"}'
+```
+
+### Production-Grade Reliability
+
+- Token bucket rate limiting prevents operational abuse (standard RateLimit headers)
+- TTL automatic cleanup prevents debug categories staying enabled
+- Comprehensive audit trails meet regulatory compliance requirements
+- JWKS infrastructure with strong ETag and 304 revalidation
+
+---
+
+## Framework Integration
+
+### Express.js
 
 ```javascript
 const express = require('express')
@@ -36,542 +110,354 @@ const { adapters, auth } = require('@rdcp.dev/server')
 const app = express()
 app.use(express.json())
 
-// Add RDCP support with built-in authentication
+// Enterprise-grade operational control in 3 lines
 const rdcpMiddleware = adapters.express.createRDCPMiddleware({
-  authenticator: auth.validateRDCPAuth,  // Built-in API key auth
-  debugConfig: {
-    DATABASE: false,
-    API_ROUTES: true,
-    QUERIES: false
-  }
+  authenticator: auth.validateRDCPAuth
 })
-
 app.use(rdcpMiddleware)
+
 app.listen(3000)
-
-// ✅ Ready! RDCP endpoints are automatically available:
-// GET  /.well-known/rdcp
-// GET  /rdcp/v1/discovery 
-// POST /rdcp/v1/control
-// GET  /rdcp/v1/status
-// GET  /rdcp/v1/health
 ```
 
-**Set your API key:**
-```bash
-export RDCP_API_KEY="your-secure-32-plus-character-api-key-here"
-```
+Operational endpoints are immediately available:
+- GET `/.well-known/rdcp` — Protocol discovery
+- POST `/rdcp/v1/control` — Runtime operational control
+- GET `/rdcp/v1/status` — Current operational state
+- GET `/rdcp/v1/health` — Health checks
 
-### Test Your Setup
+### Multi-Framework Support
 
-```bash
-# Test protocol discovery (no auth required)
-curl http://localhost:3000/.well-known/rdcp
-
-# Test authenticated endpoint
-curl -H "X-API-Key: your-api-key" http://localhost:3000/rdcp/v1/status
-
-# Control debug categories
-curl -X POST -H "X-API-Key: your-api-key" \
-     -H "Content-Type: application/json" \
-     -d '{"action":"enable","categories":["DATABASE"]}' \
-     http://localhost:3000/rdcp/v1/control
-```
-
----
-
-## Framework Support
-
-### Express.js
+Consistent behavior across Express, Fastify, and Koa
 
 ```javascript
-const { adapters, auth } = require('@rdcp.dev/server')
-
-app.use(adapters.express.createRDCPMiddleware({
-  authenticator: auth.validateRDCPAuth
-}))
-```
-
-### Fastify
-
-```javascript
-const { adapters, auth } = require('@rdcp/server')
-
-// As middleware
-const rdcpMiddleware = adapters.fastify.createRDCPMiddleware({
-  authenticator: auth.validateRDCPAuth
-})
-fastify.addHook('preHandler', rdcpMiddleware)
-
-// Or as plugin
+// Fastify
 fastify.register(adapters.fastify.createRDCPPlugin({
   authenticator: auth.validateRDCPAuth
 }))
-```
 
-### Koa
-
-```javascript
-const { adapters, auth } = require('@rdcp/server')
-
-const rdcpMiddleware = adapters.koa.createRDCPMiddleware({
+// Koa
+app.use(adapters.koa.createRDCPMiddleware({
   authenticator: auth.validateRDCPAuth
-})
-
-app.use(rdcpMiddleware)
-```
-
-### Next.js API Routes
-
-```javascript
-// pages/api/rdcp/[...rdcp].js
-import { adapters, auth } from '@rdcp.dev/server'
-
-const rdcpHandler = adapters.express.createRDCPMiddleware({
-  authenticator: auth.validateRDCPAuth
-})
-
-export default function handler(req, res) {
-  return rdcpHandler(req, res, () => {})
-}
+}))
 ```
 
 ---
 
-## Authentication Levels
+## Enterprise Authentication
 
-### Basic Level (API Key)
-
-**Default and most common setup:**
-
-```javascript
-const { auth } = require('@rdcp/server')
-
-// Use built-in API key authentication
-const authenticator = auth.validateRDCPAuth
-
-// Or create custom API key auth
-const customAuth = async (req) => {
-  const apiKey = req.headers['x-api-key']
-  return apiKey === process.env.RDCP_API_KEY
-}
-```
-
-**Environment Setup:**
-```bash
-# Required: 32+ character API key for security
-export RDCP_API_KEY="your-production-ready-32-plus-character-api-key"
-```
-
-**Client Usage:**
-```bash
-curl -H "X-API-Key: your-api-key" /rdcp/v1/status
-# OR
-curl -H "Authorization: Bearer your-api-key" /rdcp/v1/status
-```
-
-### Standard Level (JWT Bearer Tokens)
+### JWT with Tenant-Scoped Authorization (example)
 
 ```javascript
 const jwt = require('jsonwebtoken')
 
 const jwtAuthenticator = async (req) => {
   const token = req.headers['authorization']?.replace('Bearer ', '')
-  
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
-    // Verify RDCP scopes
-    return decoded.scopes?.includes('rdcp:control')
+
+    // Global operational control
+    if (decoded.scopes?.includes('control')) return true
+
+    // Tenant-specific operational control
+    const tenantId = req.headers['x-rdcp-tenant-id']
+    return decoded.scopes?.includes(`control:${tenantId}`)
   } catch {
     return false
   }
 }
 ```
 
-**Environment Setup:**
-```bash
-export JWT_SECRET="your-jwt-signing-secret"
-export RDCP_AUTH_LEVEL="standard"
-```
-
-### Enterprise Level (mTLS + JWT Hybrid)
+### mTLS Certificate Validation (example)
 
 ```javascript
 const enterpriseAuth = async (req) => {
-  // Validate client certificate
   const cert = req.connection.getPeerCertificate()
-  if (!cert || !cert.subject?.CN?.includes('rdcp-client')) {
-    return false
-  }
-  
-  // Also validate JWT for additional context
-  const token = req.headers['authorization']?.replace('Bearer ', '')
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET)
-    return decoded.org_id === extractOrgFromCert(cert)
-  } catch {
-    return true // Certificate-only auth fallback
-  }
+  const allowed = process.env.RDCP_ALLOWED_CERT_SUBJECTS?.split(',') || []
+  return allowed.some(subject => cert.subject?.CN?.includes(subject))
 }
+```
+
+### JWKS Infrastructure
+
+```javascript
+const { createJwksFetcher } = require('@rdcp.dev/server')
+
+// Enterprise JWKS client with caching and rotation support
+const jwksFetcher = createJwksFetcher({ ttlMs: 30000 })
+const result = await jwksFetcher.fetch('https://idp.example.com/.well-known/jwks.json')
+
+// Automatic ETag-based revalidation and key rotation handling
+console.log(`Keys: ${result.jwks.keys.length}, From Cache: ${result.fromCache}`)
 ```
 
 ---
 
-## Complete Configuration
+## Operational Control Examples
 
-### All Middleware Options
+### Incident Response Workflow
+
+```bash
+# 1. Incident detected - need database query visibility
+curl -X POST /rdcp/v1/control \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"action":"enable","categories":["DATABASE","QUERIES"],"temporary":"15m"}'
+
+# 2. Debug output immediately available in logs
+# Application now logs all database queries for 15 minutes
+
+# 3. Root cause identified - disable to prevent log noise
+curl -X POST /rdcp/v1/control \
+  -H "Authorization: Bearer $JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"action":"disable","categories":["DATABASE","QUERIES"]}'
+```
+
+### Customer-Specific Debugging
+
+```bash
+curl -X POST /rdcp/v1/tenants/customer-123/control \
+  -H "Authorization: Bearer $TENANT_SCOPED_JWT" \
+  -H "Content-Type: application/json" \
+  -d '{"action":"enable","categories":["API_ROUTES"],"temporary":"30m"}'
+```
+
+### Audit Trail Verification
+
+```bash
+# All operational changes automatically logged for compliance
+curl -H "Authorization: Bearer $JWT_TOKEN" /rdcp/v1/audit
+```
+
+---
+
+## Installation and Setup
+
+### Install
+
+```bash
+npm install @rdcp.dev/server
+```
+
+### Environment Configuration
+
+```bash
+# Required: 32+ character API key for production security
+export RDCP_API_KEY="your-production-ready-32-plus-character-api-key"
+
+# Optional: JWT configuration for Standard/Enterprise levels
+export JWT_SECRET="your-jwt-signing-secret"
+export JWT_ISSUER="your-organization"
+export JWT_AUDIENCE="rdcp-services"
+
+# Optional: mTLS configuration for Enterprise level
+export RDCP_TRUSTED_CA_FINGERPRINTS="sha256:abcd1234..."
+export RDCP_ALLOWED_CERT_SUBJECTS="rdcp-client,ops-team"
+```
+
+### Complete Configuration
 
 ```javascript
 const rdcpMiddleware = adapters.express.createRDCPMiddleware({
-  // ✅ REQUIRED: Authentication function
+  // Authentication (required)
   authenticator: auth.validateRDCPAuth,
-  
-  // ✅ OPTIONAL: Debug categories (default: all false)
+
+  // Debug categories (optional)
   debugConfig: {
-    DATABASE: false,      // Database operations
-    API_ROUTES: true,     // HTTP request/response  
-    QUERIES: false,       // SQL and data queries
-    REPORTS: true,        // Report generation
-    CACHE: false,         // Cache operations
-    AUTH: false,          // Authentication flows
-    INTEGRATIONS: true    // Third-party services
+    DATABASE: false,
+    API_ROUTES: true,
+    QUERIES: false,
+    REPORTS: false,
+    CACHE: false
   },
-  
-  // ✅ OPTIONAL: Custom base path (default: '/rdcp/v1')
-  basePath: '/api/debug/v1',
-  
-  // ✅ OPTIONAL: Performance monitoring
-  performance: {
-    enableMetrics: true,
-    sampleRate: 0.1,
-    trackMemory: true
-  },
-  
-  // ✅ OPTIONAL: Multi-tenancy configuration
-  tenant: {
-    multiTenancy: true,
-    isolationLevel: 'organization'  // 'global' | 'process' | 'namespace' | 'organization'
-  }
-})
-```
 
-### Multi-Tenancy Headers
+  // Enterprise capabilities (optional)
+  capabilities: {
+    // Multi-tenant isolation
+    multiTenant: {
+      enabled: true,
+      isolation: 'organization'
+    },
 
-```bash
-# Tenant-isolated requests
-curl -H "X-API-Key: key" \
-     -H "X-RDCP-Tenant-ID: customer-123" \
-     -H "X-RDCP-Isolation-Level: organization" \
-     /rdcp/v1/control
-```
+    // Rate limiting
+    rateLimit: {
+      enabled: true,
+      maxRequests: 100,
+      windowMs: 60000,
+      headers: true
+    },
 
----
+    // Audit logging
+    audit: {
+      enabled: true,
+      sink: 'file',
+      sampling: 1.0,
+      redaction: ['password', 'token']
+    },
 
-## Client SDK
-
-**Use the client SDK to consume RDCP endpoints from other services:**
-
-### Installation & Setup
-
-```javascript
-const { RDCPClient } = require('@rdcp/server/client')
-
-const client = new RDCPClient({
-  baseUrl: 'https://your-rdcp-server.com',
-  auth: {
-    level: 'basic',
-    apiKey: 'your-32-plus-character-api-key'
-  },
-  timeout: 5000,
-  retries: 3
-})
-```
-
-### Client Methods
-
-```javascript
-// Protocol discovery
-const discovery = await client.discover()
-console.log('RDCP Capabilities:', discovery.capabilities)
-
-// Get debug system info  
-const debugInfo = await client.getDebugInfo()
-console.log('Available Categories:', debugInfo.categories)
-
-// Control debug categories
-const result = await client.enable(['DATABASE', 'API_ROUTES'])
-console.log('Changes Applied:', result.changes)
-
-// Convenience methods
-await client.disable(['QUERIES'])
-await client.toggle(['CACHE'])
-await client.reset()  // Disable all
-
-// Status monitoring
-const status = await client.getStatus()
-console.log('Active Categories:', status.categories)
-
-// Health check
-const health = await client.getHealth()
-console.log('System Health:', health.status)
-```
-
----
-
-## Utilities
-
-### JWKS helper with ETag caching and backoff
-```ts path=null start=null
-import { createJwksFetcher } from '@rdcp/server'
-
-const jwksFetcher = createJwksFetcher()
-
-async function fetchWithBackoff(baseUrl: string, attempts = 3): Promise<void> {
-  let lastErr: unknown
-  for (let i = 0; i < attempts; i++) {
-    try {
-      const res = await jwksFetcher.fetch(baseUrl)
-      console.log('jwks keys', res.jwks.keys.length, 'fromCache', res.fromCache)
-      return
-    } catch (e) {
-      lastErr = e
-      await new Promise(r => setTimeout(r, Math.min(2000, 250 * (1 << i))))
+    // TTL automatic cleanup
+    ttl: {
+      enabled: true,
+      maxDuration: '1h',
+      defaultDuration: '15m'
     }
   }
-  throw lastErr
-}
+})
 ```
-
-#### TTL and revalidation
-- ttlMs allows returning a cached JWKS immediately without a network call while the cache is fresh.
-- 304 responses do not extend the TTL window — only a fresh 200 response updates lastUpdatedAt.
-- Use a modest ttlMs relative to the server's Cache-Control max-age.
-
-```ts path=null start=null
-import { createJwksFetcher } from '@rdcp/server'
-
-// Skip network when cache younger than 30s
-const fetcher = createJwksFetcher({ ttlMs: 30_000 })
-const res1 = await fetcher.fetch('http://localhost:3000') // 200, caches body + ETag
-const res2 = await fetcher.fetch('http://localhost:3000') // served from cache, no network
-
-// For strict revalidation each call, construct without ttlMs
-const reval = createJwksFetcher()
-const r1 = await reval.fetch('http://localhost:3000') // 200
-const r2 = await reval.fetch('http://localhost:3000') // 304 -> fromCache: true
-```
-
-#### Validation utilities: filter keys and select by kid
-```ts path=null start=null
-import { filterJwksKeys, findJwkByKid } from '@rdcp/server'
-
-const rsaSigOnly = filterJwksKeys(res1.jwks, { kty: ['RSA'], use: ['sig'] })
-const maybeByKid = findJwkByKid(res1.jwks, 'my-kid', { kty: ['RSA'] })
-```
-
-- Full JOSE verification example and FAQ: see wiki/JWKS.md
-- Deno/Bun examples: see wiki/Examples-Deno-Bun.md
-
-#### How to try the example (ts-node)
-
-- If you have ts-node available:
-  - npx ts-node examples/jwks-client-cache-demo.ts
-- Env:
-  - BASE_URL=http://localhost:3000 (or your server)
-  - JWKS_TTL_MS=30000 to demo cache hits
-  - ROTATE_URL=http://localhost:3000/rotate (optional demo endpoint if you have one)
-- Behavior:
-  - First fetch returns 200, caches the body and ETag
-  - Second fetch within ttlMs returns from cache without network
-  - A no-ttlMs fetcher revalidates with If-None-Match, returns fromCache=true on 304
-  - After rotation, next fetch returns 200 with a new ETag
 
 ---
 
-## Documentation
+## Protocol Endpoints
 
-- Error responses and codes: wiki/Error-Responses.md
-- Testing helpers and patterns: wiki/Testing-Helpers.md
-- Logging configuration (hybrid fallback): wiki/Logging.md
+### Discovery and Status
 
-## API Reference
+```bash
+# Protocol discovery (no authentication required)
+GET /.well-known/rdcp
 
-### RDCP Endpoints (Auto-Generated)
+# System status and active debug categories
+GET /rdcp/v1/status
 
-| Endpoint | Method | Auth | Description |
-|----------|--------|------|-------------|
-| `/.well-known/rdcp` | GET | No | Protocol discovery |
-| `/rdcp/v1/discovery` | GET | Yes | Debug system discovery |
-| `/rdcp/v1/control` | POST | Yes | Runtime debug control |
-| `/rdcp/v1/status` | GET | Yes | Current debug status |
-| `/rdcp/v1/health` | GET | Yes | System health check |
+# Health check for load balancers
+GET /rdcp/v1/health
+```
 
-### Control Request Format
+### Operational Control
 
-```javascript
-// Enable specific categories
+```bash
+# Enable debug categories
 POST /rdcp/v1/control
 {
   "action": "enable",
   "categories": ["DATABASE", "API_ROUTES"],
   "options": {
-    "temporary": false,
-    "duration": "1h"
+    "temporary": true,
+    "duration": "30m"
   }
 }
 
-// Disable categories
+# Disable debug categories
 POST /rdcp/v1/control
 {
   "action": "disable",
   "categories": ["QUERIES"]
 }
 
-// Toggle categories
+# Reset all categories to disabled
 POST /rdcp/v1/control
 {
-  "action": "toggle", 
-  "categories": ["CACHE"]
-}
-
-// Reset all to disabled
-POST /rdcp/v1/control
-{
-  "action": "reset",
-  "categories": "*"
+  "action": "reset"
 }
 ```
 
-### Standard Response Format
+### Multi-Tenant Operations
 
-**All RDCP responses include:**
-
-```javascript
-// Success Response
-{
-  "protocol": "rdcp/1.0",           // Always present
-  "timestamp": "2024-01-15T10:30:00.000Z",
-  "requestId": "req_1705234200000",
-  // ... endpoint-specific data
-}
-
-// Error Response  
-{
-  "error": {
-    "code": "RDCP_AUTH_REQUIRED",
-    "message": "Authentication required", 
-    "protocol": "rdcp/1.0"
-  }
-}
-```
-
-### Error Codes
-
-| Code | HTTP Status | Description |
-|------|-------------|-------------|
-| `RDCP_AUTH_REQUIRED` | 401 | Authentication required |
-| `RDCP_AUTH_ERROR` | 401 | Authentication failed |
-| `RDCP_FORBIDDEN` | 403 | Insufficient permissions |
-| `RDCP_VALIDATION_ERROR` | 400 | Request validation failed |
-| `RDCP_METHOD_NOT_ALLOWED` | 405 | Wrong HTTP method |
-| `RDCP_NOT_FOUND` | 404 | RDCP endpoint not found |
-| `RDCP_INTERNAL_ERROR` | 500 | Internal server error |
-
----
-
-## Migration Guide
-
-### From Manual RDCP Implementation
-
-**Before (Manual - 50+ lines):**
-```javascript
-// Manual endpoint implementations
-app.get('/.well-known/rdcp', (req, res) => {
-  res.json({ protocol: 'rdcp/1.0', endpoints: { /* ... */ } })
-})
-
-app.get('/rdcp/v1/discovery', authenticateRDCP, (req, res) => {
-  // Manual discovery logic...
-})
-
-app.post('/rdcp/v1/control', authenticateRDCP, validateRequest, (req, res) => {
-  // Manual control logic...
-})
-
-// ... 40+ more lines of boilerplate
-```
-
-**After (SDK - 5 lines):**
-```javascript
-const rdcpMiddleware = adapters.express.createRDCPMiddleware({
-  authenticator: auth.validateRDCPAuth
-})
-app.use(rdcpMiddleware)
-// ✅ Done! All endpoints work automatically
+```bash
+# Tenant-specific operational control
+GET /rdcp/v1/tenants/{tenantId}/status
+POST /rdcp/v1/tenants/{tenantId}/control
 ```
 
 ---
 
-## Testing
+## Client SDK
 
-### Run Tests
+Consume RDCP endpoints from other services:
 
-```bash
-# All tests (45+ tests across 5 test suites)
-npm test
+```javascript
+const { RDCPClient } = require('@rdcp.dev/server/client')
 
-# With coverage report
-npm test -- --coverage
+const client = new RDCPClient({
+  baseUrl: 'https://your-service.com',
+  auth: { type: 'jwt', token: 'your-jwt-token' }
+})
 
-# Specific adapter tests
-npm test -- --testNamePattern="express"
-npm test -- --testNamePattern="fastify"
-npm test -- --testNamePattern="koa"
-
-# Authentication tests
-npm test -- --testNamePattern="auth"
+await client.enable(['DATABASE', 'API_ROUTES'])
+await client.disable(['QUERIES'])
+await client.status()
 ```
 
 ---
 
-## Environment Variables
+## Enterprise Deployment
 
-### Required
+### Kubernetes Integration (example)
 
-```bash
-# API key for Basic authentication (32+ characters required)
-RDCP_API_KEY="your-production-ready-32-plus-character-api-key-here"
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rdcp-enabled-service
+spec:
+  template:
+    spec:
+      containers:
+      - name: app
+        env:
+        - name: RDCP_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: rdcp-secrets
+              key: api-key
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: rdcp-secrets
+              key: jwt-secret
 ```
 
-### Optional
+### Load Balancer Health Checks
 
 ```bash
-# Authentication level (default: basic)
-RDCP_AUTH_LEVEL="basic|standard|enterprise"
-
-# JWT secret for Standard/Enterprise auth
-JWT_SECRET="your-jwt-signing-secret"
-
-# Server configuration
-PORT=3000
-NODE_ENV="development|production"
+GET /rdcp/v1/health
 ```
+
+---
+
+## Protocol Compliance
+
+RDCP v1.0 specification compliance validated through 220+ automated tests:
+
+- Authentication across all security levels
+- Multi-tenant isolation validation
+- Rate limiting and audit trail testing
+- Error handling and protocol response formats
+- Cross-framework compatibility
+
+See Protocol Compliance Report: https://github.com/mojoatomic/rdcp/blob/main/PROTOCOL-COMPLIANCE-REPORT.md
+
+---
+
+## Why Operational Control Infrastructure Matters
+
+- For Infrastructure Teams: Immediate operational changes without deployment risk
+- For SaaS Platforms: Customer-specific debugging without affecting other tenants
+- For Compliance: Complete audit trails of operational changes
+- For Incidents: Debug visibility in seconds, not deployment cycles
+
+This represents new infrastructure capability—not an incremental improvement to existing tools.
 
 ---
 
 ## Requirements
 
-### Runtime
-- **Node.js**: 16.0.0 or higher
-- **Frameworks**: Express 4.18+, Fastify 4.0+, or Koa 2.0+
-
-### Dependencies
-- `jsonwebtoken`: JWT authentication support
-- `node-fetch`: HTTP client functionality
-- `zod`: Request/response validation
+- Node.js >= 18
+- Express 4.18+, Fastify 4.x+, Koa 2.x
 
 ---
 
 ## License
 
-**MIT License** - see [LICENSE](LICENSE) file for details.
+MIT License — see [LICENSE](LICENSE) for details.
+
+---
+
+## Documentation
+
+- Installation: https://github.com/mojoatomic/rdcp/wiki/Installation
+- Basic Usage: https://github.com/mojoatomic/rdcp/wiki/Basic-Usage
+- Authentication Setup: https://github.com/mojoatomic/rdcp/wiki/Authentication-Setup
+- JWKS Integration: https://github.com/mojoatomic/rdcp/wiki/JWKS
+- Rate Limiting: https://github.com/mojoatomic/rdcp/wiki/Rate-Limiting
+- API Reference: https://github.com/mojoatomic/rdcp/wiki/API-Reference
+- OpenTelemetry Plugin: https://github.com/mojoatomic/rdcp/wiki/OpenTelemetry-Integration-Roadmap
