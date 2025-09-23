@@ -214,6 +214,37 @@ const result = await jwksFetcher.fetch('https://idp.example.com/.well-known/jwks
 console.log(`Keys: ${result.jwks.keys.length}, From Cache: ${result.fromCache}`)
 ```
 
+#### Platform snippets
+
+- File cache (persisted across restarts)
+
+```javascript
+import { createJwksFetcher } from '@rdcp.dev/server'
+const jwks = createJwksFetcher({ cachePath: '.rdcp-cache', ttlMs: 60000 })
+```
+
+- Custom Redis store (see docs/jwks-cache-stores.md for implementation)
+
+```javascript
+import { createJwksFetcher } from '@rdcp.dev/server'
+// Pass your Redis-backed store instance
+const jwks = createJwksFetcher({ cache: new RedisJwksCache(redis), ttlMs: 60000 })
+```
+
+- DynamoDB store (see docs/jwks-cache-stores.md)
+
+```javascript
+import { createJwksFetcher } from '@rdcp.dev/server'
+const jwks = createJwksFetcher({ cache: new DynamoJwksCache(dynamoClient, 'rdcp-jwks-cache') })
+```
+
+- Vercel KV (edge/runtime) (see docs/jwks-cache-stores.md)
+
+```javascript
+import { createJwksFetcher } from '@rdcp.dev/server'
+const jwks = createJwksFetcher({ cache: new VercelKVCache() })
+```
+
 > OpenTelemetry plugin (optional)
 >
 > - npm: [@rdcp.dev/otel-plugin](https://www.npmjs.com/package/@rdcp.dev/otel-plugin)
