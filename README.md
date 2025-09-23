@@ -190,6 +190,11 @@ const result = await jwksFetcher.fetch('https://idp.example.com/.well-known/jwks
 console.log(`Keys: ${result.jwks.keys.length}, From Cache: ${result.fromCache}`)
 ```
 
+> OpenTelemetry plugin (optional)
+>
+> - npm: [@rdcp.dev/otel-plugin](https://www.npmjs.com/package/@rdcp.dev/otel-plugin)
+> - Docs: [OpenTelemetry Integration](https://github.com/mojoatomic/rdcp/wiki/OpenTelemetry-Integration-Roadmap)
+
 ---
 
 ## Operational Control Examples
