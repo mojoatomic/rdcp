@@ -195,6 +195,33 @@ console.log(`Keys: ${result.jwks.keys.length}, From Cache: ${result.fromCache}`)
 > - npm: [@rdcp.dev/otel-plugin](https://www.npmjs.com/package/@rdcp.dev/otel-plugin)
 > - Docs: [OpenTelemetry Integration](https://github.com/mojoatomic/rdcp/wiki/OpenTelemetry-Integration-Roadmap)
 
+### Getting started with the plugin
+
+- Install (peer dep required):
+
+```bash
+npm install @rdcp.dev/otel-plugin @opentelemetry/api
+```
+
+- Enable correlation in your app:
+
+```javascript
+import { setupRDCPWithOpenTelemetry } from '@rdcp.dev/otel-plugin'
+
+// One line to enable RDCP trace correlation using active OpenTelemetry spans
+setupRDCPWithOpenTelemetry()
+```
+
+- Optional configuration:
+
+```javascript
+import { setupRDCPWithOpenTelemetry } from '@rdcp.dev/otel-plugin'
+
+setupRDCPWithOpenTelemetry({
+  enableBaggage: true // include OpenTelemetry baggage in RDCP logs
+})
+```
+
 ---
 
 ## Operational Control Examples
