@@ -52,7 +52,9 @@
     "license.md",
     "CODE_OF_CONDUCT.md",
     "code_of_conduct.md",
-    "README-Wiki-Setup.md"
+    "README-Wiki-Setup.md",
+    "WARP.md",
+    "warp-generic.md"
   ],
   "rules": [
     "Use the '@rdcp.dev/server' package (not '@rdcp/server')",
