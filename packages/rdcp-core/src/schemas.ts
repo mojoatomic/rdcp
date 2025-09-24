@@ -6,7 +6,7 @@ export const protocolVersionSchema = z.literal(PROTOCOL_VERSION)
 
 // Control endpoint schemas (protocol-surface only)
 export const controlRequestSchema = z.object({
-  action: z.enum(['enable', 'disable', 'toggle', 'reset']),
+action: z.enum(['enable', 'disable', 'toggle', 'reset', 'status']),
   categories: z.union([z.string(), z.array(z.string())]),
   options: z
     .object({
