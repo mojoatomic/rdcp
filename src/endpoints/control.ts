@@ -92,7 +92,9 @@ export function runtimeControl(req: Request, res: Response): void {
         changes.push(
           ...keys.map(cat => ({
             category: cat,
-            previousState: Boolean(debugConfig[cat as keyof typeof debugConfig]),
+            previousState: Boolean(
+              debugConfig[cat as keyof typeof debugConfig]
+            ),
             newState: false,
             effectiveAt: timestamp,
           }))
