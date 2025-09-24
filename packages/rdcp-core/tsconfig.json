@@ -4,7 +4,6 @@
     "rootDir": "./src",
     "composite": false,
     "declaration": true,
-    "emitDeclarationOnly": true,
     "outDir": "./dist",
     "module": "es2022",
     "target": "es2022",
