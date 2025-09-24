@@ -6,9 +6,9 @@
   "type": "module",
   "exports": {
     ".": {
-      "import": "./src/index.ts",
+      "import": "./dist/index.esm.js",
       "require": "./dist-cjs/index.js",
-      "types": "./src/index.ts",
+      "types": "./dist/index.d.ts",
       "default": "./dist-cjs/index.js"
     }
   },
