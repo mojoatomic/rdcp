@@ -127,11 +127,3 @@ export const errorResponseSchema = z.object({
   }),
 })
 
-// Inferred types
-export type ControlRequest = z.infer<typeof controlRequestSchema>
-export type ControlResponse = z.infer<typeof controlResponseSchema>
-export type DiscoveryResponse = z.infer<typeof discoveryResponseSchema>
-export type StatusResponse = z.infer<typeof statusResponseSchema>
-export type HealthResponse = z.infer<typeof healthResponseSchema>
-export type ProtocolDiscoveryResponse = z.infer<typeof protocolDiscoverySchema>
-export type ErrorResponse = z.infer<typeof errorResponseSchema>
