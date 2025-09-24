@@ -10,18 +10,15 @@ import {
   createTenantResponse,
   getTenantDebugConfig,
 } from '../utils/tenant.js'
-
-type RequestWithRDCPAuth = Request & {
-  rdcpAuth?: { user?: string; method?: string }
-}
+import { createControlResponse } from '../validation/response.js'
+import { ControlChange } from '../utils/types.js'
 
 export function runtimeControl(req: Request, res: Response): void {
   try {
     const tenantContext = extractTenantContext(req)
     const request = controlRequestSchema.parse(req.body)
-    const requestId = `req_${Date.now()}`
     const timestamp = new Date().toISOString()
-    const changes = []
+    const changes: ControlChange[] = []
 
     const categories = Array.isArray(request.categories)
       ? request.categories
@@ -68,20 +65,23 @@ export function runtimeControl(req: Request, res: Response): void {
         })
         break
       }
+
+      case 'status': {
+        // No state change; respond with success and no changes
+        break
+      }
+
+      // Optional: unsupported actions fall through
+      default:
+        break
     }
 
-    const response = {
-      protocol: 'rdcp/1.0' as const,
-      requestId,
-      success: true,
-      changes,
-      audit: {
-        timestamp,
-        action: request.action,
-        operator: (req as RequestWithRDCPAuth).rdcpAuth?.user ?? 'system',
-        method: (req as RequestWithRDCPAuth).rdcpAuth?.method ?? 'unknown',
-      },
-    }
+    const response = createControlResponse(
+      request.action,
+      categories,
+      'success',
+      changes
+    )
 
     res.json(
       tenantContext ? createTenantResponse(response, tenantContext) : response
