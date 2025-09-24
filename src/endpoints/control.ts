@@ -13,7 +13,6 @@ import {
 import { createControlResponse } from '../validation/response.js'
 import { ControlChange } from '../utils/types.js'
 
-
 export function runtimeControl(req: Request, res: Response): void {
   try {
     const tenantContext = extractTenantContext(req)
