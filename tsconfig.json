@@ -15,6 +15,10 @@
     "rootDir": ".",
     "resolveJsonModule": true,
     "allowJs": true,
+    "baseUrl": ".",
+    "paths": {
+      "@rdcp.dev/core": ["packages/rdcp-core/src/index.ts"]
+    },
     "noImplicitAny": true,
     "noImplicitReturns": true,
     "noUnusedLocals": false,
