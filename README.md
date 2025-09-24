@@ -586,6 +586,7 @@ MIT License — see [LICENSE](LICENSE) for details.
 - JWKS Integration (wiki): https://github.com/mojoatomic/rdcp/wiki/JWKS
 - JWKS Client Quickstart (repo): docs/jwks-client.md
 - JWKS Cache Stores (repo): docs/jwks-cache-stores.md
+- Core package boundaries (repo): docs/core-package-boundaries.md
 - Rate Limiting: https://github.com/mojoatomic/rdcp/wiki/Rate-Limiting
 - API Reference: https://github.com/mojoatomic/rdcp/wiki/API-Reference
 - OpenTelemetry Plugin: https://github.com/mojoatomic/rdcp/wiki/OpenTelemetry-Integration-Roadmap
