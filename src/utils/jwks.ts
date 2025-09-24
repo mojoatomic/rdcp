@@ -1,5 +1,9 @@
 import type { JWK } from 'jose'
-import { FileJwksCache, type JwksCacheEntry, type JwksCacheStore } from './jwks-cache.js'
+import {
+  FileJwksCache,
+  type JwksCacheEntry,
+  type JwksCacheStore,
+} from './jwks-cache.js'
 
 export interface JwksBody {
   keys: JWK[]
@@ -32,8 +36,14 @@ export class JwksFetcher {
   }) {
     this.doFetch = opts?.fetchImpl ?? fetch
     this.ttlMs = opts?.ttlMs
-    this.cache = opts?.cache ?? (opts?.cachePath ? new FileJwksCache(opts.cachePath) : undefined)
-    this.refreshThresholdMs = Math.max(0, opts?.refreshThresholdMs ?? (this.ttlMs ? Math.min(Math.floor(this.ttlMs * 0.2), 30_000) : 0))
+    this.cache =
+      opts?.cache ??
+      (opts?.cachePath ? new FileJwksCache(opts.cachePath) : undefined)
+    this.refreshThresholdMs = Math.max(
+      0,
+      opts?.refreshThresholdMs ??
+        (this.ttlMs ? Math.min(Math.floor(this.ttlMs * 0.2), 30_000) : 0)
+    )
   }
 
   /**
@@ -56,7 +66,9 @@ export class JwksFetcher {
         // If within TTL, serve immediately
         if (this.ttlMs && entry.lastFetched + this.ttlMs > Date.now()) {
           this.maybeStartBackgroundRefresh(url) // preemptive update if near expiry
-          return this.etag ? { jwks: this.body, etag: this.etag, fromCache: true } : { jwks: this.body, fromCache: true }
+          return this.etag
+            ? { jwks: this.body, etag: this.etag, fromCache: true }
+            : { jwks: this.body, fromCache: true }
         }
       }
     }
@@ -70,7 +82,9 @@ export class JwksFetcher {
       Date.now() - this.lastUpdatedAt < this.ttlMs
     ) {
       this.maybeStartBackgroundRefresh(url)
-      return this.etag ? { jwks: this.body, etag: this.etag, fromCache: true } : { jwks: this.body, fromCache: true }
+      return this.etag
+        ? { jwks: this.body, etag: this.etag, fromCache: true }
+        : { jwks: this.body, fromCache: true }
     }
 
     // Inflight dedupe per (url + etag)
@@ -96,7 +110,9 @@ export class JwksFetcher {
 
     if (res.status === 304 && this.body) {
       // Do not update lastUpdatedAt on 304; TTL remains based on last 200 update
-      return this.etag ? { jwks: this.body, etag: this.etag, fromCache: true } : { jwks: this.body, fromCache: true }
+      return this.etag
+        ? { jwks: this.body, etag: this.etag, fromCache: true }
+        : { jwks: this.body, fromCache: true }
     }
 
     if (!res.ok) {
@@ -127,7 +143,9 @@ export class JwksFetcher {
       await this.cache.set(url, entry)
     }
 
-    return this.etag ? { jwks: body, etag: this.etag, fromCache: false } : { jwks: body, fromCache: false }
+    return this.etag
+      ? { jwks: body, etag: this.etag, fromCache: false }
+      : { jwks: body, fromCache: false }
   }
 
   private maybeStartBackgroundRefresh(url: string): void {
@@ -139,12 +157,15 @@ export class JwksFetcher {
       // Trigger non-blocking refresh with current etag
       const inflightKey = `${url}|${this.etag ?? ''}`
       if (!inflight.get(inflightKey)) {
-        const p: Promise<JwksFetchResult> = this.doNetworkFetch(url).catch(() => {
-          const fallback: JwksFetchResult = this.etag
-            ? { jwks: this.body as JwksBody, etag: this.etag, fromCache: true }
-            : { jwks: this.body as JwksBody, fromCache: true }
-          return fallback
-        })
+        const p: Promise<JwksFetchResult> = this.doNetworkFetch(url).catch(
+          () => {
+            const b = this.body as JwksBody
+            if (this.etag) {
+              return { jwks: b, etag: this.etag, fromCache: true }
+            }
+            return { jwks: b, fromCache: true }
+          }
+        )
         inflight.set(inflightKey, p)
         // Clean up when finished
         p.finally(() => inflight.delete(inflightKey))
