@@ -4,6 +4,7 @@ As of PR #42, protocol-level Zod schemas are centralized in `@rdcp.dev/core`. Th
 
 Exports
 
+Schemas:
 - protocolVersionSchema
 - controlRequestSchema
 - controlResponseSchema
@@ -12,6 +13,16 @@ Exports
 - healthResponseSchema
 - protocolDiscoverySchema
 - errorResponseSchema
+
+Fixtures (sample typed payloads):
+- protocolVersionFixture
+- controlRequestEnableFixture | controlRequestDisableFixture | controlRequestResetFixture | controlRequestStatusFixture
+- controlResponseFixture
+- discoveryResponseFixture
+- statusResponseFixture
+- healthResponseFixture
+- protocolDiscoveryFixture
+- errorResponseFixture
 
 Usage
 
@@ -39,16 +50,30 @@ function validate(body: unknown): ControlRequest {
 }
 ```
 
-Constants and schemas together:
+Constants, schemas, and fixtures together:
 
 ```ts
-import { PROTOCOL_VERSION, RDCP_HEADERS, RDCP_PATHS, controlRequestSchema } from '@rdcp.dev/core'
+import {
+  PROTOCOL_VERSION,
+  RDCP_HEADERS,
+  RDCP_PATHS,
+  controlRequestSchema,
+  controlRequestEnableFixture,
+  discoveryResponseFixture,
+} from '@rdcp.dev/core'
+
+// Use fixtures in tests or examples
+const req = controlRequestEnableFixture
+const discovery = discoveryResponseFixture
 ```
 
 Back-compat import (still supported):
 
 ```ts
-import { controlRequestSchema } from '@rdcp.dev/server'
+import {
+  controlRequestSchema,
+  controlRequestEnableFixture,
+} from '@rdcp.dev/server'
 ```
 
 Notes
