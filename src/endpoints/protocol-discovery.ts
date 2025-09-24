@@ -1,5 +1,6 @@
 import { Request, Response } from 'express'
 import { getTraceProviderStatus } from '../debug.js'
+import { PROTOCOL_VERSION, RDCP_PATHS } from '@rdcp.dev/core'
 
 /**
  * Protocol Discovery Endpoint - /.well-known/rdcp
@@ -10,12 +11,12 @@ export function protocolDiscovery(req: Request, res: Response): void {
   const traceStatus = getTraceProviderStatus()
 
   const response = {
-    protocol: 'rdcp/1.0',
+    protocol: PROTOCOL_VERSION,
     endpoints: {
-      discovery: '/rdcp/v1/discovery',
-      control: '/rdcp/v1/control',
-      status: '/rdcp/v1/status',
-      health: '/rdcp/v1/health',
+      discovery: RDCP_PATHS.DISCOVERY,
+      control: RDCP_PATHS.CONTROL,
+      status: RDCP_PATHS.STATUS,
+      health: RDCP_PATHS.HEALTH,
     },
     capabilities: {
       multiTenancy: false, // Start with basic implementation

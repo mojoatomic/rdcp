@@ -6,6 +6,7 @@ import {
   RDCPError,
   RDCP_ERROR_CODES,
 } from './types.js'
+import { RDCP_HEADERS, PROTOCOL_VERSION } from '@rdcp.dev/core'
 
 // RDCP HTTP Client - Protocol compliant request handling
 export class RDCPHttpClient {
@@ -29,8 +30,8 @@ export class RDCPHttpClient {
   private generateAuthHeaders(): AuthHeaders {
     const headers: AuthHeaders = {
       'Content-Type': 'application/json',
-      'X-RDCP-Client-ID': 'rdcp-sdk-js',
-      'X-RDCP-Request-ID': this.generateRequestId(),
+      [RDCP_HEADERS.CLIENT_ID]: 'rdcp-sdk-js',
+      [RDCP_HEADERS.REQUEST_ID]: this.generateRequestId(),
     }
 
     // Add method-specific headers based on auth level
@@ -38,23 +39,23 @@ export class RDCPHttpClient {
       case 'basic':
         if (this.auth.apiKey) {
           headers['X-API-Key'] = this.auth.apiKey
-          headers['X-RDCP-Auth-Method'] = 'api-key'
-          headers['X-RDCP-Key-Version'] = 'v1'
+          headers[RDCP_HEADERS.AUTH_METHOD] = 'api-key'
+          headers[RDCP_HEADERS.KEY_VERSION] = 'v1'
         }
         break
 
       case 'standard':
         if (this.auth.bearerToken) {
           headers['Authorization'] = `Bearer ${this.auth.bearerToken}`
-          headers['X-RDCP-Auth-Method'] = 'bearer'
-          headers['X-RDCP-Token-Type'] = 'jwt'
+          headers[RDCP_HEADERS.AUTH_METHOD] = 'bearer'
+          headers[RDCP_HEADERS.TOKEN_TYPE] = 'jwt'
         }
         break
 
       case 'enterprise':
         if (this.auth.clientCert) {
           // mTLS headers (implementation depends on certificate handling)
-          headers['X-RDCP-Auth-Method'] = 'mtls'
+          headers[RDCP_HEADERS.AUTH_METHOD] = 'mtls'
           headers['X-Client-Cert'] = Buffer.from(
             this.auth.clientCert.cert
           ).toString('base64')
@@ -62,7 +63,7 @@ export class RDCPHttpClient {
         if (this.auth.bearerToken) {
           // Hybrid mode: mTLS + JWT
           headers['Authorization'] = `Bearer ${this.auth.bearerToken}`
-          headers['X-RDCP-Auth-Method'] = 'hybrid'
+          headers[RDCP_HEADERS.AUTH_METHOD] = 'hybrid'
         }
         break
     }
@@ -80,12 +81,12 @@ export class RDCPHttpClient {
     }
   ): AuthHeaders {
     if (tenant) {
-      headers['X-RDCP-Tenant-ID'] = tenant.id
+      headers[RDCP_HEADERS.TENANT_ID] = tenant.id
       if (tenant.isolationLevel) {
-        headers['X-RDCP-Isolation-Level'] = tenant.isolationLevel
+        headers[RDCP_HEADERS.ISOLATION_LEVEL] = tenant.isolationLevel
       }
       if (tenant.name) {
-        headers['X-RDCP-Tenant-Name'] = tenant.name
+        headers[RDCP_HEADERS.TENANT_NAME] = tenant.name
       }
     }
     return headers
@@ -102,7 +103,7 @@ export class RDCPHttpClient {
       !data ||
       typeof data !== 'object' ||
       !('protocol' in data) ||
-      (data as { protocol: string }).protocol !== 'rdcp/1.0'
+      (data as { protocol: string }).protocol !== PROTOCOL_VERSION
     ) {
       throw new Error('Invalid RDCP response: missing or incorrect protocol')
     }

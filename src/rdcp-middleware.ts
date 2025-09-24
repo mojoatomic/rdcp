@@ -5,6 +5,7 @@ import { runtimeControl } from './endpoints/control'
 import { statusMonitoring } from './endpoints/status'
 import { healthCheck } from './endpoints/health'
 import { validateRDCPAuth } from './auth'
+import { PROTOCOL_VERSION, RDCP_PATHS } from '@rdcp.dev/core'
 
 interface RDCPOptions {
   requireAuth?: boolean
@@ -22,7 +23,7 @@ function rdcpAuthMiddleware(
       error: {
         code: 'RDCP_AUTH_FAILED',
         message: 'Authentication failed',
-        protocol: 'rdcp/1.0',
+        protocol: PROTOCOL_VERSION,
       },
     })
     return
@@ -34,19 +35,19 @@ export function createRDCPMiddleware(options: RDCPOptions = {}): Router {
   const router = express.Router()
 
   // 5 RDCP endpoints - conditionally apply auth middleware
-  router.get('/.well-known/rdcp', protocolDiscovery)
+  router.get(RDCP_PATHS.WELL_KNOWN_RDCP, protocolDiscovery)
 
   if (options.requireAuth) {
-    router.get('/rdcp/v1/discovery', rdcpAuthMiddleware, debugSystemDiscovery)
-    router.post('/rdcp/v1/control', rdcpAuthMiddleware, runtimeControl)
-    router.get('/rdcp/v1/status', rdcpAuthMiddleware, statusMonitoring)
+    router.get(RDCP_PATHS.DISCOVERY, rdcpAuthMiddleware, debugSystemDiscovery)
+    router.post(RDCP_PATHS.CONTROL, rdcpAuthMiddleware, runtimeControl)
+    router.get(RDCP_PATHS.STATUS, rdcpAuthMiddleware, statusMonitoring)
   } else {
-    router.get('/rdcp/v1/discovery', debugSystemDiscovery)
-    router.post('/rdcp/v1/control', runtimeControl)
-    router.get('/rdcp/v1/status', statusMonitoring)
+    router.get(RDCP_PATHS.DISCOVERY, debugSystemDiscovery)
+    router.post(RDCP_PATHS.CONTROL, runtimeControl)
+    router.get(RDCP_PATHS.STATUS, statusMonitoring)
   }
 
-  router.get('/rdcp/v1/health', healthCheck)
+  router.get(RDCP_PATHS.HEALTH, healthCheck)
 
   return router
 }
