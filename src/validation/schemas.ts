@@ -8,13 +8,6 @@ export {
   healthResponseSchema,
   protocolDiscoverySchema,
   errorResponseSchema,
-  type ControlRequest,
-  type ControlResponse,
-  type DiscoveryResponse,
-  type StatusResponse,
-  type HealthResponse,
-  type ProtocolDiscoveryResponse,
-  type ErrorResponse,
 } from '@rdcp.dev/core'
 
 // Local helper for safe validation (server-only utility)
