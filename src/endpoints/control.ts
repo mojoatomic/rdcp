@@ -13,9 +13,6 @@ import {
 import { createControlResponse } from '../validation/response.js'
 import { ControlChange } from '../utils/types.js'
 
-type RequestWithRDCPAuth = Request & {
-  rdcpAuth?: { user?: string; method?: string }
-}
 
 export function runtimeControl(req: Request, res: Response): void {
   try {
