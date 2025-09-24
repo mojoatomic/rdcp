@@ -18,4 +18,5 @@ __exportStar(require("./types/index.js"), exports);
 __exportStar(require("./constants.js"), exports);
 __exportStar(require("./errors.js"), exports);
 __exportStar(require("./schemas.js"), exports);
+__exportStar(require("./fixtures.js"), exports);
 //# sourceMappingURL=index.js.map
