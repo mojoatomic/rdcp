@@ -289,10 +289,10 @@ X-RDCP-Tenant-ID: <tenant-id>  # If multi-tenant
   "timestamp": "2025-09-17T10:30:00Z",
   "categories": [
     {
-      "id": "DATABASE",
-      "enabled": true|false,
+      "name": "DATABASE",
       "description": "Database operations",
-      "tags": ["infrastructure"],
+      "enabled": true,
+      "temporary": false,
       "metrics": {
         "callsTotal": 1234,
         "callsPerSecond": 2.3
@@ -300,18 +300,9 @@ X-RDCP-Tenant-ID: <tenant-id>  # If multi-tenant
     }
   ],
   "performance": {
-    "overhead": {
-      "cpu": {
-        "value": 0.1,
-        "unit": "percent",
-        "measured": true|false
-      },
-      "memory": {
-        "value": 1048576,
-        "unit": "bytes",
-        "measured": true|false
-      }
-    }
+    "totalCalls": 45678,
+    "callsPerSecond": 2.3,
+    "categoryBreakdown": { "DATABASE": 1234 }
   }
 }
 ```
@@ -322,14 +313,14 @@ X-RDCP-Tenant-ID: <tenant-id>  # If multi-tenant
 ```json
 POST /rdcp/v1/control HTTP/1.1
 Content-Type: application/json
-X-RDCP-Request-ID: <unique-id>  # OPTIONAL
 
 {
-  "action": "enable|disable|toggle|reset",
-  "categories": ["DATABASE"] | "*",
+  "action": "enable|disable|toggle|reset|status",
+  "categories": ["DATABASE", "API_ROUTES"]  // or a single string "DATABASE"
+  ,
   "options": {
-    "temporary": true|false,
-    "duration": 300,  # seconds
+    "temporary": true,
+    "duration": "15m",  // number (seconds) or duration string (e.g., "15m")
     "reason": "Investigating issue #1234"
   }
 }
@@ -339,35 +330,21 @@ X-RDCP-Request-ID: <unique-id>  # OPTIONAL
 ```json
 {
   "protocol": "rdcp/1.0",
-  "requestId": "<request-id>",
-  "success": true|false,
-  "authContext": {
-    "method": "bearer",
-    "userId": "user@example.com",
-    "scopes": ["control"],
-    "sessionId": "sess_abc123"
-  },
+  "timestamp": "2025-09-17T10:30:00Z",
+  "action": "enable",
+  "categories": ["DATABASE"],
+  "status": "success", // "partial" or "failed"
+  "message": "Enabled categories",
   "changes": [
     {
       "category": "DATABASE",
       "previousState": false,
       "newState": true,
+      "temporary": true,
       "effectiveAt": "2025-09-17T10:30:00Z",
-      "expiresAt": "2025-09-17T10:35:00Z"  # If temporary
+      "expiresAt": "2025-09-17T10:45:00Z"
     }
-  ],
-  "audit": {
-    "timestamp": "2025-09-17T10:30:00Z",
-    "action": "enable",
-    "operator": "user@example.com",
-    "method": "bearer",
-    "clientId": "admin-console-v1",
-    "reason": "Investigating issue #1234",
-    "complianceMetadata": {  # For enterprise level
-      "ticketId": "INC-1234",
-      "approvedBy": "manager@example.com"
-    }
-  }
+  ]
 }
 ```
 
@@ -383,16 +360,9 @@ GET /rdcp/v1/status HTTP/1.1
 {
   "protocol": "rdcp/1.0",
   "timestamp": "2025-09-17T10:30:00Z",
-  "categories": {
-    "DATABASE": {
-      "enabled": true,
-      "metrics": {
-        "callsLastMinute": 123,
-        "callsTotal": 45678,
-        "lastActivity": "2025-09-17T10:29:55Z"
-      }
-    }
-  }
+  "enabled": true,
+  "categories": { "DATABASE": true, "API_ROUTES": false },
+  "performance": { "totalCalls": 45678, "callsPerSecond": 2.3 }
 }
 ```
 
@@ -407,12 +377,12 @@ GET /rdcp/v1/health HTTP/1.1
 ```json
 {
   "protocol": "rdcp/1.0",
-  "status": "healthy|degraded|unhealthy",
   "timestamp": "2025-09-17T10:30:00Z",
-  "components": {
-    "debugSystem": "operational|degraded|failed",
-    "persistence": "operational|degraded|failed"
-  }
+  "status": "healthy",
+  "checks": [
+    { "name": "redis", "status": "pass", "duration": "5ms" },
+    { "name": "db", "status": "pass", "duration": "8ms" }
+  ]
 }
 ```
 
@@ -437,15 +407,7 @@ All errors MUST follow:
 
 ### 6.2 Standard Error Codes
 
-| Code | HTTP Status | Description |
-|------|-------------|-------------|
-| `RDCP_AUTH_REQUIRED` | 401 | Authentication required |
-| `RDCP_FORBIDDEN` | 403 | Insufficient permissions |
-| `RDCP_NOT_FOUND` | 404 | Resource not found |
-| `RDCP_VALIDATION_ERROR` | 400 | Request validation failed |
-| `RDCP_CATEGORY_NOT_FOUND` | 400 | Invalid category specified |
-| `RDCP_RATE_LIMITED` | 429 | Rate limit exceeded |
-| `RDCP_INTERNAL_ERROR` | 500 | Internal server error |
+For the complete, source-of-truth list of protocol error codes and their HTTP mappings, see: docs/error-codes.md
 
 ---
 

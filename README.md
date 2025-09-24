@@ -587,6 +587,7 @@ MIT License — see [LICENSE](LICENSE) for details.
 - JWKS Client Quickstart (repo): docs/jwks-client.md
 - JWKS Cache Stores (repo): docs/jwks-cache-stores.md
 - Protocol schemas (repo): docs/protocol-schemas.md
+- Protocol error codes (repo): docs/error-codes.md
 - Core package boundaries (repo): docs/core-package-boundaries.md
 - Rate Limiting: https://github.com/mojoatomic/rdcp/wiki/Rate-Limiting
 - API Reference: https://github.com/mojoatomic/rdcp/wiki/API-Reference
