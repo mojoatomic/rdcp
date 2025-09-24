@@ -65,6 +65,7 @@
     }
   },
   "scripts": {
+    "gen:error-codes": "npm run build && node scripts/generate-error-codes-doc.mjs",
     "docs:check-links": "node scripts/check-wiki-links.js",
     "docs:check-links:external": "node scripts/check-wiki-links.js --external",
     "dev": "tsx watch examples/express-server.ts",

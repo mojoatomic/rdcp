@@ -49,6 +49,7 @@ export {
   safeValidate,
   // Error handling
   RDCP_ERROR_CODES,
+  ERROR_STATUS_MAP,
   createRDCPError,
   createRDCPErrorWithStatus,
   createValidationError,
