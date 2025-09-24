@@ -583,7 +583,9 @@ MIT License — see [LICENSE](LICENSE) for details.
 - Installation: https://github.com/mojoatomic/rdcp/wiki/Installation
 - Basic Usage: https://github.com/mojoatomic/rdcp/wiki/Basic-Usage
 - Authentication Setup: https://github.com/mojoatomic/rdcp/wiki/Authentication-Setup
-- JWKS Integration: https://github.com/mojoatomic/rdcp/wiki/JWKS
+- JWKS Integration (wiki): https://github.com/mojoatomic/rdcp/wiki/JWKS
+- JWKS Client Quickstart (repo): docs/jwks-client.md
+- JWKS Cache Stores (repo): docs/jwks-cache-stores.md
 - Rate Limiting: https://github.com/mojoatomic/rdcp/wiki/Rate-Limiting
 - API Reference: https://github.com/mojoatomic/rdcp/wiki/API-Reference
 - OpenTelemetry Plugin: https://github.com/mojoatomic/rdcp/wiki/OpenTelemetry-Integration-Roadmap
