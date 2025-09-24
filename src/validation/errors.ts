@@ -4,50 +4,19 @@
  */
 
 import { RDCPError } from '../utils/types.js'
+import { PROTOCOL_VERSION, RDCP_ERROR_CODES, RDCPErrorCode } from '@rdcp.dev/core'
 
 /**
  * Standard RDCP v1.0 error codes
  * Must match protocol specification exactly
  */
-export const RDCP_ERROR_CODES = {
-  // Authentication errors (4xx)
-  RDCP_AUTH_REQUIRED: 'RDCP_AUTH_REQUIRED',
-  RDCP_INVALID_TOKEN: 'RDCP_INVALID_TOKEN',
-  RDCP_TOKEN_EXPIRED: 'RDCP_TOKEN_EXPIRED',
-  RDCP_FORBIDDEN: 'RDCP_FORBIDDEN',
-  RDCP_INVALID_CLIENT: 'RDCP_INVALID_CLIENT',
-
-  // Validation errors (4xx)
-  RDCP_VALIDATION_ERROR: 'RDCP_VALIDATION_ERROR',
-  RDCP_INVALID_ACTION: 'RDCP_INVALID_ACTION',
-  RDCP_INVALID_CATEGORY: 'RDCP_INVALID_CATEGORY',
-  RDCP_CATEGORY_NOT_FOUND: 'RDCP_CATEGORY_NOT_FOUND',
-  RDCP_MISSING_PARAMETER: 'RDCP_MISSING_PARAMETER',
-  RDCP_INVALID_PROTOCOL: 'RDCP_INVALID_PROTOCOL',
-  RDCP_NOT_FOUND: 'RDCP_NOT_FOUND',
-  RDCP_RATE_LIMITED: 'RDCP_RATE_LIMITED',
-  RDCP_REQUEST_ID_INVALID: 'RDCP_REQUEST_ID_INVALID',
-
-  // Server errors (5xx)
-  RDCP_SERVER_ERROR: 'RDCP_SERVER_ERROR',
-  RDCP_INTERNAL_ERROR: 'RDCP_INTERNAL_ERROR',
-  RDCP_UNAVAILABLE: 'RDCP_UNAVAILABLE',
-  RDCP_TIMEOUT: 'RDCP_TIMEOUT',
-  RDCP_CONFIGURATION_ERROR: 'RDCP_CONFIGURATION_ERROR',
-  RDCP_STORAGE_ERROR: 'RDCP_STORAGE_ERROR',
-  RDCP_AUDIT_WRITE_FAILED: 'RDCP_AUDIT_WRITE_FAILED',
-  RDCP_RATE_LIMIT_MISCONFIGURED: 'RDCP_RATE_LIMIT_MISCONFIGURED',
-
-  // Protocol errors
-  RDCP_UNSUPPORTED_VERSION: 'RDCP_UNSUPPORTED_VERSION',
-  RDCP_MALFORMED_REQUEST: 'RDCP_MALFORMED_REQUEST',
-} as const
+// RDCP_ERROR_CODES are protocol constants; import from core and re-export for compatibility
+export { RDCP_ERROR_CODES } from '@rdcp.dev/core'
 
 /**
  * RDCP error code type
  */
-export type RDCPErrorCode =
-  (typeof RDCP_ERROR_CODES)[keyof typeof RDCP_ERROR_CODES]
+export type { RDCPErrorCode } from '@rdcp.dev/core'
 
 /**
  * Error code to HTTP status mapping
@@ -115,7 +84,7 @@ export function createRDCPError(
       code,
       message,
       ...(details ? { details } : {}),
-      protocol: 'rdcp/1.0',
+      protocol: PROTOCOL_VERSION,
       timestamp: new Date().toISOString(),
     },
   }
