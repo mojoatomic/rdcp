@@ -4,11 +4,7 @@
  */
 
 import { RDCPError } from '../utils/types.js'
-import {
-  PROTOCOL_VERSION,
-  RDCP_ERROR_CODES,
-  RDCPErrorCode,
-} from '@rdcp.dev/core'
+import { PROTOCOL_VERSION, RDCP_ERROR_CODES, RDCPErrorCode } from '@rdcp.dev/core'
 
 /**
  * Standard RDCP v1.0 error codes
