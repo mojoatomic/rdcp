@@ -49,20 +49,54 @@ export function runtimeControl(req: Request, res: Response): void {
         )
         break
 
+      case 'toggle': {
+        const debugConfig = tenantContext
+          ? getTenantDebugConfig(tenantContext.tenantId)
+          : DEBUG_CONFIG
+        categories.forEach(cat => {
+          const prev = Boolean(debugConfig[cat as keyof typeof debugConfig])
+          const next = !prev
+          if (tenantContext?.tenantId) {
+            // Tenant-scoped toggle
+            getTenantDebugConfig(tenantContext.tenantId) // ensure exists
+            // Directly set via setTenantDebugCategory through enable/disable helpers
+            if (next) {
+              enableDebugCategories([cat], tenantContext.tenantId)
+            } else {
+              disableDebugCategories([cat], tenantContext.tenantId)
+            }
+          } else if (cat in DEBUG_CONFIG) {
+            DEBUG_CONFIG[cat as keyof typeof DEBUG_CONFIG] = next
+          }
+          changes.push({
+            category: cat,
+            previousState: prev,
+            newState: next,
+            effectiveAt: timestamp,
+          })
+        })
+        break
+      }
+
       case 'reset': {
         const debugConfig = tenantContext
           ? getTenantDebugConfig(tenantContext.tenantId)
           : DEBUG_CONFIG
-        disableDebugCategories(
-          Object.keys(debugConfig),
-          tenantContext?.tenantId
-        )
-        changes.push({
-          category: 'ALL',
-          previousState: true,
-          newState: false,
-          effectiveAt: timestamp,
+        const keys = Object.keys(debugConfig)
+        const changed: string[] = []
+        keys.forEach(cat => {
+          const prev = Boolean(debugConfig[cat as keyof typeof debugConfig])
+          if (prev) changed.push(cat)
         })
+        disableDebugCategories(keys, tenantContext?.tenantId)
+        changes.push(
+          ...keys.map(cat => ({
+            category: cat,
+            previousState: Boolean(debugConfig[cat as keyof typeof debugConfig]),
+            newState: false,
+            effectiveAt: timestamp,
+          }))
+        )
         break
       }
 

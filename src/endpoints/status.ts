@@ -8,29 +8,27 @@ import {
 
 export function statusMonitoring(req: Request, res: Response): void {
   const tenantContext = extractTenantContext(req)
-  const status = tenantContext
+  const config = tenantContext
     ? getTenantDebugConfig(tenantContext.tenantId)
     : getDebugStatus()
-  const metrics = getPerformanceMetrics()
-  const categories: Record<string, unknown> = {}
+  const perf = getPerformanceMetrics()
 
-  Object.keys(status).forEach(key => {
-    if (status[key as keyof typeof status]) {
-      categories[key] = {
-        enabled: true,
-        metrics: {
-          callsLastMinute: 0,
-          callsTotal: metrics.categoryBreakdown[key] || 0,
-          lastActivity: new Date().toISOString(),
-        },
-      }
-    }
+  const categories: Record<string, boolean> = {}
+  Object.keys(config).forEach(key => {
+    categories[key] = Boolean(config[key as keyof typeof config])
   })
+
+  const enabled = Object.values(categories).some(Boolean)
 
   const response = {
     protocol: 'rdcp/1.0' as const,
     timestamp: new Date().toISOString(),
+    enabled,
     categories,
+    performance: {
+      totalCalls: perf.totalCalls,
+      callsPerSecond: perf.callsPerSecond,
+    },
   }
 
   res.json(
