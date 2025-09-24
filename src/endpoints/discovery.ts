@@ -5,15 +5,16 @@ import {
   createTenantResponse,
   getTenantDebugConfig,
 } from '../utils/tenant.js'
+import { PROTOCOL_VERSION, RDCP_PATHS } from '@rdcp.dev/core'
 
 export function protocolDiscovery(req: Request, res: Response): void {
   res.json({
-    protocol: 'rdcp/1.0',
+    protocol: PROTOCOL_VERSION,
     endpoints: {
-      discovery: '/rdcp/v1/discovery',
-      control: '/rdcp/v1/control',
-      status: '/rdcp/v1/status',
-      health: '/rdcp/v1/health',
+      discovery: RDCP_PATHS.DISCOVERY,
+      control: RDCP_PATHS.CONTROL,
+      status: RDCP_PATHS.STATUS,
+      health: RDCP_PATHS.HEALTH,
     },
     capabilities: {
       multiTenancy: true,

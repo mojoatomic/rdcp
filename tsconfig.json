@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "Node",
+    "module": "es2022",
+    "moduleResolution": "Bundler",
     "strict": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
@@ -15,6 +15,10 @@
     "rootDir": ".",
     "resolveJsonModule": true,
     "allowJs": true,
+    "baseUrl": ".",
+    "paths": {
+      "@rdcp.dev/core": ["packages/rdcp-core/src/index.ts"]
+    },
     "noImplicitAny": true,
     "noImplicitReturns": true,
     "noUnusedLocals": false,

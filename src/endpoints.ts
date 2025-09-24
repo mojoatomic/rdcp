@@ -1,25 +1,26 @@
 import { Router, Response } from 'express'
 import { RDCPRequest } from './middleware'
 import { validateRDCPRequest } from './validation'
+import { PROTOCOL_VERSION, RDCP_PATHS } from '@rdcp.dev/core'
 
 export function createRDCPEndpoints(): Router {
   const router = Router()
 
-  router.get('/.well-known/rdcp', (req: RDCPRequest, res: Response) => {
+  router.get(RDCP_PATHS.WELL_KNOWN_RDCP, (req: RDCPRequest, res: Response) => {
     res.json({
-      protocol: 'rdcp/1.0',
+      protocol: PROTOCOL_VERSION,
       endpoints: {
-        control: '/rdcp/v1/control',
-        status: '/rdcp/v1/status',
+        control: RDCP_PATHS.CONTROL,
+        status: RDCP_PATHS.STATUS,
       },
     })
   })
 
-  router.post('/rdcp/v1/control', (req: RDCPRequest, res: Response) => {
+  router.post(RDCP_PATHS.CONTROL, (req: RDCPRequest, res: Response) => {
     try {
       const request = validateRDCPRequest(req.body)
       res.json({
-        protocol: 'rdcp/1.0',
+        protocol: PROTOCOL_VERSION,
         success: true,
         request,
       })

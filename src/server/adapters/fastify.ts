@@ -17,6 +17,7 @@ import { extractTenantContext, RDCPTenantContext } from '../../utils/tenant.js'
 import { logger } from '../../utils/logger.js'
 import { createKeyring } from '../keyring.js'
 import { prepareJWKSResponse, etagMatches } from '../../utils/etag.js'
+import { RDCP_PATHS } from '@rdcp.dev/core'
 
 /**
  * RDCP Authenticator function interface for Fastify
@@ -114,7 +115,7 @@ export function createRDCPMiddleware(
   const {
     authenticator,
     debugConfig = {},
-    basePath = '/rdcp/v1',
+    basePath = RDCP_PATHS.BASE,
     performance = {},
     tenant = {},
   } = options
@@ -260,7 +261,7 @@ export function createRDCPMiddleware(
         options.capabilities?.security?.tokenLifecycle?.jwks?.enabled ===
           true && pathname === '/.well-known/jwks.json'
       if (
-        !pathname.startsWith('/.well-known/rdcp') &&
+        !pathname.startsWith(RDCP_PATHS.WELL_KNOWN_RDCP) &&
         !pathname.startsWith(basePath) &&
         !isMetrics &&
         !isJwks
@@ -311,7 +312,7 @@ export function createRDCPMiddleware(
         `req-${Date.now()}-${Math.random().toString(36).slice(2)}`
 
       // Handle .well-known/rdcp discovery endpoint (no auth required)
-      if (pathname === '/.well-known/rdcp') {
+      if (pathname === RDCP_PATHS.WELL_KNOWN_RDCP) {
         const discoveryResponse = rdcpServer.handleDiscovery({
           basePath,
           requestId: reqId,
