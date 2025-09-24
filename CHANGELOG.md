@@ -5,11 +5,16 @@ All notable changes to this project will be documented in this file.
 ## [Unreleased]
 
 Features
+- Core: centralize protocol constants in `@rdcp.dev/core` (`PROTOCOL_VERSION`, `RDCP_HEADERS`, `RDCP_PATHS`)
+- Core: centralize RDCP protocol error codes and type in `@rdcp.dev/core` (`RDCP_ERROR_CODES`, `RDCPErrorCode`)
+- Core: centralize protocol Zod schemas in `@rdcp.dev/core`; `@rdcp.dev/server` re-exports for back-compat
 - JWKS client: inflight request deduplication per (url + etag)
 - JWKS client: optional persisted cache (file-backed via cachePath) and pluggable store
 - JWKS client: background refresh when nearing TTL expiry (refreshThresholdMs)
 
 Docs
+- New: docs/protocol-schemas.md — schema reference and usage examples
+- Updated: packages/rdcp-core/README.md and docs/core-package-boundaries.md to reflect core protocol scope (constants, error codes, schemas)
 - README: document JWKS TTL/ETag behavior, persisted cache, and background refresh usage
 
 Tests
