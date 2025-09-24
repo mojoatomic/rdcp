@@ -2,35 +2,46 @@
 
 Purpose
 
-- Provide a single, framework-agnostic source of truth for RDCP protocol types
-- Eliminate duplicate type definitions across server/client/agents
+- Provide a single, framework-agnostic source of truth for RDCP protocol definitions
+- Eliminate duplicate protocol constants/schemas/types across server/client/agents
 - Keep server implementation details decoupled from protocol surface
 
 Boundaries
 
-- Types only, no runtime code
+- Protocol-only: constants, error codes, and Zod schemas (minimal runtime via `zod`)
 - No Node.js, DOM, or framework dependencies
-- No imports from @rdcp.dev/server (or adapters)
+- No imports from `@rdcp.dev/server` (or adapters)
 - Stable union types for error codes and protocol fields; no any types
 
 Import guidance
 
-- Prefer importing shared RDCP protocol types from @rdcp.dev/core
-- Keep server-specific utilities in @rdcp.dev/server
-- If a utility is broadly useful and has no runtime/platform coupling, consider promoting it here (in a later PR)
+- Prefer importing protocol primitives (constants, error codes, schemas, types) from `@rdcp.dev/core`
+- Keep runtime utilities and framework adapters in `@rdcp.dev/server`
+- If a utility is broadly useful and has no runtime/platform coupling, consider promoting it later (in a separate utilities package)
 
-Example
+Examples
+
+Schema validation (recommended direct import from core):
 
 ```ts
-import type { ControlRequest, RDCPErrorCode } from '@rdcp.dev/core'
+import { controlRequestSchema } from '@rdcp.dev/core'
+import { z } from 'zod'
 
-export function validate(req: ControlRequest): RDCPErrorCode | undefined {
-  //... validate against protocol-specified fields
-  return undefined
+type ControlRequest = z.infer<typeof controlRequestSchema>
+
+export function validate(body: unknown): ControlRequest {
+  return controlRequestSchema.parse(body)
 }
+```
+
+Back-compat (re-export from server still available):
+
+```ts
+import { controlRequestSchema } from '@rdcp.dev/server'
 ```
 
 Related docs
 
 - packages/rdcp-core/README.md (package overview)
+- docs/protocol-schemas.md (schema reference and usage)
 - docs/rdcp-protocol-specification.md (protocol spec)
