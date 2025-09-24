@@ -83,7 +83,8 @@
     "type-check:examples": "tsc --noEmit --project tsconfig.json examples/express-server.ts",
     "clean": "rm -rf dist coverage .nyc_output"
   },
-  "dependencies": {
+"dependencies": {
+    "@rdcp.dev/core": "file:packages/rdcp-core",
     "@opentelemetry/api": "^1.9.0",
     "fastify-plugin": "^5.0.1",
     "jose": "^5.9.4",
