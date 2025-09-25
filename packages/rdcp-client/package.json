@@ -1,7 +1,7 @@
 {
   "name": "@rdcp.dev/client",
-  "version": "0.1.0",
-  "private": true,
+  "version": "1.0.0",
+  "private": false,
   "license": "MIT",
   "type": "module",
   "sideEffects": false,
@@ -19,8 +19,11 @@
       "default": "./dist-cjs/index.js"
     }
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
-    "@rdcp.dev/core": "file:../rdcp-core",
+    "@rdcp.dev/core": "^1.0.0",
     "zod": "^3.24.2"
   },
   "scripts": {

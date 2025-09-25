@@ -7,8 +7,11 @@ function makeFetch(
   status: number,
   body: unknown,
   contentType = 'application/json'
-) {
-  return async (_url: string, _init?: RequestInit): Promise<Response> => {
+): typeof fetch {
+  const f: typeof fetch = async (
+    _input: RequestInfo | URL,
+    _init?: RequestInit
+  ): Promise<Response> => {
     return {
       ok: status >= 200 && status < 300,
       status,
@@ -22,6 +25,7 @@ function makeFetch(
       },
     } as unknown as Response
   }
+  return f
 }
 
 describe('RDCP Client SDK', () => {
