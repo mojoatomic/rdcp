@@ -437,7 +437,7 @@ export function createRDCPMiddleware(
           statusCode = 405
         } else {
           // Following Context7 patterns - body parser middleware adds body property
-          const body = ctx.request.body || {}
+          const body = ctx.request.body ?? {}
           const meta: {
             requestId: string
             authMethod?: string

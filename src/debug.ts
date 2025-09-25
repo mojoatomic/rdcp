@@ -104,7 +104,7 @@ export const debug = {
         : ''
       console.log(
         `🔌 [DB]${traceInfo} ${entry.message}`,
-        entry.metadata?.args || []
+        entry.metadata?.args ?? []
       )
     }
   ),
@@ -114,7 +114,7 @@ export const debug = {
       : ''
     console.log(
       `🔍 [API]${traceInfo} ${entry.message}`,
-      entry.metadata?.args || []
+      entry.metadata?.args ?? []
     )
   }),
   query: createTrackedDebugger('QUERIES', (entry: TraceEnhancedLogEntry) => {
@@ -123,7 +123,7 @@ export const debug = {
       : ''
     console.log(
       `🚀 [QUERY]${traceInfo} ${entry.message}`,
-      entry.metadata?.args || []
+      entry.metadata?.args ?? []
     )
   }),
   report: createTrackedDebugger('REPORTS', (entry: TraceEnhancedLogEntry) => {
@@ -132,7 +132,7 @@ export const debug = {
       : ''
     console.log(
       `📊 [REPORT]${traceInfo} ${entry.message}`,
-      entry.metadata?.args || []
+      entry.metadata?.args ?? []
     )
   }),
   cache: createTrackedDebugger('CACHE', (entry: TraceEnhancedLogEntry) => {
@@ -141,7 +141,7 @@ export const debug = {
       : ''
     console.log(
       `🐛 [CACHE]${traceInfo} ${entry.message}`,
-      entry.metadata?.args || []
+      entry.metadata?.args ?? []
     )
   }),
 }
