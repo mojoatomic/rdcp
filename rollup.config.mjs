@@ -12,7 +12,7 @@ const baseConfig = {
     commonjs(),
     json(),
     typescript({ 
-      tsconfig: './tsconfig.json', 
+      tsconfig: './tsconfig.rollup.json',
       declaration: false,
       declarationMap: false 
     }),
