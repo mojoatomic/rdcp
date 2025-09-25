@@ -397,7 +397,7 @@ export function createRDCPMiddleware(
           )
           statusCode = 405
         } else {
-          const body = request.body || {}
+          const body = request.body ?? {}
           const meta: {
             requestId: string
             authMethod?: string
