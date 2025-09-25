@@ -17,7 +17,7 @@ export {
   disableRDCPOpenTelemetry,
   isRDCPOpenTelemetryActive,
   createOpenTelemetryProvider,
-  type RDCPOpenTelemetryConfig
+  type RDCPOpenTelemetryConfig,
 } from './setup'
 
 // Re-export types from @rdcp/server for convenience
@@ -39,7 +39,7 @@ import {
   setupRDCPWithOpenTelemetry,
   disableRDCPOpenTelemetry,
   isRDCPOpenTelemetryActive,
-  createOpenTelemetryProvider
+  createOpenTelemetryProvider,
 } from './setup'
 
 export default {
@@ -49,7 +49,7 @@ export default {
   isRDCPOpenTelemetryActive,
   createOpenTelemetryProvider,
   version: RDCP_OTEL_PLUGIN_VERSION,
-  name: RDCP_OTEL_PLUGIN_NAME
+  name: RDCP_OTEL_PLUGIN_NAME,
 }
 
 // WARP Compliance: 40 lines (under 50 line limit for type definitions)
