@@ -1,5 +1,55 @@
 # Contributing to RDCP
 
+Thank you for contributing! This guide highlights the key parts of the build, type generation, and CI setup so you can be productive quickly.
+
+## Build & Types
+
+We split TypeScript declaration emission from the Rollup JavaScript bundling to improve stability and avoid out-of-memory issues in CI.
+
+- Build type declarations (emits to dist/types):
+  - npm run build:types
+  - Internals: tsc -p tsconfig.types.json (emitDeclarationOnly, declarationDir: dist/types)
+- Build JavaScript bundles (CJS + ESM):
+  - npm run build:js
+  - Internals: rollup -c rollup.config.mjs (uses tsconfig.rollup.json, no declarations)
+- Full build (types + JS):
+  - npm run build
+
+Notes:
+- package.json export "types" fields point to dist/types/...
+- dist and dist/types are excluded from TS inputs to prevent TS5055 "overwrite input" errors.
+- We no longer use rollup-plugin-dts; tsc handles declaration generation.
+
+## Local CI (quick checks)
+
+- Install: npm ci --no-audit --no-fund
+- Core: npm run build:core
+- Build: npm run build
+- Lint: npm run lint:ci
+- Tests: npm test
+
+## Pre-commit
+
+We use lint-staged via Husky. The pre-commit hook runs:
+
+```
+npx --no-install lint-staged
+```
+
+If you add new file types, update the lint-staged section in package.json accordingly.
+
+## Conventional commits (suggested)
+
+- chore(...): tooling, config, non-functional
+- build(...): build pipeline, bundling, packaging
+- fix(...): bug fixes
+- feat(...): new features
+- docs(...): documentation only
+
+This keeps history clean and helps automation.
+
+# Contributing to RDCP
+
 Thank you for your interest in contributing to RDCP!
 
 At this time, we are not accepting external pull requests. The SDK is currently undergoing active testing and stabilization to ensure API quality, performance, and security ahead of broader community contributions.
