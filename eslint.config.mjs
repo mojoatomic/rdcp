@@ -11,6 +11,19 @@ export default defineConfig([
   },
   js.configs.recommended,
   {
+    files: ['tests/**/*.ts', 'tests/**/*.js', '**/*.test.ts', '**/*.test.js'],
+    languageOptions: {
+      globals: {
+        describe: 'readonly',
+        test: 'readonly',
+        expect: 'readonly',
+        beforeEach: 'readonly',
+        afterEach: 'readonly',
+        jest: 'readonly'
+      }
+    }
+  },
+  {
     // Linter options (avoid CI warnings from unused disables)
     linterOptions: {
       reportUnusedDisableDirectives: 'off',
