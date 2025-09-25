@@ -2,7 +2,6 @@ import resolve from '@rollup/plugin-node-resolve'
 import commonjs from '@rollup/plugin-commonjs'
 import typescript from '@rollup/plugin-typescript'
 import json from '@rollup/plugin-json'
-import dts from 'rollup-plugin-dts'
 
 const external = ['crypto', 'node:crypto', 'jsonwebtoken', 'node-fetch', 'express', 'fastify']
 
@@ -13,7 +12,7 @@ const baseConfig = {
     commonjs(),
     json(),
     typescript({ 
-      tsconfig: './tsconfig.json', 
+      tsconfig: './tsconfig.rollup.json',
       declaration: false,
       declarationMap: false 
     }),
@@ -92,26 +91,5 @@ export default [
       },
     ],
   },
-  
-  // Type definitions
-  {
-    input: 'src/index.ts',
-    output: { file: 'dist/index.d.ts', format: 'es' },
-    plugins: [dts()],
-  },
-  {
-    input: 'src/client/index.ts',
-    output: { file: 'dist/client/index.d.ts', format: 'es' },
-    plugins: [dts()],
-  },
-  {
-    input: 'src/server/index.ts',
-    output: { file: 'dist/server/index.d.ts', format: 'es' },
-    plugins: [dts()],
-  },
-  {
-    input: 'src/auth/index.ts',
-    output: { file: 'dist/auth/index.d.ts', format: 'es' },
-    plugins: [dts()],
-  },
+
 ]
