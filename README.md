@@ -2,12 +2,27 @@
 
 First-of-its-kind JavaScript/TypeScript SDK implementing the Runtime Debug Control Protocol (RDCP) for operational infrastructure control.
 
-[![npm version](https://badge.fury.io/js/@rdcp.dev%2Fserver.svg)](https://badge.fury.io/js/@rdcp.dev%2Fserver)
+[![npm: @rdcp.dev/core](https://img.shields.io/npm/v/%40rdcp.dev/core?label=%40rdcp.dev%2Fcore)](https://www.npmjs.com/package/@rdcp.dev/core)
+[![npm: @rdcp.dev/client](https://img.shields.io/npm/v/%40rdcp.dev/client?label=%40rdcp.dev%2Fclient)](https://www.npmjs.com/package/@rdcp.dev/client)
+[![npm: @rdcp.dev/server](https://img.shields.io/npm/v/%40rdcp.dev/server?label=%40rdcp.dev%2Fserver)](https://www.npmjs.com/package/@rdcp.dev/server)
 [![CI](https://github.com/mojoatomic/rdcp/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/mojoatomic/rdcp/actions/workflows/ci.yml)
 [![Protocol Compliance](https://img.shields.io/badge/RDCP-v1.0%20Compliant-green)](https://github.com/mojoatomic/rdcp/blob/main/PROTOCOL-COMPLIANCE-REPORT.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ---
+
+## Install
+
+```bash
+# Core (protocol constants, error codes, schemas)
+npm i @rdcp.dev/core
+
+# Client SDK (fetch-based, Node 18+)
+npm i @rdcp.dev/client
+
+# Server SDK (adapters, endpoints, auth)
+npm i @rdcp.dev/server
+```
 
 ## The Infrastructure Gap
 
