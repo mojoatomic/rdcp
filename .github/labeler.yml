@@ -1,0 +1,17 @@
+'area:ci':
+  - .github/workflows/**
+
+'area:docs':
+  - docs/**
+  - wiki/**
+
+'area:otel-plugin':
+  - packages/otel-plugin/**
+
+'area:core':
+  - packages/rdcp-core/**
+
+'area:build':
+  - rollup.config.*
+  - tsconfig*.json
+  - package*.json
