@@ -1,3 +1,21 @@
+# CODEOWNERS is advisory unless enforced via branch protection.
+# For now, keep this non-blocking to avoid friction while the team is small.
+
+# CI and governance
+.github/workflows/*   @mojoatomic
+.github/*             @mojoatomic
+
+# Documentation
+docs/**               @mojoatomic
+wiki/**               @mojoatomic
+
+# Packages
+packages/otel-plugin/**  @mojoatomic
+packages/rdcp-core/**    @mojoatomic
+
+# Default fallback owner
+*                     @mojoatomic
+
 # Global default
 * @mojoatomic
 
