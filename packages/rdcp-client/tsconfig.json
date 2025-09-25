@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "module": "es2022",
+    "target": "es2022",
+    "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "paths": {
+      "@rdcp.dev/core": ["../rdcp-core/dist/index.d.ts"]
+    },
+    "skipLibCheck": true,
+    "declaration": true,
+    "noEmit": false
+  },
+  "include": ["src/**/*"]
+}

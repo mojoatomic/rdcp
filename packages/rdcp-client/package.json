@@ -1,0 +1,29 @@
+{
+  "name": "@rdcp.dev/client",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "dist-cjs",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.esm.js",
+      "require": "./dist-cjs/index.js",
+      "types": "./dist/index.d.ts",
+      "default": "./dist-cjs/index.js"
+    }
+  },
+  "dependencies": {
+    "@rdcp.dev/core": "file:../rdcp-core",
+    "zod": "^3.24.2"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.cjs.json"
+  }
+}
