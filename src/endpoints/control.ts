@@ -122,7 +122,7 @@ export function runtimeControl(req: Request, res: Response): void {
     res.json(
       tenantContext ? createTenantResponse(response, tenantContext) : response
     )
-  } catch (error) {
+  } catch (_error) {
     res.status(400).json({
       error: {
         code: 'RDCP_VALIDATION_ERROR',

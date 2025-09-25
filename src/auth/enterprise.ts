@@ -85,7 +85,7 @@ export function validateRDCPAuth(request: Request): RDCPAuthResult {
       if (Array.isArray(decoded.scopes)) {
         scopes = decoded.scopes
       }
-    } catch (jwtError) {
+    } catch (_jwtError) {
       // Continue with cert-only auth if JWT fails; downgrade to debug in production unless explicitly enabled
       const shouldWarn =
         process.env.NODE_ENV === 'development' ||

@@ -24,7 +24,7 @@ export function createRDCPEndpoints(): Router {
         success: true,
         request,
       })
-    } catch (error) {
+    } catch (_error) {
       res.status(400).json({
         error: 'Validation failed',
       })
