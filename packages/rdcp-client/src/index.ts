@@ -2,6 +2,7 @@ import { z } from 'zod'
 import {
   discoveryResponseSchema,
   statusResponseSchema,
+  healthResponseSchema,
   controlRequestSchema,
   controlResponseSchema,
   errorResponseSchema,
@@ -66,6 +67,7 @@ async function doFetch<T>(
 export interface RDCPClient {
   getDiscovery: () => Promise<z.infer<typeof discoveryResponseSchema>>
   getStatus: () => Promise<z.infer<typeof statusResponseSchema>>
+  getHealth: () => Promise<z.infer<typeof healthResponseSchema>>
   postControl: (
     body: z.infer<typeof controlRequestSchema>
   ) => Promise<z.infer<typeof controlResponseSchema>>
@@ -93,6 +95,15 @@ export function createRDCPClient(options: RDCPClientOptions): RDCPClient {
         url,
         { method: 'GET', headers: { ...baseHeaders } },
         statusResponseSchema
+      )
+    },
+    async getHealth(): Promise<z.infer<typeof healthResponseSchema>> {
+      const url = `${base}/rdcp/v1/health`
+      return doFetch(
+        f,
+        url,
+        { method: 'GET', headers: { ...baseHeaders } },
+        healthResponseSchema
       )
     },
     async postControl(
