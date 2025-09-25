@@ -99,6 +99,17 @@ curl -X POST /rdcp/v1/control \
 
 ---
 
+## Quick imports from @rdcp.dev/core
+
+Use these imports to access protocol constants and shared definitions from the core package:
+
+```ts path=null start=null
+import { PROTOCOL_VERSION, RDCP_PATHS } from '@rdcp.dev/core'
+import { RDCP_ERROR_CODES } from '@rdcp.dev/core'
+// If exported in your version of core:
+// import { controlRequestSchema } from '@rdcp.dev/core'
+```
+
 ## Framework Integration
 
 ### Express.js
