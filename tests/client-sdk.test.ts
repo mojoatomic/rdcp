@@ -7,8 +7,11 @@ function makeFetch(
   status: number,
   body: unknown,
   contentType = 'application/json'
-) {
-  return async (_url: string, _init?: RequestInit): Promise<Response> => {
+): typeof fetch {
+  const f: typeof fetch = async (
+    _input: RequestInfo | URL,
+    _init?: RequestInit
+  ): Promise<Response> => {
     return {
       ok: status >= 200 && status < 300,
       status,
@@ -22,6 +25,7 @@ function makeFetch(
       },
     } as unknown as Response
   }
+  return f
 }
 
 describe('RDCP Client SDK', () => {
@@ -73,7 +77,6 @@ describe('RDCP Client SDK', () => {
     const res = await rdcp.getHealth()
     expect(res.status).toBe('healthy')
   })
-
   test('postControl validates input and throws before fetch for invalid body', async () => {
     const rdcp = createRDCPClient({ baseUrl, fetch: makeFetch(200, {}) })
     await expect(
