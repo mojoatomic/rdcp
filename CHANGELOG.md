@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.1.0] - 2025-09-25
+
+Highlights
+- RDCP ecosystem is complete and ready for external adoption
+- Publish-ready: @rdcp.dev/core@1.0.0 and @rdcp.dev/client@1.0.0 (protocol v1.0 compliant)
+- Client SDK adds getHealth() endpoint; end-to-end tests cover all five RDCP endpoints
+
+Changes
+- Bump @rdcp.dev/server to 2.1.0; update dependency to @rdcp.dev/core ^1.0.0
+- Prepare package metadata and changelogs for core and client
+- CI: ensure core builds before client SDK build
+
 ## [Unreleased]
 
 Features
