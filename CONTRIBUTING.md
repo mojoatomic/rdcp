@@ -16,6 +16,12 @@ Why contributions are paused
 When contributions will open
 - We plan to revisit community PRs after the initial stabilization milestone. We’ll update the README and project Wiki when contributions open back up.
 
+Internal contributor guidelines (tooling and lockfiles)
+- Node and npm: use Node >= 18 and npm >= 9. This repo declares engines to help standardize environments.
+- After dependency bumps: run `npm install` locally to refresh package-lock.json and commit the lockfile changes in the same PR.
+- CI installs: `npm ci` is used for clean installs. It requires the lockfile to be up-to-date with package.json. If you see errors like "Invalid: lock file's <pkg>@<old> does not satisfy <pkg>@<new>", run `npm install` and commit the updated lockfile.
+- Monorepo note: if a subpackage has its own lockfile (e.g., packages/rdcp-demo-app), refresh and commit that lockfile as well when dependencies change for that workspace.
+
 A note about unsolicited PRs
 - We appreciate the effort, but unsolicited PRs may be closed without review while contributions are paused. Please use issues for discussion meanwhile.
 
