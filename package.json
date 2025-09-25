@@ -83,9 +83,14 @@
     "test:coverage": "jest --coverage",
     "type-check": "tsc --noEmit",
     "type-check:examples": "tsc --noEmit --project tsconfig.json examples/express-server.ts",
-    "clean": "rm -rf dist coverage .nyc_output"
+    "clean": "rm -rf dist coverage .nyc_output",
+    "prepare": "husky install"
   },
-"dependencies": {
+  "lint-staged": {
+    "*.{js,ts}": "eslint --fix",
+    "*.md": "node scripts/check-wiki-links.js"
+  },
+  "dependencies": {
     "@rdcp.dev/core": "file:packages/rdcp-core",
     "@opentelemetry/api": "^1.9.0",
     "fastify-plugin": "^5.0.1",
@@ -117,6 +122,8 @@
     "prettier": "^3.1.1",
     "rollup": "^4.9.2",
     "rollup-plugin-dts": "^6.1.0",
+    "husky": "^9.1.6",
+    "lint-staged": "^15.2.9",
     "supertest": "^6.3.4",
     "ts-jest": "^29.1.0",
     "ts-node": "^10.9.2",
