@@ -93,7 +93,7 @@
     "*.md": "node scripts/check-wiki-links.js"
   },
   "dependencies": {
-    "@rdcp.dev/core": "file:packages/rdcp-core",
+    "@rdcp.dev/core": "^1.0.0",
     "@opentelemetry/api": "^1.9.0",
     "fastify-plugin": "^5.0.1",
     "jose": "^5.9.4",
