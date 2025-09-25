@@ -1,17 +1,27 @@
 'area:ci':
-  - .github/workflows/**
+  - changed-files:
+      - any-glob-to-any-file:
+          - .github/workflows/**
 
 'area:docs':
-  - docs/**
-  - wiki/**
+  - changed-files:
+      - any-glob-to-any-file:
+          - docs/**
+          - wiki/**
 
 'area:otel-plugin':
-  - packages/otel-plugin/**
+  - changed-files:
+      - any-glob-to-any-file:
+          - packages/otel-plugin/**
 
 'area:core':
-  - packages/rdcp-core/**
+  - changed-files:
+      - any-glob-to-any-file:
+          - packages/rdcp-core/**
 
 'area:build':
-  - rollup.config.*
-  - tsconfig*.json
-  - package*.json
+  - changed-files:
+      - any-glob-to-any-file:
+          - rollup.config.*
+          - tsconfig*.json
+          - package*.json
