@@ -63,6 +63,20 @@ describe('RDCP Client SDK', () => {
     )
   })
 
+  test('health endpoint returns valid response', async () => {
+    const healthBody = {
+      protocol: 'rdcp/1.0',
+      timestamp: new Date().toISOString(),
+      status: 'healthy',
+      checks: [],
+    }
+    const rdcp = createRDCPClient({
+      baseUrl,
+      fetch: makeFetch(200, healthBody),
+    })
+    const res = await rdcp.getHealth()
+    expect(res.status).toBe('healthy')
+  })
   test('postControl validates input and throws before fetch for invalid body', async () => {
     const rdcp = createRDCPClient({ baseUrl, fetch: makeFetch(200, {}) })
     await expect(
