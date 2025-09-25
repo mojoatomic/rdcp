@@ -36,16 +36,16 @@ export function debugSystemDiscovery(req: Request, res: Response): void {
   const debugConfig = tenantContext
     ? getTenantDebugConfig(tenantContext.tenantId)
     : DEBUG_CONFIG
-  const metrics = getPerformanceMetrics()
+  const perf = getPerformanceMetrics()
 
-  const categories = Object.keys(debugConfig).map(id => ({
-    id,
-    enabled: debugConfig[id as keyof typeof debugConfig],
-    description: `Debug logging for ${id.toLowerCase().replace('_', ' ')}`,
-    tags: ['infrastructure'],
+  const categories = Object.keys(debugConfig).map(name => ({
+    name,
+    description: `Debug logging for ${name.toLowerCase().replace('_', ' ')}`,
+    enabled: Boolean(debugConfig[name as keyof typeof debugConfig]),
+    temporary: false,
     metrics: {
-      callsTotal: metrics.categoryBreakdown[id] || 0,
-      callsPerSecond: metrics.callsPerSecond || 0,
+      callsTotal: perf.categoryBreakdown[name] || 0,
+      callsPerSecond: perf.callsPerSecond || 0,
     },
   }))
 
@@ -54,10 +54,9 @@ export function debugSystemDiscovery(req: Request, res: Response): void {
     timestamp: new Date().toISOString(),
     categories,
     performance: {
-      overhead: {
-        cpu: { value: 0.1, unit: 'percent', measured: false },
-        memory: { value: 1048576, unit: 'bytes', measured: false },
-      },
+      totalCalls: perf.totalCalls,
+      callsPerSecond: perf.callsPerSecond,
+      categoryBreakdown: { ...perf.categoryBreakdown },
     },
   }
 

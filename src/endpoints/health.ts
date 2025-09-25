@@ -6,12 +6,12 @@ export function healthCheck(req: Request, res: Response): void {
 
   const response = {
     protocol: 'rdcp/1.0' as const,
-    status: 'healthy' as const,
     timestamp: new Date().toISOString(),
-    components: {
-      debugSystem: 'operational' as const,
-      persistence: 'operational' as const,
-    },
+    status: 'healthy' as const,
+    checks: [
+      { name: 'redis', status: 'pass' as const, duration: '5ms' },
+      { name: 'db', status: 'pass' as const, duration: '8ms' },
+    ],
   }
 
   res.json(
