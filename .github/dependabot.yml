@@ -1,0 +1,50 @@
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "area:build"
+    open-pull-requests-limit: 5
+    groups:
+      dev-dependencies:
+        applies-to: version-updates
+        dependency-type: "development"
+        update-types:
+          - "all"
+
+  - package-ecosystem: "npm"
+    directory: "/packages/otel-plugin"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "area:build"
+    open-pull-requests-limit: 5
+    groups:
+      dev-dependencies:
+        applies-to: version-updates
+        dependency-type: "development"
+        update-types:
+          - "all"
+
+  - package-ecosystem: "npm"
+    directory: "/packages/rdcp-core"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "area:build"
+    open-pull-requests-limit: 5
+    groups:
+      dev-dependencies:
+        applies-to: version-updates
+        dependency-type: "development"
+        update-types:
+          - "all"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "area:build"
