@@ -2,7 +2,7 @@
 // Following Context7 OpenTelemetry patterns and WARP.md guidelines
 // WARP: TypeScript-first, no any types, under 100 lines (Auth adapter limit)
 
-import { trace, propagation, context } from '@opentelemetry/api'
+import { trace, propagation } from '@opentelemetry/api'
 import type { TraceProvider, TraceContext } from '@rdcp.dev/server'
 
 /**
@@ -31,11 +31,14 @@ export class OpenTelemetryProvider implements TraceProvider {
       return {
         traceId: spanContext.traceId,
         spanId: spanContext.spanId,
-        baggage: this.extractBaggage()
+        baggage: this.extractBaggage(),
       }
     } catch (error) {
       // WARP: Fail gracefully, don't break RDCP functionality
-      console.warn('RDCP OpenTelemetry Provider: Error getting trace context:', error)
+      console.warn(
+        'RDCP OpenTelemetry Provider: Error getting trace context:',
+        error
+      )
       return null
     }
   }
@@ -60,7 +63,10 @@ export class OpenTelemetryProvider implements TraceProvider {
       return baggageRecord
     } catch (error) {
       // WARP: Fail gracefully
-      console.warn('RDCP OpenTelemetry Provider: Error extracting baggage:', error)
+      console.warn(
+        'RDCP OpenTelemetry Provider: Error extracting baggage:',
+        error
+      )
       return {}
     }
   }
@@ -82,11 +88,15 @@ export class OpenTelemetryProvider implements TraceProvider {
   /**
    * Get OpenTelemetry provider information for debugging
    */
-  public getProviderInfo(): { name: string; version: string; configured: boolean } {
+  public getProviderInfo(): {
+    name: string
+    version: string
+    configured: boolean
+  } {
     return {
       name: 'OpenTelemetryProvider',
       version: '1.0.0',
-      configured: this.isConfigured()
+      configured: this.isConfigured(),
     }
   }
 }

@@ -17,13 +17,25 @@ export default defineConfig([
       parserOptions: {
         projectService: true
       },
+      globals: {
+        console: 'readonly',
+        require: 'readonly',
+        module: 'readonly',
+        process: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly'
+      }
     },
     plugins: {
       '@typescript-eslint': tsPlugin
     },
     rules: {
+      // TypeScript handles undefined variables, and we explicitly declare Node globals above
+      'no-undef': 'off',
+      // Allow console in this package; logs are part of integration diagnostics
+      'no-console': 'off',
       'no-unused-vars': 'off',
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' }]
     }
   }
-])
+]
