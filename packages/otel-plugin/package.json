@@ -49,6 +49,7 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "lint": "eslint src --ext .ts --fix",
+    "lint:ci": "eslint src --ext .ts --max-warnings=0",
     "type-check": "tsc --noEmit",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run clean && npm run build"
@@ -76,7 +77,8 @@
     "typescript": "^5.3.3"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
   },
   "publishConfig": {
     "access": "public"
