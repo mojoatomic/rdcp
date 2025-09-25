@@ -4,6 +4,7 @@ npm-debug.log*
 
 # Build outputs
 dist/
+dist-cjs/
 build/
 coverage/
 
