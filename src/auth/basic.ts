@@ -82,7 +82,7 @@ export function validateRDCPAuth(request: Request): RDCPAuthResult {
       method: 'api-key',
       error: isValid ? undefined : 'Invalid API key',
     }
-  } catch (error) {
+  } catch (_error) {
     // Keys are different lengths - return false without revealing why
     return {
       valid: false,

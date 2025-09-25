@@ -191,7 +191,7 @@ export function createKeyring(initial: KeyringConfig): Keyring {
       }
       const payload = jwt.verify(token, verifyKey, verifyOpts)
       return { ok: true, header: decoded.header, payload }
-    } catch (e) {
+    } catch (_e) {
       return {
         ok: false,
         error: {
