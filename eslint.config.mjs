@@ -62,11 +62,4 @@ export default defineConfig([
       'no-var': 'error',
     },
   },
-  {
-    files: ['packages/otel-plugin/**/*.ts'],
-    rules: {
-      'no-console': 'off',
-      'prettier/prettier': 'off',
-    },
-  },
 ])
