@@ -25,6 +25,7 @@ jobs:
       - run: npm install --prefix packages/otel-plugin --no-audit --no-fund
       - run: npm install --no-save --prefix packages/otel-plugin $GITHUB_WORKSPACE
       - run: npm run build --prefix packages/otel-plugin
+      - run: npm run build --prefix packages/rdcp-client
       - run: npm install --prefix packages/rdcp-demo-app --no-audit --no-fund
       - run: npm test
       - run: npm run lint:ci
