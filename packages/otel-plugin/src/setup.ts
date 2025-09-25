@@ -111,7 +111,7 @@ export function isRDCPOpenTelemetryActive(): boolean {
 /**
  * Advanced: Create OpenTelemetry provider instance without auto-setup
  * For customers who need more control over the integration
- * 
+ *
  * @example
  * const provider = createOpenTelemetryProvider()
  * // Custom setup logic...
