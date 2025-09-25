@@ -18,53 +18,61 @@ export interface RDCPOpenTelemetryConfig {
   customProvider?: TraceProvider
 }
 
+interface TraceProviderStatus {
+  enabled: boolean
+  provider: string
+}
+
 /**
  * Easy setup function for RDCP with OpenTelemetry integration
  * Context7: Following OpenTelemetry plugin setup patterns
- * 
+ *
  * @example
  * // Basic usage
  * setupRDCPWithOpenTelemetry()
- * 
+ *
  * @example
  * // With configuration
  * setupRDCPWithOpenTelemetry({
  *   enableBaggage: false
  * })
  */
-export function setupRDCPWithOpenTelemetry(config: RDCPOpenTelemetryConfig = {}): void {
-  const {
-    enableTraceCorrelation = true,
-    customProvider
-  } = config
+export function setupRDCPWithOpenTelemetry(
+  config: RDCPOpenTelemetryConfig = {}
+): void {
+  const { enableTraceCorrelation = true, customProvider } = config
 
   if (!enableTraceCorrelation) {
-    console.info('RDCP: OpenTelemetry trace correlation disabled by configuration')
+    console.info(
+      'RDCP: OpenTelemetry trace correlation disabled by configuration'
+    )
     setTraceProvider(null)
     return
   }
 
   try {
     // Use custom provider if provided, otherwise create default OpenTelemetry provider
-    const provider = customProvider || new OpenTelemetryProvider()
-    
+    const provider = customProvider ?? new OpenTelemetryProvider()
+
     // Context7: Validate provider before setting (following OpenTelemetry patterns)
     if (provider instanceof OpenTelemetryProvider && !provider.isConfigured()) {
       console.warn(
         'RDCP: OpenTelemetry provider may not be properly configured. ' +
-        'Ensure you have initialized OpenTelemetry with a TracerProvider.'
+          'Ensure you have initialized OpenTelemetry with a TracerProvider.'
       )
     }
 
     // Set the trace provider in RDCP
     setTraceProvider(provider)
-    
+
     console.info('✅ RDCP OpenTelemetry integration enabled')
-    
+
     // Log provider info for debugging
     if (provider instanceof OpenTelemetryProvider) {
       const info = provider.getProviderInfo()
-      console.info(`RDCP: Using ${info.name} v${info.version} (configured: ${info.configured})`)
+      console.info(
+        `RDCP: Using ${info.name} v${info.version} (configured: ${info.configured})`
+      )
     }
   } catch (error) {
     // WARP: Fail gracefully, don't break application startup
@@ -89,9 +97,11 @@ export function disableRDCPOpenTelemetry(): void {
 export function isRDCPOpenTelemetryActive(): boolean {
   try {
     // This will be available once @rdcp/server exports getTraceProviderStatus
-    const { getTraceProviderStatus } = require('@rdcp.dev/server')
+    const { getTraceProviderStatus } = require('@rdcp.dev/server') as {
+      getTraceProviderStatus: () => TraceProviderStatus
+    }
     const status = getTraceProviderStatus()
-    return status.enabled && status.provider === 'opentelemetry'
+    return Boolean(status?.enabled && status?.provider === 'opentelemetry')
   } catch {
     // Fallback: assume active if no errors during setup
     return true

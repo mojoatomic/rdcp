@@ -8,11 +8,16 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [18.x, 20.x]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version-file: '.nvmrc'
+          node-version: ${{ matrix['node-version'] }}
+          cache: npm
       - run: npm ci --no-audit --no-fund
       - run: npm run build
       - run: npm install --prefix packages/otel-plugin --no-audit --no-fund
@@ -21,3 +26,5 @@ jobs:
       - run: npm install --prefix packages/rdcp-demo-app --no-audit --no-fund
       - run: npm test
       - run: npm run lint:ci
+      - run: npm run lint:ci --prefix packages/otel-plugin
+      - run: npm run type-check --prefix packages/otel-plugin
