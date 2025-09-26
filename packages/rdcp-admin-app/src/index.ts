@@ -27,6 +27,10 @@ app.get('/admin', (_req, res) => {
   <head><meta charset="utf-8"><title>RDCP Admin (Spec)</title></head>
   <body>
     <h1>RDCP Admin UI (Spec)</h1>
+    <ul>
+      <li><a href="/admin/json" target="_blank">Raw JSON (discovery + status)</a></li>
+      <li><a href="/admin/spec" target="_blank">AdminUISpec JSON (headless builder)</a></li>
+    </ul>
     <pre id="out">Loading...</pre>
     <script>
       fetch('/admin/spec').then(r=>r.json()).then(j=>{
@@ -37,6 +41,23 @@ app.get('/admin', (_req, res) => {
     </script>
   </body>
 </html>`)
+})
+
+app.get('/admin/json', async (_req, res) => {
+  try {
+    const rdcp = createRDCPClient({
+      baseUrl: process.env.RDCP_BASE_URL ?? 'http://localhost:3000',
+      headers: {},
+    })
+    const [discovery, status] = await Promise.all([
+      rdcp.getDiscovery(),
+      rdcp.getStatus(),
+    ])
+    res.json({ discovery, status })
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'unknown'
+    res.status(500).json({ error: String(message) })
+  }
 })
 
 app.listen(3100, () => {
