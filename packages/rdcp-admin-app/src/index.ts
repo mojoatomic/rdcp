@@ -2,14 +2,22 @@
 import express from 'express'
 import { createRDCPClient } from '@rdcp.dev/client'
 import { createAdminUISpec } from '@rdcp.dev/admin-ui'
+import { RDCP_HEADERS } from '@rdcp.dev/core'
 
 const app = express()
 
 app.get('/admin/spec', async (_req, res) => {
   try {
+    const apiKey =
+      process.env.RDCP_API_KEY ?? 'dev-key-change-in-production-min-32-chars'
+    const headers: Record<string, string> = {
+      [RDCP_HEADERS.AUTH_METHOD]: 'api-key',
+      [RDCP_HEADERS.CLIENT_ID]: 'admin-app',
+      authorization: `Bearer ${apiKey}`,
+    }
     const rdcp = createRDCPClient({
       baseUrl: process.env.RDCP_BASE_URL ?? 'http://localhost:3000',
-      headers: {},
+      headers,
     })
     const discovery = await rdcp.getDiscovery()
     const spec = createAdminUISpec(discovery)
@@ -22,9 +30,16 @@ app.get('/admin/spec', async (_req, res) => {
 
 app.get('/admin', async (_req, res) => {
   try {
+    const apiKey =
+      process.env.RDCP_API_KEY ?? 'dev-key-change-in-production-min-32-chars'
+    const headers: Record<string, string> = {
+      [RDCP_HEADERS.AUTH_METHOD]: 'api-key',
+      [RDCP_HEADERS.CLIENT_ID]: 'admin-app',
+      authorization: `Bearer ${apiKey}`,
+    }
     const rdcp = createRDCPClient({
       baseUrl: process.env.RDCP_BASE_URL ?? 'http://localhost:3000',
-      headers: {},
+      headers,
     })
     const discovery = await rdcp.getDiscovery()
     const spec = createAdminUISpec(discovery)
@@ -74,9 +89,16 @@ app.get('/admin', async (_req, res) => {
 
 app.get('/admin/json', async (_req, res) => {
   try {
+    const apiKey =
+      process.env.RDCP_API_KEY ?? 'dev-key-change-in-production-min-32-chars'
+    const headers: Record<string, string> = {
+      [RDCP_HEADERS.AUTH_METHOD]: 'api-key',
+      [RDCP_HEADERS.CLIENT_ID]: 'admin-app',
+      authorization: `Bearer ${apiKey}`,
+    }
     const rdcp = createRDCPClient({
       baseUrl: process.env.RDCP_BASE_URL ?? 'http://localhost:3000',
-      headers: {},
+      headers,
     })
     const [discovery, status] = await Promise.all([
       rdcp.getDiscovery(),
@@ -91,9 +113,16 @@ app.get('/admin/json', async (_req, res) => {
 
 app.post('/admin/action', express.json(), async (req, res) => {
   try {
+    const apiKey =
+      process.env.RDCP_API_KEY ?? 'dev-key-change-in-production-min-32-chars'
+    const headers: Record<string, string> = {
+      [RDCP_HEADERS.AUTH_METHOD]: 'api-key',
+      [RDCP_HEADERS.CLIENT_ID]: 'admin-app',
+      authorization: `Bearer ${apiKey}`,
+    }
     const rdcp = createRDCPClient({
       baseUrl: process.env.RDCP_BASE_URL ?? 'http://localhost:3000',
-      headers: {},
+      headers,
     })
     const body = req.body ?? {}
     const action = String(body.action || '').trim()
