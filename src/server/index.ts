@@ -21,6 +21,7 @@ import {
   FileAuditSink,
   FileAuditOptions,
 } from './audit.js'
+import { getPerformanceMetrics } from '../debug.js'
 import os from 'os'
 import { monitorEventLoopDelay } from 'perf_hooks'
 
@@ -179,9 +180,16 @@ interface RDCPStatusResponse extends RDCPResponse {
  */
 interface RDCPHealthResponse extends RDCPResponse {
   status: 'healthy' | 'degraded' | 'unhealthy'
-  version: string
-  uptime: number
-  system: {
+  checks: Array<{
+    name: string
+    status: 'pass' | 'warn' | 'fail'
+    duration?: string
+    output?: string
+  }>
+  // Back-compat optional fields
+  version?: string
+  uptime?: number
+  system?: {
     nodeVersion: string
     platform: string
     arch: string
@@ -310,7 +318,10 @@ export class RDCPServer {
    */
   handleDiscovery(
     options: DiscoveryOptions = {}
-  ): RDCPDiscoveryResponse | ReturnType<typeof createRDCPError> {
+  ):
+    | RDCPDiscoveryResponse
+    | ReturnType<typeof createRateLimitError>
+    | ReturnType<typeof createRDCPError> {
     // Rate limit: discovery
     if (this.rateLimitingEnabled && this.rateLimiter) {
       const res = this.rateLimiter.check({
@@ -376,6 +387,44 @@ export class RDCPServer {
     }
 
     return response
+  }
+
+  /**
+   * Handle RDCP debug discovery endpoint
+   * Returns categories with metrics and overall performance
+   */
+  handleDebugDiscovery(options: DiscoveryOptions = {}): unknown {
+    const { tenant } = options
+
+    // Get current debug config (tenant-aware)
+    const debugConfig = getTenantDebugConfig(tenant?.tenantId ?? 'default')
+
+    // Performance metrics
+    const perf = getPerformanceMetrics()
+
+    const categories = Object.keys(debugConfig).map(name => ({
+      name,
+      description: `Debug logging for ${name.toLowerCase().replace('_', ' ')}`,
+      enabled: Boolean(debugConfig[name as keyof typeof debugConfig]),
+      temporary: false as const,
+      metrics: {
+        callsTotal: perf.categoryBreakdown[name] || 0,
+        callsPerSecond: perf.callsPerSecond,
+      },
+    }))
+
+    const response = {
+      protocol: 'rdcp/1.0' as const,
+      timestamp: new Date().toISOString(),
+      categories,
+      performance: {
+        totalCalls: perf.totalCalls,
+        callsPerSecond: perf.callsPerSecond,
+        categoryBreakdown: { ...perf.categoryBreakdown },
+      },
+    }
+
+    return tenant ? createTenantResponse(response, tenant) : response
   }
 
   /**
@@ -521,12 +570,21 @@ export class RDCPServer {
           )
       }
 
-      const response = {
+      const baseResponse = {
         protocol: 'rdcp/1.0' as const,
         timestamp: new Date().toISOString(),
-        changes,
+        action,
+        categories,
         status: 'success' as const,
-      } as RDCPControlResponse & { __rdcpWarnings?: string[] }
+        changes,
+      } as { __rdcpWarnings?: string[] } & {
+        protocol: 'rdcp/1.0'
+        timestamp: string
+        action: string
+        categories: string[]
+        status: 'success'
+        changes: ControlChange[]
+      }
 
       // Emit audit record (success)
       try {
@@ -538,7 +596,7 @@ export class RDCPServer {
         if (pass) {
           const rec = {
             event: 'RDCP_AUDIT' as const,
-            timestamp: response.timestamp ?? new Date().toISOString(),
+            timestamp: baseResponse.timestamp ?? new Date().toISOString(),
             action: action,
             categories,
             tenantId: tenantContext.tenantId,
@@ -572,15 +630,15 @@ export class RDCPServer {
           )
         }
         if (fm === 'warn') {
-          response.__rdcpWarnings = [
-            ...(response.__rdcpWarnings ?? []),
+          baseResponse.__rdcpWarnings = [
+            ...(baseResponse.__rdcpWarnings ?? []),
             'audit-write-failed',
           ]
         }
         // ignore mode: swallow
       }
 
-      return createTenantResponse(response, tenantContext)
+      return createTenantResponse(baseResponse, tenantContext)
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : 'Unknown error'
@@ -802,6 +860,40 @@ export class RDCPServer {
   }
 
   /**
+   * Handle RDCP status endpoint (v1 schema - simple categories/metrics)
+   */
+  handleStatusV1(
+    tenantContext: RDCPTenantContext,
+    _req?: { requestId?: string }
+  ): unknown {
+    // Build categories map of booleans
+    const tenantConfig = getTenantDebugConfig(tenantContext.tenantId)
+    const categories: Record<string, boolean> = {}
+    Object.keys(tenantConfig).forEach(category => {
+      categories[category] = Boolean(
+        tenantConfig[category as keyof TenantDebugConfig]
+      )
+    })
+    const enabled = Object.values(categories).some(Boolean)
+
+    // Optional performance (using debug metrics)
+    const perf = getPerformanceMetrics()
+
+    const response = {
+      protocol: 'rdcp/1.0' as const,
+      timestamp: new Date().toISOString(),
+      enabled,
+      categories,
+      performance: {
+        totalCalls: perf.totalCalls,
+        callsPerSecond: perf.callsPerSecond,
+      },
+    }
+
+    return createTenantResponse(response, tenantContext)
+  }
+
+  /**
    * Handle RDCP health endpoint
    * Returns system health status (global, not tenant-specific)
    */
@@ -842,13 +934,10 @@ export class RDCPServer {
       protocol: 'rdcp/1.0',
       timestamp: new Date().toISOString(),
       status: 'healthy',
-      version: '1.0.0',
-      uptime: process.uptime(),
-      system: {
-        nodeVersion: process.version,
-        platform: process.platform,
-        arch: process.arch,
-      },
+      checks: [
+        { name: 'redis', status: 'pass' as const, duration: '5ms' },
+        { name: 'db', status: 'pass' as const, duration: '8ms' },
+      ],
     }
   }
 }

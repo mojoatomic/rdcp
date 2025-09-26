@@ -60,7 +60,7 @@ describe('Client-first e2e: RDCP client against demo app', () => {
       action: 'enable',
       categories: ['API_ROUTES'],
     })
-    expect(res.success).toBe(true)
+    expect(res.status).toBe('success')
 
     const status1 = await rdcp.getStatus()
     expect(status1.protocol).toBeDefined()
