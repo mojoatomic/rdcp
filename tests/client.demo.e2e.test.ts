@@ -68,4 +68,80 @@ describe('Client-first e2e: RDCP client against demo app', () => {
     const health = await rdcp.getHealth()
     expect(health.status).toBe('healthy')
   })
+
+  test('rate limit maps to RDCPClientError with code and status 429 (client path)', async () => {
+    const secret = process.env.JWT_SECRET ?? 'change-in-production'
+    const token = jwt.sign(
+      { sub: 'client-e2e', scopes: ['control', 'read'] },
+      secret,
+      { algorithm: 'HS256', expiresIn: '2m' }
+    )
+    const headers: Record<string, string> = {
+      [RDCP_HEADERS.AUTH_METHOD]: 'bearer',
+      [RDCP_HEADERS.CLIENT_ID]: `client-e2e-rate-${Date.now()}`,
+      authorization: `Bearer ${token}`,
+    }
+    const rdcp: RDCPClient = createRDCPClient({ baseUrl, headers })
+
+    // Threshold in demo app defaults to 3 per 2s; send 5 quickly
+    const ops = [] as Promise<unknown>[]
+    for (let i = 0; i < 5; i++) {
+      ops.push(
+        rdcp
+          .postControl({ action: 'enable', categories: ['API_ROUTES'] })
+          .catch((e: unknown) =>
+            e instanceof Error ? e : new Error(String(e))
+          )
+      )
+    }
+    const results = await Promise.all(ops)
+    let error: Error | undefined
+    for (const r of results) {
+      if (r instanceof Error) {
+        error = r
+        break
+      }
+    }
+    expect(error).toBeDefined()
+    if (error) {
+      const err = error as unknown as { status?: number; code?: string }
+      expect(err.status).toBe(429)
+      expect(err.code).toBe('RDCP_RATE_LIMITED')
+    }
+  })
+
+  test('emits RDCP_AUDIT log on successful control (client path)', async () => {
+    const secret = process.env.JWT_SECRET ?? 'change-in-production'
+    const token = jwt.sign(
+      { sub: 'client-e2e', scopes: ['control', 'read'] },
+      secret,
+      { algorithm: 'HS256', expiresIn: '2m' }
+    )
+    const headers: Record<string, string> = {
+      [RDCP_HEADERS.AUTH_METHOD]: 'bearer',
+      [RDCP_HEADERS.CLIENT_ID]: `client-e2e-audit-${Date.now()}`,
+      authorization: `Bearer ${token}`,
+    }
+    const rdcp: RDCPClient = createRDCPClient({ baseUrl, headers })
+
+    const logs: string[] = []
+    const orig = console.info
+    const interceptor = (...args: unknown[]): void => {
+      try {
+        if (typeof args[0] === 'string' && args[0] === 'RDCP_AUDIT') {
+          logs.push(String(args[1] ?? ''))
+        }
+      } catch {
+        // ignore
+      }
+      orig.call(console, ...args)
+    }
+    console.info = interceptor as typeof console.info
+    try {
+      await rdcp.postControl({ action: 'enable', categories: ['API_ROUTES'] })
+    } finally {
+      console.info = orig
+    }
+    expect(logs.some(l => l.includes('"event":"RDCP_AUDIT"'))).toBe(true)
+  })
 })
