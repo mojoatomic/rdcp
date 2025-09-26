@@ -1,0 +1,20 @@
+{
+  "name": "@rdcp.dev/admin-ui-react",
+  "version": "0.0.0",
+  "description": "React renderer for RDCP Admin UI spec produced by @rdcp.dev/admin-ui (headless)",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/types/src/index.d.ts",
+  "files": ["dist", "README.md", "LICENSE"],
+  "peerDependencies": {
+    "react": "^18.0.0"
+  },
+  "dependencies": {
+    "@rdcp.dev/admin-ui": "0.0.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "type-check": "tsc --noEmit"
+  }
+}
