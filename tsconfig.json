@@ -15,7 +15,13 @@
     "allowJs": true,
     "baseUrl": ".",
     "paths": {
-      "@rdcp.dev/core": ["packages/rdcp-core/src/index.ts"]
+      "@rdcp.dev/admin-ui": ["tests/shims/admin-ui.ts"],
+      "@rdcp.dev/admin-ui-react": ["tests/shims/admin-ui-react.ts"],
+      "react": ["tests/shims/react.ts"],
+      "react-dom/server": ["tests/shims/react-dom-server.ts"],
+      "@rdcp.dev/server": ["src"],
+      "@rdcp.dev/otel-plugin": ["packages/otel-plugin/src"],
+      "@rdcp.dev/*": ["packages/rdcp-*/src"]
     },
     "noImplicitAny": true,
     "noImplicitReturns": true,
