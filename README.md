@@ -13,6 +13,45 @@ First-of-its-kind JavaScript/TypeScript SDK implementing the Runtime Debug Contr
 
 ## Install
 
+Quick start (Client SDK)
+
+```ts path=null start=null
+import { createRDCPClient } from '@rdcp.dev/client'
+import { RDCP_HEADERS } from '@rdcp.dev/core'
+
+const rdcp = createRDCPClient({
+  baseUrl: process.env.RDCP_BASE_URL || 'http://localhost:3000',
+  headers: {
+    [RDCP_HEADERS.AUTH_METHOD]: 'api-key',
+    [RDCP_HEADERS.CLIENT_ID]: 'demo-client',
+    'x-api-key': process.env.RDCP_API_KEY!,
+  },
+})
+
+// Discovery
+const discovery = await rdcp.getDiscovery()
+
+// Status
+const status = await rdcp.getStatus()
+
+// Control
+const res = await rdcp.postControl({ action: 'enable', categories: ['API_ROUTES'] })
+
+// Health
+const health = await rdcp.getHealth()
+```
+
+Run the demo locally with the client SDK:
+
+```bash
+npm run dev --prefix packages/rdcp-demo-app # start demo app
+npm run demo:client                         # run client demo flows
+npm run demo:client:auth                    # try Basic/Bearer auth examples
+npm run demo:benchmark                      # compare client vs direct fetch
+```
+
+Install packages
+
 ```bash
 # Core (protocol constants, error codes, schemas)
 npm i @rdcp.dev/core
@@ -69,6 +108,10 @@ Authentication tiers, tenant isolation, and audit features exist because operati
 
 ### The Technical Innovation
 
+Prefer the Client SDK for production usage. For raw HTTP users, see Appendix below.
+
+Appendix: raw HTTP example
+
 ```bash
 # Instead of deploying code changes
 # (risky during incidents)
@@ -76,7 +119,7 @@ Authentication tiers, tenant isolation, and audit features exist because operati
 # Send HTTP requests to running systems
 curl -X POST /rdcp/v1/control \
   -H "Content-Type: application/json" \
-  -d '{"action":"enable","categories":["DATABASE"],"temporary":"5m"}'
+  -d '{"action":"enable","categories":["DATABASE"],"options":{"temporary":true,"duration":"5m"}}'
 ```
 
 Debug output activates immediately, provides operational visibility, then automatically disables after 5 minutes.
