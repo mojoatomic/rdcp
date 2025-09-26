@@ -2,9 +2,6 @@
 import express from 'express'
 import { createRDCPClient } from '@rdcp.dev/client'
 import { createAdminUISpec } from '@rdcp.dev/admin-ui'
-import * as React from 'react'
-import { renderToString } from 'react-dom/server'
-import { AdminUIRenderer } from '@rdcp.dev/admin-ui-react'
 
 const app = express()
 
@@ -15,8 +12,7 @@ app.get('/admin/spec', async (_req, res) => {
       headers: {},
     })
     const discovery = await rdcp.getDiscovery()
-    // @ts-expect-error ui not yet part of discovery; reserved for future optional block
-    const spec = createAdminUISpec(discovery, discovery.ui)
+    const spec = createAdminUISpec(discovery)
     res.json(spec)
   } catch (e) {
     const message = e instanceof Error ? e.message : 'unknown'
@@ -32,8 +28,23 @@ app.get('/admin', async (_req, res) => {
     })
     const discovery = await rdcp.getDiscovery()
     const spec = createAdminUISpec(discovery)
+    const [{ default: React }, { renderToString }, mod] = await Promise.all([
+      import('react'),
+      import('react-dom/server'),
+      import('@rdcp.dev/admin-ui-react'),
+    ])
+    const AdminUIRenderer = (
+      mod as unknown as {
+        AdminUIRenderer: (props: { spec: unknown }) => unknown
+      }
+    ).AdminUIRenderer
     const markup = renderToString(
-      React.createElement(AdminUIRenderer, { spec })
+      (
+        React as unknown as { createElement: (...args: unknown[]) => unknown }
+      ).createElement(
+        AdminUIRenderer as unknown as (props: { spec: unknown }) => unknown,
+        { spec }
+      )
     )
     res.type('html').send(`<!doctype html>
 <html>
@@ -78,6 +89,37 @@ app.get('/admin/json', async (_req, res) => {
   }
 })
 
-app.listen(3100, () => {
-  console.log('Admin app scaffold listening on :3100')
+app.post('/admin/action', express.json(), async (req, res) => {
+  try {
+    const rdcp = createRDCPClient({
+      baseUrl: process.env.RDCP_BASE_URL ?? 'http://localhost:3000',
+      headers: {},
+    })
+    const body = req.body ?? {}
+    const action = String(body.action || '').trim()
+    const categories = Array.isArray(body.categories)
+      ? body.categories
+      : [String(body.category || 'API_ROUTES')]
+    const options =
+      body.options && typeof body.options === 'object'
+        ? body.options
+        : undefined
+    const result = await rdcp.postControl({
+      action: action as 'enable' | 'disable' | 'toggle' | 'reset',
+      categories,
+      options,
+    })
+    res.json(result)
+  } catch (e) {
+    const message = e instanceof Error ? e.message : 'unknown'
+    res.status(500).json({ error: String(message) })
+  }
 })
+
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(3100, () => {
+    console.log('Admin app scaffold listening on :3100')
+  })
+}
+
+export { app }
