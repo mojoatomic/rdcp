@@ -1,0 +1,4 @@
+[submodule ".wiki-edit"]
+	path = .wiki-edit
+	url = https://github.com/mojoatomic/rdcp.wiki.git
+	branch = master
