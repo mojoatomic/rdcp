@@ -1,0 +1,19 @@
+{
+  "name": "@rdcp.dev/admin-app",
+  "version": "0.0.0",
+  "description": "Demo admin app that renders /admin via @rdcp.dev/admin-ui (scaffold)",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@rdcp.dev/admin-ui": "0.0.0",
+    "@rdcp.dev/client": "^1.0.0",
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.3"
+  }
+}
