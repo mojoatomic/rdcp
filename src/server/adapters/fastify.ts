@@ -384,7 +384,7 @@ export function createRDCPMiddleware(
       let statusCode = 200
 
       if (pathname === `${basePath}/discovery`) {
-        response = rdcpServer.handleDiscovery({
+        response = rdcpServer.handleDebugDiscovery({
           basePath,
           tenant: tenantContext,
           requestId: reqId,
@@ -413,7 +413,9 @@ export function createRDCPMiddleware(
           response = await rdcpServer.handleControl(body, tenantContext, meta)
         }
       } else if (pathname === `${basePath}/status`) {
-        response = rdcpServer.handleStatus(tenantContext, { requestId: reqId })
+        response = rdcpServer.handleStatusV1(tenantContext, {
+          requestId: reqId,
+        })
       } else if (pathname === `${basePath}/health`) {
         response = rdcpServer.handleHealth({ requestId: reqId })
       } else {
