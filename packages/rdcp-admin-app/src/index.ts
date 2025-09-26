@@ -21,6 +21,24 @@ app.get('/admin/spec', async (_req, res) => {
   }
 })
 
+app.get('/admin', (_req, res) => {
+  res.type('html').send(`<!doctype html>
+<html>
+  <head><meta charset="utf-8"><title>RDCP Admin (Spec)</title></head>
+  <body>
+    <h1>RDCP Admin UI (Spec)</h1>
+    <pre id="out">Loading...</pre>
+    <script>
+      fetch('/admin/spec').then(r=>r.json()).then(j=>{
+        document.getElementById('out').textContent = JSON.stringify(j, null, 2)
+      }).catch(e=>{
+        document.getElementById('out').textContent = 'Error: '+e
+      })
+    </script>
+  </body>
+</html>`)
+})
+
 app.listen(3100, () => {
   console.log('Admin app scaffold listening on :3100')
 })
