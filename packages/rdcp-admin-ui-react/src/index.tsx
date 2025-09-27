@@ -79,6 +79,13 @@ export function SubmitBar(props: SubmitBarProps): JSX.Element {
   }
   return (
     <div>
+      <label htmlFor="rdcp-action" style={{ marginRight: 8 }}>Action</label>
+      <select id="rdcp-action" aria-label="action" defaultValue="enable" style={{ marginRight: 12 }}>
+        <option value="enable">enable</option>
+        <option value="disable">disable</option>
+        <option value="toggle">toggle</option>
+        <option value="reset">reset</option>
+      </select>
       <button id="rdcp-apply" onClick={run} disabled={busy || disabled}>Apply</button>
     </div>
   )

@@ -70,6 +70,10 @@ app.get('/admin', async (_req, res) => {
       body { font-family: -apple-system, system-ui, Arial; padding: 20px; }
       section { border: 1px solid #ddd; padding: 12px; margin: 8px 0; border-radius: 6px; }
       h1 { margin-top: 0; }
+      #rdcp-toast { position: fixed; right: 20px; bottom: 20px; max-width: 360px; background: #222; color: #fff; padding: 10px 12px; border-radius: 6px; box-shadow: 0 6px 18px rgba(0,0,0,0.2); opacity: 0; pointer-events: none; transform: translateY(10px); transition: opacity .2s ease, transform .2s ease; font-size: 14px; }
+      #rdcp-toast.show { opacity: 0.95; transform: translateY(0); }
+      #rdcp-toast.success { background: #137333; }
+      #rdcp-toast.error { background: #a50e0e; }
     </style>
   </head>
   <body>
@@ -79,11 +83,22 @@ app.get('/admin', async (_req, res) => {
       <li><a href="/admin/spec" target="_blank">AdminUISpec JSON (headless builder)</a></li>
     </ul>
     <div id="root">${markup}</div>
+    <div id="rdcp-toast" role="status" aria-live="polite" aria-atomic="true" />
     <script>
       (function(){
         var paused = false;
         var errorCount = 0;
         var statusEl = document.getElementById('rdcp-status');
+        var toastEl = document.getElementById('rdcp-toast');
+        var toastTimer = null;
+        function showToast(msg, type){
+          if (!toastEl) return;
+          toastEl.textContent = String(msg || '');
+          toastEl.classList.remove('success','error');
+          if (type) toastEl.classList.add(String(type));
+          toastEl.classList.add('show');
+          clearTimeout(toastTimer); toastTimer = setTimeout(function(){ toastEl.classList.remove('show'); }, 2500);
+        }
         function setLoading(on){ if (statusEl){ statusEl.setAttribute('data-loading', on ? 'true' : 'false'); if(on){ statusEl.innerHTML = '<strong>Status</strong> <span>(loading...)</span>'; } } }
         function updateStatus(ts){ if (statusEl){ statusEl.innerHTML = '<strong>Status</strong> ' + (ts ? '<span>(' + ts + ')</span>' : '<span>(idle)</span>'); } }
         function jitter(ms){ return ms + Math.floor(Math.random()*300); }
@@ -110,7 +125,9 @@ app.get('/admin', async (_req, res) => {
               var durEl = document.getElementById('rdcp-duration');
               var duration = durEl && durEl.value ? String(durEl.value) : '';
               var options = duration ? { temporary: true, duration: duration } : undefined;
-              var body = { action: 'enable', categories: cats };
+              var actionEl = document.getElementById('rdcp-action');
+              var action = actionEl && actionEl.value ? String(actionEl.value) : 'enable';
+              var body = { action: action, categories: cats };
               if (tenant) body.tenantId = tenant;
               if (options) body.options = options;
               btn.disabled = true;
@@ -121,13 +138,13 @@ app.get('/admin', async (_req, res) => {
               })
               .then(function(res){ return res.text().then(function(t){ try { return { ok: res.ok, data: JSON.parse(t) }; } catch(_){ return { ok: res.ok, data: t }; } }); })
               .then(function(result){
-                if (result.ok) alert('Applied successfully'); else alert('Failed: ' + (result && result.data && result.data.error ? result.data.error : 'unknown'));
+                if (result.ok) showToast('Applied successfully','success'); else showToast('Failed: ' + (result && result.data && result.data.error ? result.data.error : 'unknown'),'error');
               })
-              .catch(function(err){ alert('Error: ' + err); })
+              .catch(function(err){ showToast('Error: ' + err,'error'); })
               .finally(function(){ btn.disabled = false; paused = false; schedule(0); });
             } catch (e) {
               paused = false; schedule(500);
-              alert('Error: ' + e);
+              showToast('Error: ' + e,'error');
             }
           });
         }
