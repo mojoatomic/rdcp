@@ -92,6 +92,22 @@ Rather than requiring integration with specific platforms, RDCP defines standard
 
 ---
 
+## Admin UI (Actions + Polling)
+
+The demo Admin UI at `/admin` demonstrates real-time operational control with:
+
+- Action selector: enable/disable/toggle/reset
+- Jittered polling (~1s + 0–300ms), exponential backoff (cap ~10s)
+- Pause during control operations; immediate resume
+- Inline toasts for success/error, non-blocking feedback
+
+Try it locally:
+- Start the demo app (see packages/rdcp-demo-app/README.md)
+- Visit `/admin` and toggle categories, set optional TTL (e.g., `2m`), and click Apply
+- Watch the Status panel timestamp update and toasts confirm actions
+
+A short GIF can be placed in `docs/assets/admin-ui-demo.gif` and embedded here when available.
+
 ## Operational Infrastructure Control (OIC)
 
 RDCP is the first implementation of a new infrastructure category: Operational Infrastructure Control (OIC).

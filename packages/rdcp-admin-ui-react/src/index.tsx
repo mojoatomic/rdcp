@@ -9,10 +9,18 @@ export function ToggleGroup(props: ToggleGroupProps): JSX.Element {
     onChange(next)
   }
   return (
-    <div>
+    <div data-rdcp="toggle-group">
       {categories.map(cat => (
         <label key={cat} style={{ display: 'inline-block', marginRight: 8 }}>
-          <input type="checkbox" checked={selected.includes(cat)} onChange={() => onToggle(cat)} /> {cat}
+          <input
+            type="checkbox"
+            name={`category-${cat}`}
+            data-category={cat}
+            aria-label={`toggle ${cat}`}
+            checked={selected.includes(cat)}
+            onChange={() => onToggle(cat)}
+          />{' '}
+          {cat}
         </label>
       ))}
     </div>
@@ -26,6 +34,7 @@ export function DurationInput(props: DurationInputProps): JSX.Element {
   return (
     <div>
       <input
+        id="rdcp-duration"
         aria-label="duration"
         placeholder="e.g., 2m, 30s"
         value={value}
@@ -41,7 +50,7 @@ export function TenantSelect(props: TenantSelectProps): JSX.Element | null {
   const { tenants, value, onChange } = props
   if (!tenants || tenants.length === 0) return null
   return (
-    <select aria-label="tenant" value={value ?? ''} onChange={e => onChange(e.target.value || undefined)}>
+    <select id="rdcp-tenant" aria-label="tenant" value={value ?? ''} onChange={e => onChange(e.target.value || undefined)}>
       <option value="">(global)</option>
       {tenants.map(t => (
         <option key={t} value={t}>{t}</option>
@@ -54,8 +63,8 @@ export type StatusPanelProps = { status?: { timestamp?: string } }
 export function StatusPanel(props: StatusPanelProps): JSX.Element {
   const { status } = props
   return (
-    <div>
-      <strong>Status</strong> {status?.timestamp ? <span>({status.timestamp})</span> : null}
+    <div id="rdcp-status" data-loading="false">
+      <strong>Status</strong> {status?.timestamp ? <span>({status.timestamp})</span> : <span>(idle)</span>}
     </div>
   )
 }
@@ -70,7 +79,14 @@ export function SubmitBar(props: SubmitBarProps): JSX.Element {
   }
   return (
     <div>
-      <button onClick={run} disabled={busy || disabled}>Apply</button>
+      <label htmlFor="rdcp-action" style={{ marginRight: 8 }}>Action</label>
+      <select id="rdcp-action" aria-label="action" defaultValue="enable" style={{ marginRight: 12 }}>
+        <option value="enable">enable</option>
+        <option value="disable">disable</option>
+        <option value="toggle">toggle</option>
+        <option value="reset">reset</option>
+      </select>
+      <button id="rdcp-apply" onClick={run} disabled={busy || disabled}>Apply</button>
     </div>
   )
 }
