@@ -79,6 +79,40 @@ app.get('/admin', async (_req, res) => {
       <li><a href="/admin/spec" target="_blank">AdminUISpec JSON (headless builder)</a></li>
     </ul>
     <div id="root">${markup}</div>
+    <script>
+      (function(){
+        var btn = document.getElementById('rdcp-apply');
+        if (!btn) return;
+        btn.addEventListener('click', function(){
+          try {
+            var boxes = Array.prototype.slice.call(document.querySelectorAll('input[type="checkbox"][data-category]'));
+            var cats = boxes.filter(function(el){ return !!el && el.checked; }).map(function(el){ return el.getAttribute('data-category'); });
+            var tenantEl = document.getElementById('rdcp-tenant');
+            var tenant = tenantEl && tenantEl.value ? String(tenantEl.value) : '';
+            var durEl = document.getElementById('rdcp-duration');
+            var duration = durEl && durEl.value ? String(durEl.value) : '';
+            var options = duration ? { temporary: true, duration: duration } : undefined;
+            var body = { action: 'enable', categories: cats };
+            if (tenant) body.tenantId = tenant;
+            if (options) body.options = options;
+            btn.disabled = true;
+            fetch('/admin/action', {
+              method: 'POST',
+              headers: { 'content-type': 'application/json' },
+              body: JSON.stringify(body)
+            })
+            .then(function(res){ return res.text().then(function(t){ try { return { ok: res.ok, data: JSON.parse(t) }; } catch(_){ return { ok: res.ok, data: t }; } }); })
+            .then(function(result){
+              if (result.ok) alert('Applied successfully'); else alert('Failed: ' + (result && result.data && result.data.error ? result.data.error : 'unknown'));
+            })
+            .catch(function(err){ alert('Error: ' + err); })
+            .finally(function(){ btn.disabled = false; });
+          } catch (e) {
+            alert('Error: ' + e);
+          }
+        });
+      })();
+    </script>
   </body>
 </html>`)
   } catch (e) {
