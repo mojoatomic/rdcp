@@ -81,36 +81,58 @@ app.get('/admin', async (_req, res) => {
     <div id="root">${markup}</div>
     <script>
       (function(){
+        var paused = false;
+        var errorCount = 0;
+        var statusEl = document.getElementById('rdcp-status');
+        function setLoading(on){ if (statusEl){ statusEl.setAttribute('data-loading', on ? 'true' : 'false'); if(on){ statusEl.innerHTML = '<strong>Status</strong> <span>(loading...)</span>'; } } }
+        function updateStatus(ts){ if (statusEl){ statusEl.innerHTML = '<strong>Status</strong> ' + (ts ? '<span>(' + ts + ')</span>' : '<span>(idle)</span>'); } }
+        function jitter(ms){ return ms + Math.floor(Math.random()*300); }
+        function nextDelay(ok){ if (ok){ errorCount = 0; return jitter(1000); } else { errorCount = Math.min(errorCount+1, 5); return Math.min(jitter(1000*Math.pow(2,errorCount)), 10000); } }
+        function schedule(ms){ setTimeout(poll, ms); }
+        function poll(){
+          if (paused){ schedule(500); return; }
+          setLoading(true);
+          fetch('/admin/json').then(function(res){ return res.json(); }).then(function(data){
+            try { var ts = data && data.status && data.status.timestamp ? String(data.status.timestamp) : ''; updateStatus(ts); } catch(_){ /* noop */ }
+            setLoading(false);
+            schedule(nextDelay(true));
+          }).catch(function(){ setLoading(false); schedule(nextDelay(false)); });
+        }
         var btn = document.getElementById('rdcp-apply');
-        if (!btn) return;
-        btn.addEventListener('click', function(){
-          try {
-            var boxes = Array.prototype.slice.call(document.querySelectorAll('input[type="checkbox"][data-category]'));
-            var cats = boxes.filter(function(el){ return !!el && el.checked; }).map(function(el){ return el.getAttribute('data-category'); });
-            var tenantEl = document.getElementById('rdcp-tenant');
-            var tenant = tenantEl && tenantEl.value ? String(tenantEl.value) : '';
-            var durEl = document.getElementById('rdcp-duration');
-            var duration = durEl && durEl.value ? String(durEl.value) : '';
-            var options = duration ? { temporary: true, duration: duration } : undefined;
-            var body = { action: 'enable', categories: cats };
-            if (tenant) body.tenantId = tenant;
-            if (options) body.options = options;
-            btn.disabled = true;
-            fetch('/admin/action', {
-              method: 'POST',
-              headers: { 'content-type': 'application/json' },
-              body: JSON.stringify(body)
-            })
-            .then(function(res){ return res.text().then(function(t){ try { return { ok: res.ok, data: JSON.parse(t) }; } catch(_){ return { ok: res.ok, data: t }; } }); })
-            .then(function(result){
-              if (result.ok) alert('Applied successfully'); else alert('Failed: ' + (result && result.data && result.data.error ? result.data.error : 'unknown'));
-            })
-            .catch(function(err){ alert('Error: ' + err); })
-            .finally(function(){ btn.disabled = false; });
-          } catch (e) {
-            alert('Error: ' + e);
-          }
-        });
+        if (btn){
+          btn.addEventListener('click', function(){
+            try {
+              paused = true;
+              var boxes = Array.prototype.slice.call(document.querySelectorAll('input[type="checkbox"][data-category]'));
+              var cats = boxes.filter(function(el){ return !!el && el.checked; }).map(function(el){ return el.getAttribute('data-category'); });
+              var tenantEl = document.getElementById('rdcp-tenant');
+              var tenant = tenantEl && tenantEl.value ? String(tenantEl.value) : '';
+              var durEl = document.getElementById('rdcp-duration');
+              var duration = durEl && durEl.value ? String(durEl.value) : '';
+              var options = duration ? { temporary: true, duration: duration } : undefined;
+              var body = { action: 'enable', categories: cats };
+              if (tenant) body.tenantId = tenant;
+              if (options) body.options = options;
+              btn.disabled = true;
+              fetch('/admin/action', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify(body)
+              })
+              .then(function(res){ return res.text().then(function(t){ try { return { ok: res.ok, data: JSON.parse(t) }; } catch(_){ return { ok: res.ok, data: t }; } }); })
+              .then(function(result){
+                if (result.ok) alert('Applied successfully'); else alert('Failed: ' + (result && result.data && result.data.error ? result.data.error : 'unknown'));
+              })
+              .catch(function(err){ alert('Error: ' + err); })
+              .finally(function(){ btn.disabled = false; paused = false; schedule(0); });
+            } catch (e) {
+              paused = false; schedule(500);
+              alert('Error: ' + e);
+            }
+          });
+        }
+        // start polling
+        schedule(0);
       })();
     </script>
   </body>

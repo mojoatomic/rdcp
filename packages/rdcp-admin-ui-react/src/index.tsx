@@ -63,8 +63,8 @@ export type StatusPanelProps = { status?: { timestamp?: string } }
 export function StatusPanel(props: StatusPanelProps): JSX.Element {
   const { status } = props
   return (
-    <div>
-      <strong>Status</strong> {status?.timestamp ? <span>({status.timestamp})</span> : null}
+    <div id="rdcp-status" data-loading="false">
+      <strong>Status</strong> {status?.timestamp ? <span>({status.timestamp})</span> : <span>(idle)</span>}
     </div>
   )
 }
