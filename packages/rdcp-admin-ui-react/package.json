@@ -6,13 +6,16 @@
   "type": "module",
   "license": "Apache-2.0",
   "main": "dist/index.js",
-  "types": "dist/types/src/index.d.ts",
+  "types": "dist/index.d.ts",
   "files": ["dist", "README.md", "LICENSE"],
   "peerDependencies": {
     "react": "^18.0.0"
   },
   "dependencies": {
     "@rdcp.dev/admin-ui": "0.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.0"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",

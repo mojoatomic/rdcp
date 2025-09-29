@@ -6,7 +6,7 @@
   "type": "module",
   "license": "Apache-2.0",
   "main": "dist/index.js",
-  "types": "dist/types/src/index.d.ts",
+  "types": "dist/index.d.ts",
   "files": ["dist", "README.md", "LICENSE"],
   "scripts": {
     "build": "tsc -p tsconfig.json",

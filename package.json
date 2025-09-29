@@ -1,6 +1,6 @@
 {
   "name": "@rdcp.dev/server",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "JavaScript/TypeScript SDK for Runtime Debug Control Protocol v1.0 endpoints",
   "keywords": [
     "rdcp",
@@ -31,6 +31,9 @@
     "url": "https://github.com/rdcp/sdk/issues"
   },
   "homepage": "https://rdcp.dev",
+  "workspaces": [
+    "packages/*"
+  ],
   "main": "dist/index.js",
   "types": "dist/types/src/index.d.ts",
   "files": [
@@ -74,9 +77,11 @@
     "cleanup": "pkill -f 'tsx watch' || true",
     "build:core": "tsc -p packages/rdcp-core/tsconfig.json && tsc -p packages/rdcp-core/tsconfig.cjs.json",
     "build:client": "tsc -p packages/rdcp-client/tsconfig.json && tsc -p packages/rdcp-client/tsconfig.cjs.json",
+    "build:admin": "npm run build --prefix packages/rdcp-admin-ui && npm run build --prefix packages/rdcp-admin-ui-react && npm run build --prefix packages/rdcp-admin-app",
+    "build:otel": "npm run build --prefix packages/otel-plugin",
     "build:types": "tsc -p tsconfig.types.json",
     "build:js": "rollup -c rollup.config.mjs",
-    "build": "npm run build:core && npm run build:client && npm run build:types && npm run build:js",
+    "build": "npm run build:core && npm run build:client && npm run build:admin && npm run build:otel && npm run build:types && npm run build:js",
     "demo:proof": "bash scripts/demo-proof.sh",
     "demo:client": "node --enable-source-maps scripts/client-demo.mjs",
     "demo:client:auth": "node --enable-source-maps scripts/client-auth-examples.mjs",
@@ -117,6 +122,8 @@
     "@types/jsonwebtoken": "^9.0.5",
     "@types/koa": "^3.0.0",
     "@types/node": "^20.10.6",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
     "@types/supertest": "^2.0.12",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
