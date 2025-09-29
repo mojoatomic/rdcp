@@ -25,6 +25,9 @@ app.get('/admin/spec', async (_req, res) => {
       categories: discovery.categories.map(c => ({
         ...c,
         temporary: Boolean(c.temporary),
+        metrics: c.metrics
+          ? { ...c.metrics }
+          : { callsTotal: 0, callsPerSecond: 0 },
       })),
     }
     const spec = createAdminUISpec(normalized)
@@ -54,6 +57,9 @@ app.get('/admin', async (_req, res) => {
       categories: discovery.categories.map(c => ({
         ...c,
         temporary: Boolean(c.temporary),
+        metrics: c.metrics
+          ? { ...c.metrics }
+          : { callsTotal: 0, callsPerSecond: 0 },
       })),
     }
     const spec = createAdminUISpec(normalized)
