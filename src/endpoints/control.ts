@@ -28,7 +28,7 @@ export function runtimeControl(req: Request, res: Response): void {
       case 'enable':
         enableDebugCategories(categories, tenantContext?.tenantId)
         changes.push(
-          ...categories.map(cat => ({
+          ...categories.map((cat: string) => ({
             category: cat,
             previousState: false,
             newState: true,
@@ -40,7 +40,7 @@ export function runtimeControl(req: Request, res: Response): void {
       case 'disable':
         disableDebugCategories(categories, tenantContext?.tenantId)
         changes.push(
-          ...categories.map(cat => ({
+          ...categories.map((cat: string) => ({
             category: cat,
             previousState: true,
             newState: false,
@@ -53,7 +53,7 @@ export function runtimeControl(req: Request, res: Response): void {
         const debugConfig = tenantContext
           ? getTenantDebugConfig(tenantContext.tenantId)
           : DEBUG_CONFIG
-        categories.forEach(cat => {
+        categories.forEach((cat: string) => {
           const prev = Boolean(debugConfig[cat as keyof typeof debugConfig])
           const next = !prev
           if (tenantContext?.tenantId) {
@@ -84,13 +84,13 @@ export function runtimeControl(req: Request, res: Response): void {
           : DEBUG_CONFIG
         const keys = Object.keys(debugConfig)
         const changed: string[] = []
-        keys.forEach(cat => {
+        keys.forEach((cat: string) => {
           const prev = Boolean(debugConfig[cat as keyof typeof debugConfig])
           if (prev) changed.push(cat)
         })
         disableDebugCategories(keys, tenantContext?.tenantId)
         changes.push(
-          ...keys.map(cat => ({
+          ...keys.map((cat: string) => ({
             category: cat,
             previousState: Boolean(
               debugConfig[cat as keyof typeof debugConfig]

@@ -76,7 +76,7 @@
     "build:client": "tsc -p packages/rdcp-client/tsconfig.json && tsc -p packages/rdcp-client/tsconfig.cjs.json",
     "build:types": "tsc -p tsconfig.types.json",
     "build:js": "rollup -c rollup.config.mjs",
-    "build": "npm run build:types && npm run build:js",
+    "build": "npm run build:core && npm run build:client && npm run build:types && npm run build:js",
     "demo:proof": "bash scripts/demo-proof.sh",
     "demo:client": "node --enable-source-maps scripts/client-demo.mjs",
     "demo:client:auth": "node --enable-source-maps scripts/client-auth-examples.mjs",
