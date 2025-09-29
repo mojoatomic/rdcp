@@ -44,10 +44,21 @@ const health = await rdcp.getHealth()
 Run the demo locally with the client SDK:
 
 ```bash
+# Fresh clone setup (installs all workspace deps, including demo app)
+npm ci
+npm run build
+
+# Start demo app and run client flows
 npm run dev --prefix packages/rdcp-demo-app # start demo app
 npm run demo:client                         # run client demo flows
 npm run demo:client:auth                    # try Basic/Bearer auth examples
 npm run demo:benchmark                      # compare client vs direct fetch
+```
+
+If you are using an older npm that doesn’t enable workspaces automatically, run:
+
+```bash
+npm install --prefix packages/rdcp-demo-app
 ```
 
 Install packages
