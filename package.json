@@ -17,7 +17,7 @@
     "authentication",
     "multi-tenant"
   ],
-  "license": "MIT",
+  "license": "Apache-2.0",
   "author": {
     "name": "Doug Fennell",
     "email": "doug@rdcp.dev",

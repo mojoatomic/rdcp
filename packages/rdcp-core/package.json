@@ -2,7 +2,7 @@
   "name": "@rdcp.dev/core",
   "version": "1.0.0",
   "private": false,
-  "license": "MIT",
+  "license": "Apache-2.0",
   "type": "module",
   "sideEffects": false,
   "types": "dist/index.d.ts",

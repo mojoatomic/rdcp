@@ -4,6 +4,7 @@
   "description": "React renderer for RDCP Admin UI spec produced by @rdcp.dev/admin-ui (headless)",
   "private": true,
   "type": "module",
+  "license": "Apache-2.0",
   "main": "dist/index.js",
   "types": "dist/types/src/index.d.ts",
   "files": ["dist", "README.md", "LICENSE"],

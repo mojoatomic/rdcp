@@ -2,7 +2,7 @@
   "name": "@rdcp/demo-app",
   "version": "0.1.0",
   "private": true,
-  "license": "MIT",
+  "license": "Apache-2.0",
   "author": {
     "name": "Doug Fennell",
     "email": "technical@c2cfirm.com",

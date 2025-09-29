@@ -3,7 +3,7 @@
 **OpenTelemetry integration plugin for RDCP SDK** - Enterprise-grade trace correlation
 
 [![npm version](https://img.shields.io/npm/v/@rdcp.dev/otel-plugin)](https://www.npmjs.com/package/@rdcp.dev/otel-plugin)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://www.apache.org/licenses/LICENSE-2.0)
 
 ## 🎯 Overview
 
