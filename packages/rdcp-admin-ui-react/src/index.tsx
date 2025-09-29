@@ -27,7 +27,7 @@ export function ToggleGroup(props: ToggleGroupProps): JSX.Element {
   )
 }
 
-export type DurationInputProps = { min?: string; max?: string; defaultValue?: string; onChange: (value: string) => void }
+export type DurationInputProps = { min?: string | undefined; max?: string | undefined; defaultValue?: string | undefined; onChange: (value: string) => void }
 export function DurationInput(props: DurationInputProps): JSX.Element {
   const { min, max, defaultValue, onChange } = props
   const [value, setValue] = React.useState<string>(defaultValue ?? '')
@@ -45,7 +45,7 @@ export function DurationInput(props: DurationInputProps): JSX.Element {
   )
 }
 
-export type TenantSelectProps = { tenants?: string[]; value?: string; onChange: (tenant?: string) => void }
+export type TenantSelectProps = { tenants?: string[] | undefined; value?: string | undefined; onChange: (tenant?: string) => void }
 export function TenantSelect(props: TenantSelectProps): JSX.Element | null {
   const { tenants, value, onChange } = props
   if (!tenants || tenants.length === 0) return null
