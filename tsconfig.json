@@ -19,9 +19,9 @@
       "@rdcp.dev/admin-ui-react": ["tests/shims/admin-ui-react.ts"],
       "react": ["tests/shims/react.ts"],
       "react-dom/server": ["tests/shims/react-dom-server.ts"],
-      "@rdcp.dev/server": ["src"],
-      "@rdcp.dev/otel-plugin": ["packages/otel-plugin/src"],
-      "@rdcp.dev/*": ["packages/rdcp-*/src"]
+      "@rdcp.dev/server": ["dist/types/src/index.d.ts"],
+      "@rdcp.dev/otel-plugin": ["packages/otel-plugin/dist/index.d.ts"],
+      "@rdcp.dev/*": ["packages/rdcp-*/dist/index.d.ts"]
     },
     "noImplicitAny": true,
     "noImplicitReturns": true,
