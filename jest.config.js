@@ -17,11 +17,15 @@ module.exports = {
     '^react-dom/server$': '<rootDir>/tests/shims/react-dom-server.ts',
     '^@rdcp\\.dev/admin-ui-react$': '<rootDir>/tests/shims/admin-ui-react.ts',
     '^@rdcp\\.dev/admin-ui$': '<rootDir>/tests/shims/admin-ui.ts',
-    // Exceptions that don't follow rdcp-* folder naming
-    '^@rdcp\\.dev/server$': '<rootDir>/src',
-    '^@rdcp\\.dev/otel-plugin$': '<rootDir>/packages/otel-plugin/src',
-    // Project-wide mapping for all workspace packages
-    '^@rdcp\\.dev\/(.*)$': '<rootDir>/packages/rdcp-$1/src'
+    // Map server to built CJS to avoid ESM parse errors in Jest
+    '^@rdcp\\.dev/server$': '<rootDir>/dist/index.js',
+    // Map otel-plugin to its built CJS
+    '^@rdcp\\.dev/otel-plugin$': '<rootDir>/packages/otel-plugin/dist/index.js',
+    // Fix direct relative imports to src in tests -> built CJS outputs
+    '^\\.\\./packages/rdcp-client/src/index$': '<rootDir>/packages/rdcp-client/dist-cjs/index.js',
+    '^\\.\\./packages/rdcp-core/src/(.*)$': '<rootDir>/packages/rdcp-core/dist-cjs/$1.js',
+    // Project-wide mapping for all workspace packages (default to built CJS)
+    '^@rdcp\\.dev\/(.*)$': '<rootDir>/packages/rdcp-$1/dist-cjs/index.js'
   },
   transform: {
     '^.+\\.tsx?$': [
