@@ -9,8 +9,9 @@
     "module": "ESNext",
     "target": "ES2020",
     "moduleResolution": "Bundler",
-    "strict": true
+    "strict": true,
+    "exactOptionalPropertyTypes": false
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts"],
+  "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

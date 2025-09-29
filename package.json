@@ -95,8 +95,10 @@
     "*.md": "node scripts/check-wiki-links.js"
   },
   "dependencies": {
-    "@rdcp.dev/core": "^1.0.0",
     "@opentelemetry/api": "^1.9.0",
+    "@rdcp.dev/admin-ui": "file:packages/rdcp-admin-ui",
+    "@rdcp.dev/admin-ui-react": "file:packages/rdcp-admin-ui-react",
+    "@rdcp.dev/core": "file:packages/rdcp-core",
     "fastify-plugin": "^5.0.1",
     "jose": "^5.9.4",
     "jsonwebtoken": "^9.0.2",
@@ -104,6 +106,7 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@rdcp.dev/client": "file:packages/rdcp-client",
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-json": "^6.0.1",
     "@rollup/plugin-node-resolve": "^15.2.3",
@@ -119,21 +122,20 @@
     "eslint": "^9.0.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.1.2",
-"express": "^4.18.2",
-    "koa": "^2.14.2",
+    "express": "^4.18.2",
     "fastify": "^4.25.2",
+    "husky": "^9.1.6",
     "jest": "^29.7.0",
+    "koa": "^2.14.2",
+    "lint-staged": "^15.2.9",
     "prettier": "^3.1.1",
     "rollup": "^4.9.2",
-    "husky": "^9.1.6",
-    "lint-staged": "^15.2.9",
     "supertest": "^6.3.4",
     "ts-jest": "^29.1.0",
     "ts-node": "^10.9.2",
     "tslib": "^2.8.1",
     "tsx": "^4.6.2",
-    "typescript": "^5.3.3",
-    "@rdcp.dev/client": "^1.0.0"
+    "typescript": "^5.3.3"
   },
   "peerDependencies": {
     "express": "^4.18.0",
