@@ -59,6 +59,7 @@ If you are using an older npm that doesn’t enable workspaces automatically, ru
 
 ```bash
 npm install --prefix packages/rdcp-demo-app
+npm run build --prefix packages/otel-plugin # required once so demo app can import it
 ```
 
 Install packages
