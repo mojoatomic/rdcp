@@ -20,7 +20,17 @@ app.get('/admin/spec', async (_req, res) => {
       headers,
     })
     const discovery = await rdcp.getDiscovery()
-    const spec = createAdminUISpec(discovery)
+    const normalized = {
+      ...discovery,
+      categories: discovery.categories.map(c => ({
+        ...c,
+        temporary: Boolean(c.temporary),
+        metrics: c.metrics
+          ? { ...c.metrics }
+          : { callsTotal: 0, callsPerSecond: 0 },
+      })),
+    }
+    const spec = createAdminUISpec(normalized)
     res.json(spec)
   } catch (e) {
     const message = e instanceof Error ? e.message : 'unknown'
@@ -42,7 +52,17 @@ app.get('/admin', async (_req, res) => {
       headers,
     })
     const discovery = await rdcp.getDiscovery()
-    const spec = createAdminUISpec(discovery)
+    const normalized = {
+      ...discovery,
+      categories: discovery.categories.map(c => ({
+        ...c,
+        temporary: Boolean(c.temporary),
+        metrics: c.metrics
+          ? { ...c.metrics }
+          : { callsTotal: 0, callsPerSecond: 0 },
+      })),
+    }
+    const spec = createAdminUISpec(normalized)
     const [{ default: React }, { renderToString }, mod] = await Promise.all([
       import('react'),
       import('react-dom/server'),
@@ -59,7 +79,7 @@ app.get('/admin', async (_req, res) => {
       ).createElement(
         AdminUIRenderer as unknown as (props: { spec: unknown }) => unknown,
         { spec }
-      )
+      ) as Parameters<typeof renderToString>[0]
     )
     res.type('html').send(`<!doctype html>
 <html>

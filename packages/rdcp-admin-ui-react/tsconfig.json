@@ -9,7 +9,8 @@
     "moduleResolution": "Bundler",
     "declaration": true,
     "declarationMap": true,
-    "strict": true
+    "strict": true,
+    "paths": {}
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["node_modules", "dist"]
