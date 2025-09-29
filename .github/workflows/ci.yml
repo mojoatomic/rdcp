@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NODE_OPTIONS: --max-old-space-size=4096
+      ROLLUP_DISABLE_NATIVE: '1'
     strategy:
       fail-fast: false
       matrix:
@@ -21,6 +22,8 @@ jobs:
           node-version: ${{ matrix['node-version'] }}
           cache: npm
       - run: npm ci --no-audit --no-fund
+      - name: Ensure Rollup native binary is present (linux-x64)
+        run: npm i --no-save @rollup/rollup-linux-x64-gnu || true
       - run: npm run build
       - run: npm install --prefix packages/otel-plugin --no-audit --no-fund
       - run: npm install --no-save --prefix packages/otel-plugin $GITHUB_WORKSPACE
