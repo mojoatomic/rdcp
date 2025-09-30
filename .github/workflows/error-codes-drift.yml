@@ -28,5 +28,10 @@ jobs:
       - name: Generate error-codes doc
         run: npm run gen:error-codes
 
-      - name: Check for drift
-        run: git diff --exit-code
+      - name: Check for uncommitted changes (error codes doc only)
+        run: |
+          # Only check the generated error codes documentation, ignore build outputs
+          git diff --exit-code -- docs/error-codes.md || {
+            echo "Error codes are out of sync. Run 'npm run gen:error-codes' and commit docs/error-codes.md.";
+            exit 1;
+          }
