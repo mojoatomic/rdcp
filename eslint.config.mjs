@@ -75,4 +75,13 @@ export default defineConfig([
       'no-var': 'error',
     },
   },
+  // For core package test files, disable projectService to avoid tsconfig include requirement
+  {
+    files: ['packages/rdcp-core/tests/**/*.{ts,js}'],
+    languageOptions: {
+      parserOptions: {
+        projectService: false,
+      },
+    },
+  },
 ])
