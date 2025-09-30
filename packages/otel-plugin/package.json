@@ -1,6 +1,6 @@
 {
   "name": "@rdcp.dev/otel-plugin",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "OpenTelemetry integration plugin for RDCP SDK - Enterprise-grade trace correlation",
   "keywords": [
     "rdcp",
@@ -53,7 +53,7 @@
   },
   "peerDependencies": {
     "@opentelemetry/api": "^1.9.0",
-    "@rdcp.dev/server": "file:../../../.."
+    "@rdcp.dev/server": "^2.2.0"
   },
   "peerDependenciesMeta": {
     "@opentelemetry/api": {
