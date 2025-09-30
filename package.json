@@ -25,7 +25,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/mojoatomic/rdcp"
+    "url": "git+https://github.com/mojoatomic/rdcp.git"
   },
   "bugs": {
     "url": "https://github.com/rdcp/sdk/issues"
