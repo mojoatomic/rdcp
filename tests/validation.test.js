@@ -58,6 +58,16 @@ describe('RDCP Validation System', () => {
       expect(result.data).toBeUndefined()
       expect(result.error).toBeDefined()
     })
+
+    test('rejects lowercase category names', () => {
+      const invalidRequest = {
+        action: 'enable',
+        categories: ['database', 'api'], // lowercase should fail under strict schema
+      }
+      expect(() => controlRequestSchema.parse(invalidRequest)).toThrow()
+      const result = safeValidate(invalidRequest, controlRequestSchema)
+      expect(result.success).toBe(false)
+    })
   })
 
   describe('Error Handling', () => {
