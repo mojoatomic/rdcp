@@ -573,4 +573,56 @@ This specification defines the protocol, not the implementation. Implementations
 
 ---
 
+## Appendix C: Data Type Definitions
+
+This protocol uses standard JSON primitives (string, number, boolean, object, array) with the following domain-specific constraints.
+
+### Timestamp
+- Type: string (RFC 3339 / ISO 8601 in UTC)
+- Format: `YYYY-MM-DDTHH:mm:ss.sssZ` (milliseconds are REQUIRED; UTC 'Z' is REQUIRED)
+- Example: `"2025-09-17T10:30:00.000Z"`
+- Validation: timezone offsets other than `Z` are not permitted
+
+### Duration
+- Type: number or string
+- Number: integer seconds (e.g., `900`)
+- String: `<number><unit>` where unit ∈ `s|m|h|d` (e.g., `"15m"`, `"2h"`, `"30s"`)
+- Canonicalization (server responses): prefer string form with the smallest unit that divides evenly (e.g., `900` → `"15m"`)
+
+### CategoryName
+- Type: string
+- Pattern: `^[A-Z][A-Z0-9_]{0,63}$`
+- Length: 1–64
+- Case: uppercase with underscores
+- Examples: `DATABASE`, `API_ROUTES`, `QUERY_CACHE`
+
+### Identifier (TenantId, ClientId, RequestId)
+- Type: string
+- Pattern: `^[a-zA-Z0-9._-]{1,255}$`
+- Length: 1–255
+- Notes:
+  - Intended for headers and path params (e.g., `X-RDCP-Tenant-ID`)
+  - Must not contain whitespace
+  - Use URL-safe characters only
+
+### ErrorCode
+- Type: string
+- Pattern: `^[A-Z0-9_]{3,64}$`
+- Examples: `UNAUTHORIZED`, `TENANT_NOT_FOUND`, `RATE_LIMITED`
+
+### Metric Numbers
+Use context-specific types:
+- CounterNumber: non-negative; for counts and totals
+- RateNumber: non-negative; for per-second and throughput metrics
+- GaugeNumber: finite number; may be negative if semantically valid
+
+### CategoryList
+- Type: array of CategoryName
+- Constraints:
+  - `uniqueItems: true` (no duplicates)
+  - `minItems: 1`
+- Example: `["DATABASE", "API_ROUTES"]`
+
+---
+
 *End of RDCP Protocol Specification v1.0*
