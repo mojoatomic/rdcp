@@ -1,17 +1,46 @@
 import { z } from 'zod'
 import { PROTOCOL_VERSION } from './constants.js'
 
+// Domain-specific primitives (strict)
+const TIMESTAMP = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/)
+const DURATION = z.union([
+  z.number().int().nonnegative(),
+  z.string().regex(/^[0-9]+(s|m|h|d)$/),
+])
+const CATEGORY_NAME = z.string().regex(/^[A-Z][A-Z0-9_]{0,63}$/)
+const CATEGORY_LIST = z
+  .array(CATEGORY_NAME)
+  .min(1)
+  .superRefine((arr, ctx) => {
+    const seen = new Set<string>()
+    for (const v of arr) {
+      if (seen.has(v)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Duplicate category: ${v}`,
+        })
+        return
+      }
+      seen.add(v)
+    }
+  })
+const ERROR_CODE = z.string().regex(/^[A-Z0-9_]{3,64}$/)
+const COUNTER_NUMBER = z.number().min(0)
+const RATE_NUMBER = z.number().min(0)
+
 // Protocol version schema
 export const protocolVersionSchema = z.literal(PROTOCOL_VERSION)
 
 // Control endpoint schemas (protocol-surface only)
 export const controlRequestSchema = z.object({
-action: z.enum(['enable', 'disable', 'toggle', 'reset', 'status']),
-  categories: z.union([z.string(), z.array(z.string())]),
+  action: z.enum(['enable', 'disable', 'toggle', 'reset', 'status']),
+  categories: z.union([CATEGORY_NAME, CATEGORY_LIST]),
   options: z
     .object({
       temporary: z.boolean().optional(),
-      duration: z.union([z.number(), z.string()]).optional(),
+      duration: DURATION.optional(),
       reason: z.string().optional(),
     })
     .optional(),
@@ -19,21 +48,21 @@ action: z.enum(['enable', 'disable', 'toggle', 'reset', 'status']),
 
 export const controlResponseSchema = z.object({
   protocol: protocolVersionSchema,
-  timestamp: z.string(),
-  action: z.string(),
-  categories: z.array(z.string()),
+  timestamp: TIMESTAMP,
+  action: z.enum(['enable', 'disable', 'toggle', 'reset', 'status']),
+  categories: CATEGORY_LIST,
   status: z.enum(['success', 'partial', 'failed']),
   message: z.string().optional(),
   changes: z
     .array(
       z.object({
-        category: z.string(),
+        category: CATEGORY_NAME,
         enabled: z.boolean().optional(),
         previousState: z.boolean().optional(),
         newState: z.boolean().optional(),
         temporary: z.boolean().optional(),
-        expiresAt: z.string().optional(),
-        effectiveAt: z.string().optional(),
+        expiresAt: TIMESTAMP.optional(),
+        effectiveAt: TIMESTAMP.optional(),
       })
     )
     .optional(),
@@ -42,46 +71,46 @@ export const controlResponseSchema = z.object({
 // Discovery endpoint schemas
 export const discoveryResponseSchema = z.object({
   protocol: protocolVersionSchema,
-  timestamp: z.string(),
+  timestamp: TIMESTAMP,
   categories: z.array(
     z.object({
-      name: z.string(),
+      name: CATEGORY_NAME,
       description: z.string(),
       enabled: z.boolean(),
       temporary: z.boolean().optional(),
       metrics: z
         .object({
-          callsTotal: z.number(),
-          callsPerSecond: z.number(),
+          callsTotal: COUNTER_NUMBER,
+          callsPerSecond: RATE_NUMBER,
         })
         .optional(),
     })
   ),
   performance: z.object({
-    totalCalls: z.number(),
-    callsPerSecond: z.number(),
-    categoryBreakdown: z.record(z.number()),
+    totalCalls: COUNTER_NUMBER,
+    callsPerSecond: RATE_NUMBER,
+    categoryBreakdown: z.record(COUNTER_NUMBER),
   }),
 })
 
 // Status endpoint schemas
 export const statusResponseSchema = z.object({
   protocol: protocolVersionSchema,
-  timestamp: z.string(),
+  timestamp: TIMESTAMP,
   enabled: z.boolean().optional(),
   categories: z.record(z.boolean()).optional(),
   performance: z
     .object({
-      totalCalls: z.number(),
-      callsPerSecond: z.number(),
+      totalCalls: COUNTER_NUMBER,
+      callsPerSecond: RATE_NUMBER,
     })
     .optional(),
 })
 
-// Health endpoint schemas
+// Health endpoint schemas (duration uses implementation-specific ms string)
 export const healthResponseSchema = z.object({
   protocol: protocolVersionSchema,
-  timestamp: z.string(),
+  timestamp: TIMESTAMP,
   status: z.enum(['healthy', 'degraded', 'unhealthy']),
   checks: z.array(
     z.object({
@@ -121,9 +150,8 @@ export const protocolDiscoverySchema = z.object({
 // Base error schema
 export const errorResponseSchema = z.object({
   error: z.object({
-    code: z.string(),
+    code: ERROR_CODE,
     message: z.string(),
     protocol: protocolVersionSchema,
   }),
 })
-

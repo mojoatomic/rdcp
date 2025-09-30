@@ -81,3 +81,7 @@ Notes
 - Core remains protocol-only (no framework/server coupling). Schemas use a minimal runtime dependency on `zod`.
 - Additions to schemas are semver-minor; breaking changes are semver-major.
 - See also: docs/core-package-boundaries.md and docs/rdcp-protocol-specification.md.
+
+Centralized JSON Schema definitions ($defs)
+
+A machine-readable set of domain-specific primitives is provided at `docs/schemas/defs.json`. Downstream schemas should reference these via `$ref` instead of inlining patterns. This improves consistency between documentation, validation, and implementations.
