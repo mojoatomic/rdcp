@@ -4,6 +4,7 @@
   "description": "Headless builder for an RDCP Admin UI driven by discovery (+optional ui metadata)",
   "private": true,
   "type": "module",
+  "license": "Apache-2.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": ["dist", "README.md", "LICENSE"],

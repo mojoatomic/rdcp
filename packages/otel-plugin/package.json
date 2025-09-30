@@ -11,7 +11,7 @@
     "debug",
     "correlation"
   ],
-  "license": "MIT",
+  "license": "Apache-2.0",
   "author": {
     "name": "Doug Fennell",
     "email": "doug@rdcp.dev",
@@ -23,12 +23,9 @@
     "directory": "packages/otel-plugin"
   },
   "bugs": {
-    "url": "https://github.com/mojoatomic/rdcp/issues"
-  },
-  "homepage": "https://rdcp.dev/docs/opentelemetry",
-  "bugs": {
     "url": "https://github.com/rdcp/sdk/issues"
   },
+  "homepage": "https://rdcp.dev/docs/opentelemetry",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -56,7 +53,7 @@
   },
   "peerDependencies": {
     "@opentelemetry/api": "^1.9.0",
-    "@rdcp.dev/server": "^2.0.0"
+    "@rdcp.dev/server": "file:../../../.."
   },
   "peerDependenciesMeta": {
     "@opentelemetry/api": {

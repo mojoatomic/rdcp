@@ -4,6 +4,7 @@
   "description": "Demo admin app that renders /admin via @rdcp.dev/admin-ui (scaffold)",
   "private": true,
   "type": "module",
+  "license": "Apache-2.0",
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js"
