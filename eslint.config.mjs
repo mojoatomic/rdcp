@@ -7,7 +7,7 @@ import prettierPlugin from 'eslint-plugin-prettier'
 export default defineConfig([
   {
     // ignore patterns (must be in a standalone object in flat config)
-    ignores: ['dist/', 'dist-cjs/', 'coverage/', 'node_modules/', '*.config.js', '*.config.ts'],
+    ignores: ['dist/', '**/dist/**', 'dist-cjs/', '**/dist-cjs/**', 'coverage/', '**/coverage/**', 'node_modules/', '*.config.js', '*.config.ts'],
   },
   js.configs.recommended,
   {
