@@ -75,6 +75,15 @@ export default defineConfig([
       'no-var': 'error',
     },
   },
+  // For repository root test files, disable projectService to avoid tsconfig include requirement
+  {
+    files: ['tests/**/*.{ts,js}'],
+    languageOptions: {
+      parserOptions: {
+        projectService: false,
+      },
+    },
+  },
   // For core package test files, disable projectService to avoid tsconfig include requirement
   {
     files: ['packages/rdcp-core/tests/**/*.{ts,js}'],
@@ -84,4 +93,17 @@ export default defineConfig([
       },
     },
   },
-])
+  // Relax type-aware rules for tests when projectService is disabled
+  {
+    files: ['tests/**/*.{ts,js}', '**/*.test.{ts,js}'],
+    rules: {
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
+      '@typescript-eslint/prefer-nullish-coalescing': 'off',
+      '@typescript-eslint/prefer-optional-chain': 'off',
+      '@typescript-eslint/explicit-function-return-type': 'off',
+    },
+  },
+]
+)
