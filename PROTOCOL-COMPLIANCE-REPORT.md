@@ -2,7 +2,7 @@
 
 **Project**: RDCP SDK  
 **Protocol Version**: RDCP v1.0  
-**Assessment Date**: 2025-09-22
+**Assessment Date**: 2025-09-30
 **Documentation Sources**: `/docs/rdcp-protocol-specification.md`, `/docs/rdcp-implementation-guide.md`  
 
 ---
@@ -116,6 +116,7 @@ All errors follow the required format:
 
 #### Standard Error Codes ✅
 - **Implementation**: `src/utils/types.ts`, `src/validation/errors.js`
+- **Reference**: Generated error codes document — `docs/error-codes.md`
 - **✅ RDCP_AUTH_REQUIRED**: 401 authentication required
 - **✅ RDCP_FORBIDDEN**: 403 insufficient permissions
 - **✅ RDCP_NOT_FOUND**: 404 resource not found
@@ -126,28 +127,20 @@ All errors follow the required format:
 
 ### 5. Performance Metrics ✅
 
-Per **Section 7** of the RDCP Protocol Specification:
+Per **Section 7** of the RDCP Protocol Specification and the strict schema definitions:
 
-#### Metric Representation ✅
-```json
-{
-  "value": <numeric-value>,
-  "unit": "<unit-string>",
-  "measured": true|false,
-  "timestamp": "ISO-8601"
-}
-```
+- Discovery response includes `performance` with:
+  - `totalCalls`: non-negative CounterNumber (>= 0)
+  - `callsPerSecond`: non-negative RateNumber (>= 0)
+  - `categoryBreakdown`: object mapping CategoryName → non-negative CounterNumber
+- Status response may include optional `performance` with:
+  - `totalCalls`: non-negative CounterNumber (>= 0)
+  - `callsPerSecond`: non-negative RateNumber (>= 0)
 
-#### Standard Units ✅
-- **✅ CPU Usage**: `percent` unit
-- **✅ Memory**: `bytes` unit  
-- **✅ Rate**: `per_second` unit
-- **✅ Count**: `count` unit
-- **✅ Duration**: `milliseconds` unit
+These counters and rates align with the centralized JSON Schema `$defs` and are validated at runtime.
 
 #### Placeholder Values ✅
-- **✅ Measured Flag**: `false` indicates estimated values
-- **✅ Reasonable Estimates**: Provides baseline performance indicators
+- Some environments may emit placeholder values; real measurements can be added where applicable.
 
 ### 6. Client SDK Implementation ✅
 
@@ -238,7 +231,7 @@ To achieve **Level 3: Enterprise** compliance, the following enhancements are ne
 ## Testing Coverage Assessment ✅
 
 ### Test Suite Completeness ✅
-- **220 Passed Tests** across 34 test suites
+- **234 Passed Tests** across 39 test suites
 - **✅ All Framework Adapters**: Express, Fastify, Koa tested
 - **✅ Authentication**: Basic auth with RDCP header validation
 - **✅ Validation System**: Request/response validation and error handling
@@ -292,6 +285,10 @@ Per **Section 8** of the RDCP Protocol Specification:
 - **✅ Version Declaration**: All responses include `"protocol": "rdcp/1.0"`
 - **✅ Endpoint Versioning**: Uses `/rdcp/v1/` URL pattern
 - **✅ Backward Compatibility**: Ready for future version support
+
+### Timestamp Format (strict) ✅
+- All timestamps are UTC with required milliseconds: `YYYY-MM-DDTHH:mm:ss.sssZ`
+- Pattern: `^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$`
 
 ---
 
@@ -400,8 +397,8 @@ Per **Section 10** of the RDCP Protocol Specification:
 - Core TTL: Temporary controls promoted to core (server + adapters + client) with validation, in-memory scheduler, and tests
 - Hybrid auth hardening: improved behavior and fallback logging
 - Demo app: rate limiting and audit trail examples; e2e tests added
-- Validation: duration accepts number or string forms (e.g., '500ms', '5s', '2m')
-- Testing: increased to 220 tests across 34 test suites
+- Validation: duration accepts number (seconds) or string forms in s|m|h|d (e.g., '30s', '15m', '2h', '7d')
+- Testing: increased to 234 tests across 39 test suites
 
 ### Documentation Updates ✅
 1. **✅ Protocol Specification**: Up-to-date and comprehensive
