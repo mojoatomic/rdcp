@@ -537,3 +537,10 @@ curl -s http://localhost:3000/rdcp/v1/health | jq '.status' # Must be healthy|de
 **Goal**: Production-ready RDCP v1.0 compliant SDK that works across all JavaScript environments  
 
 *This guide ensures RDCP protocol compliance while following WARP development standards.*
+
+## GitHub Wiki Links - Definitive Rules
+
+1. **Root-level pages:** Use `[[Page-Name|Display Text]]`
+2. **Subdirectory pages:** Use `[Display Text](subdir/Page-Name)`
+3. **Never use:** `[[subdir/Page-Name]]` (doesn't work)
+4. **Never use:** `raw.githubusercontent.com` URLs
