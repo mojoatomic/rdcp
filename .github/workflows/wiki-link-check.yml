@@ -1,0 +1,19 @@
+name: Wiki link check
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main, "**" ]
+
+jobs:
+  wiki-link-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
+      - name: Run wiki link checker
+        run: bash scripts/check-wiki-links.sh .wiki-edit

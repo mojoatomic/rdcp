@@ -94,7 +94,8 @@
     "type-check": "tsc --noEmit",
     "type-check:examples": "tsc --noEmit --project tsconfig.json examples/express-server.ts",
     "clean": "rm -rf dist coverage .nyc_output",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "wiki:check": "bash scripts/check-wiki-links.sh"
   },
   "lint-staged": {
     "*.{js,ts}": "eslint --fix",
