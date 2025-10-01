@@ -698,8 +698,8 @@ git submodule update --init --recursive
 - JWKS Integration (wiki): https://github.com/mojoatomic/rdcp/wiki/JWKS
 - JWKS Client Quickstart (repo): docs/jwks-client.md
 - JWKS Cache Stores (repo): docs/jwks-cache-stores.md
-- Protocol schemas (repo): docs/protocol-schemas.md
-- Protocol error codes (repo): docs/error-codes.md
+- Protocol schemas: https://github.com/mojoatomic/rdcp-protocol/blob/main/protocol-schemas.md
+- Protocol error codes: https://github.com/mojoatomic/rdcp-protocol/blob/main/error-codes.md
 - Core package boundaries (repo): docs/core-package-boundaries.md
 - Rate Limiting: https://github.com/mojoatomic/rdcp/wiki/Rate-Limiting
 - API Reference: https://github.com/mojoatomic/rdcp/wiki/API-Reference
