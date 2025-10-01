@@ -2,3 +2,6 @@
 	path = .wiki-edit
 	url = https://github.com/mojoatomic/rdcp.wiki.git
 	branch = master
+[submodule "protocol"]
+	path = protocol
+	url = https://github.com/mojoatomic/rdcp-protocol.git
