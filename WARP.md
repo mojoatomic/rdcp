@@ -130,6 +130,17 @@ X-RDCP-Tenant-Name: <human-readable-name>  # OPTIONAL
 
 ## Essential Development Commands Pattern
 
+Git submodules (initialize/sync after clone and after pulling main):
+- .wiki-edit — local working copy of the GitHub Wiki (tracks mojoatomic/rdcp.wiki)
+- protocol — rdcp-protocol (language-agnostic spec)
+
+Run these once after clone and whenever submodule pointers change:
+
+```bash
+git submodule sync --recursive
+git submodule update --init --recursive
+```
+
 ```bash
 # Install dependencies
 npm install

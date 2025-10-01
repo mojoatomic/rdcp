@@ -675,6 +675,21 @@ Apache License 2.0 — see [LICENSE](LICENSE) for details.
 
 ---
 
+## Git submodules
+
+This repository uses two Git submodules:
+- .wiki-edit — working copy of the RDCP GitHub Wiki (mojoatomic/rdcp.wiki)
+- protocol — RDCP protocol specification (mojoatomic/rdcp-protocol)
+
+After cloning or after pulling main, initialize and sync submodules:
+
+```bash
+git submodule sync --recursive
+git submodule update --init --recursive
+```
+
+---
+
 ## Documentation
 
 - Installation: https://github.com/mojoatomic/rdcp/wiki/Installation
