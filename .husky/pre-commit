@@ -1,5 +1,12 @@
 #!/usr/bin/env sh
 . "$(dirname "$0")/_/husky.sh"
 
-npm run wiki:check || exit 1
+# Only run the wiki checker if wiki files are staged
+if git diff --cached --name-only | grep -E '^\.wiki-edit/.*\.md$' >/dev/null; then
+  echo 'husky(pre-commit): wiki changes detected — running wiki checker'
+  npm run wiki:check || exit 1
+else
+  echo 'husky(pre-commit): no wiki changes — skipping wiki checker'
+fi
+
 npx --no-install lint-staged
