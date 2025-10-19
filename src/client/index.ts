@@ -1,4 +1,4 @@
-import { RDCPHttpClient } from '../utils/http.js'
+import { RDCPHttpClient, RDCPClientError } from '../utils/http.js'
 import {
   RDCPClientConfig,
   RDCPDiscoveryResponse,
@@ -124,6 +124,45 @@ export class RDCPClient {
       undefined,
       this.config.tenant
     )
+  }
+
+  /**
+   * Modern key/value control (PUT) with graceful fallback to legacy POST for older servers
+   */
+  async set(
+    key: string,
+    value: boolean | number | string,
+    options?: ControlRequest['options']
+  ): Promise<ControlResponse> {
+    try {
+      return await this.httpClient.request<ControlResponse>(
+        'PUT',
+        '/rdcp/v1/control',
+        { key, value, ...(options ? { options } : {}) },
+        undefined,
+        this.config.tenant
+      )
+    } catch (error) {
+      // Fallback only when safe to translate to legacy action/categories
+      if (
+        typeof value === 'boolean' &&
+        error instanceof RDCPClientError &&
+        [400, 404, 405].includes(error.statusCode ?? 0)
+      ) {
+        return await this.httpClient.request<ControlResponse>(
+          'POST',
+          '/rdcp/v1/control',
+          {
+            action: value ? 'enable' : 'disable',
+            categories: [key],
+            ...(options ? { options } : {}),
+          },
+          undefined,
+          this.config.tenant
+        )
+      }
+      throw error
+    }
   }
 
   /**
