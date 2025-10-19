@@ -36,7 +36,9 @@
     "dist",
     "README.md",
     "LICENSE",
-    "scripts/rdcp-conformance.mjs"
+    "scripts/rdcp-conformance.mjs",
+    "scripts/conformance-junit.mjs",
+    "scripts/conformance-badges.mjs"
   ],
   "exports": {
     ".": {
@@ -174,6 +176,8 @@
   },
   "type": "commonjs",
   "bin": {
-    "rdcp-conformance": "scripts/rdcp-conformance.mjs"
+    "rdcp-conformance": "scripts/rdcp-conformance.mjs",
+    "rdcp-conformance-junit": "scripts/conformance-junit.mjs",
+    "rdcp-conformance-badges": "scripts/conformance-badges.mjs"
   }
 }

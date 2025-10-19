@@ -6,12 +6,41 @@ First-of-its-kind JavaScript/TypeScript SDK implementing the Runtime Debug Contr
 [![npm: @rdcp.dev/client](https://img.shields.io/npm/v/%40rdcp.dev/client?label=%40rdcp.dev%2Fclient)](https://www.npmjs.com/package/@rdcp.dev/client)
 [![npm: @rdcp.dev/server](https://img.shields.io/npm/v/%40rdcp.dev/server?label=%40rdcp.dev%2Fserver)](https://www.npmjs.com/package/@rdcp.dev/server)
 [![CI](https://github.com/mojoatomic/rdcp/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/mojoatomic/rdcp/actions/workflows/ci.yml)
+[![Conformance](https://mojoatomic.github.io/rdcp/badges/rdcp-summary.svg)](https://mojoatomic.github.io/rdcp/badges/rdcp-summary.svg)
 [![Protocol Compliance](https://img.shields.io/badge/RDCP-v1.0%20Compliant-green)](https://github.com/mojoatomic/rdcp/blob/main/PROTOCOL-COMPLIANCE-REPORT.md)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
 ---
 
 ## Install
+
+### Conformance CLI (npx)
+
+```bash
+# Discover /.well-known/rdcp and write gating config
+npx rdcp-conformance --base-url=http://localhost:3000 \
+  --include-tags=standard --out=reports/rdcp.discovery.json
+
+# Generate reports after tests
+npx rdcp-conformance-junit    # writes reports/rdcp.junit.xml
+npx rdcp-conformance-badges   # writes reports/badges/*
+```
+
+### Composite Action outputs
+
+```yaml
+- uses: ./.github/actions/rdcp-conformance
+  with:
+    base-url: http://service:3000
+  id: rdcp
+# Use outputs in subsequent steps/jobs
+- run: echo "Pass rate: ${{ steps.rdcp.outputs.pass-rate }}%" && \
+       echo "Tests: ${{ steps.rdcp.outputs.tests-passed }}/${{ steps.rdcp.outputs.tests-total }}"
+
+# Gate deployment on pass-rate
+- if: ${{ steps.rdcp.outputs.pass-rate == '100' }}
+  run: echo "Conformance OK — proceed to deploy"
+```
 
 Quick start (Client SDK)
 
