@@ -1,0 +1,58 @@
+name: Publish Conformance Badges
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Build project
+        run: npm run build
+
+      - name: Run tests to produce conformance results
+        env:
+          ROLLUP_DISABLE_NATIVE: '1'
+        run: npm test
+
+      - name: Generate badges
+        run: node scripts/conformance-badges.mjs
+
+      - name: Prepare Pages artifact
+        run: |
+          mkdir -p public
+          cp -r reports/badges public/
+          # Optional index
+          echo '<html><body><h1>RDCP Conformance Badges</h1><ul>' > public/index.html
+          for f in public/badges/*; do bn=$(basename "$f"); echo "<li><a href=\"badges/$bn\">$bn</a></li>" >> public/index.html; done
+          echo '</ul></body></html>' >> public/index.html
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
