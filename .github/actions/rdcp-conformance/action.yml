@@ -1,0 +1,43 @@
+name: RDCP Conformance
+
+inputs:
+  base-url:
+    description: Base URL of the target RDCP server
+    required: true
+  include-tags:
+    description: Comma-separated include tags
+    required: false
+  exclude-tags:
+    description: Comma-separated exclude tags
+    required: false
+  discovery-out:
+    description: Output path for discovery JSON
+    required: false
+    default: reports/rdcp.discovery.json
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20
+    - name: Install dependencies
+      shell: bash
+      run: npm ci --no-audit --no-fund
+    - name: Sanity check (conformance runner present)
+      shell: bash
+      run: |
+        test -f scripts/rdcp-conformance.mjs || { echo 'missing scripts/rdcp-conformance.mjs'; exit 1; }
+    - name: Discovery
+      shell: bash
+      run: |
+        node scripts/rdcp-conformance.mjs --base-url="${{ inputs.base-url }}" --out="${{ inputs.discovery-out }}" \
+          ${INPUT_INCLUDE:+--include-tags="${{ inputs.include-tags }}"} \
+          ${INPUT_EXCLUDE:+--exclude-tags="${{ inputs.exclude-tags }}"}
+    - name: Run tests (conformance-mode)
+      shell: bash
+      run: npm test
+    - name: Generate JUnit report
+      shell: bash
+      run: |
+        node scripts/conformance-junit.mjs || echo 'JUnit generation skipped'

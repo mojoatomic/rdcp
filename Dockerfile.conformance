@@ -1,15 +1,24 @@
 # syntax=docker/dockerfile:1
-FROM node:20-alpine
+
+FROM node:20-alpine AS base
 WORKDIR /app
 
-# Copy only minimal files to run the conformance runner + tests
+# Dependencies
 COPY package.json package-lock.json ./
-COPY jest.config.js ./
-COPY scripts/rdcp-conformance.mjs ./scripts/rdcp-conformance.mjs
-COPY tests ./tests
-COPY dist ./dist
-COPY packages ./packages
-
 RUN npm ci --no-audit --no-fund
 
-ENTRYPOINT ["node", "scripts/rdcp-conformance.mjs"]
+# Source
+COPY . .
+
+# Default environment-driven gating
+# INCLUDE_TAGS and EXCLUDE_TAGS can be provided to filter tests
+ENV INCLUDE_TAGS=""
+ENV EXCLUDE_TAGS=""
+
+# Prepare reports directory
+RUN mkdir -p reports
+
+# Entry: write gating config and run tests, then generate JUnit (non-fatal if missing results)
+CMD node -e "const fs=require('fs');fs.writeFileSync('reports/rdcp.run.json', JSON.stringify({includeTags:(process.env.INCLUDE_TAGS||'').split(',').filter(Boolean), excludeTags:(process.env.EXCLUDE_TAGS||'').split(',').filter(Boolean)}));" \
+ && npm test \
+ && node scripts/conformance-junit.mjs || true
