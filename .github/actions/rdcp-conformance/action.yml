@@ -41,3 +41,17 @@ runs:
       shell: bash
       run: |
         node scripts/conformance-junit.mjs || echo 'JUnit generation skipped'
+    - name: Generate badges
+      shell: bash
+      run: |
+        node scripts/conformance-badges.mjs || echo 'Badge generation skipped'
+    - name: Upload conformance reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: rdcp-conformance-reports
+        path: |
+          reports/rdcp.results.json
+          reports/rdcp.report.md
+          reports/rdcp.junit.xml
+          reports/badges
+        if-no-files-found: warn
