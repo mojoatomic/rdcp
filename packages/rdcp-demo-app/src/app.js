@@ -195,10 +195,10 @@ function rateLimitControl(req, res, next) {
 
 // Audit trail for control operations (structured log)
 function auditControl(req, res, next) {
-  const isGlobalControl =
-    req.path === '/rdcp/v1/control' && req.method === 'PUT'
-  const isTenantControl = isTenantControlPath(req.path) && req.method === 'PUT'
-  if (!(isGlobalControl || isTenantControl)) return next()
+  const isControlPath =
+    req.path === '/rdcp/v1/control' || isTenantControlPath(req.path)
+  const isMethod = req.method === 'PUT' || req.method === 'POST'
+  if (!(isControlPath && isMethod)) return next()
   const origJson = res.json.bind(res)
   res.json = body => {
     try {
@@ -224,7 +224,8 @@ function auditControl(req, res, next) {
 
 // RBAC example: for control endpoint under bearer auth, require 'control' scope
 function enforceControlRBAC(req, res, next) {
-  if (req.path !== '/rdcp/v1/control' || req.method !== 'PUT') return next()
+  if (req.path !== '/rdcp/v1/control') return next()
+  if (!(req.method === 'PUT' || req.method === 'POST')) return next()
   const method = String(req.headers['x-rdcp-auth-method'] || '')
   if (method !== 'bearer') return next()
   try {
