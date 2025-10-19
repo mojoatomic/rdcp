@@ -47,5 +47,9 @@ module.exports = {
   preset: 'ts-jest/presets/default-esm',
   transformIgnorePatterns: [
     'node_modules/(?!(node-fetch|fetch-blob|formdata-polyfill|web-streams-polyfill)/)',
+  ],
+  reporters: [
+    'default',
+    '<rootDir>/tests/conformance/reporter.js'
   ]
 }

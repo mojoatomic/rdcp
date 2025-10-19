@@ -1,0 +1,23 @@
+{
+  "baseUrl": "http://localhost:3000",
+  "auth": {
+    "apiKey": "{{API_KEY}}",
+    "bearer": {
+      "token": "{{JWT_TOKEN}}",
+      "issuer": "",
+      "audience": ""
+    },
+    "mtls": {
+      "cert": "{{BASE64_PEM_CERT}}",
+      "key": "{{BASE64_PEM_KEY}}"
+    }
+  },
+  "tenants": ["default"],
+  "capabilities": {
+    "multiTenancy": true,
+    "temporaryControls": true,
+    "rateLimit": true,
+    "auditTrail": true,
+    "jwks": false
+  }
+}

@@ -35,7 +35,8 @@
   "files": [
     "dist",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "scripts/rdcp-conformance.mjs"
   ],
   "exports": {
     ".": {
@@ -135,6 +136,7 @@
     "husky": "^9.1.6",
     "jest": "^29.7.0",
     "koa": "^2.14.2",
+    "koa-bodyparser": "^4.4.1",
     "lint-staged": "^15.2.9",
     "prettier": "^3.1.1",
     "rollup": "^4.9.2",
@@ -170,5 +172,8 @@
     "example": "examples",
     "test": "tests"
   },
-  "type": "commonjs"
+  "type": "commonjs",
+  "bin": {
+    "rdcp-conformance": "scripts/rdcp-conformance.mjs"
+  }
 }
