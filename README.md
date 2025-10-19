@@ -5,6 +5,7 @@ First-of-its-kind JavaScript/TypeScript SDK implementing the Runtime Debug Contr
 [![npm: @rdcp.dev/core](https://img.shields.io/npm/v/%40rdcp.dev/core?label=%40rdcp.dev%2Fcore)](https://www.npmjs.com/package/@rdcp.dev/core)
 [![npm: @rdcp.dev/client](https://img.shields.io/npm/v/%40rdcp.dev/client?label=%40rdcp.dev%2Fclient)](https://www.npmjs.com/package/@rdcp.dev/client)
 [![npm: @rdcp.dev/server](https://img.shields.io/npm/v/%40rdcp.dev/server?label=%40rdcp.dev%2Fserver)](https://www.npmjs.com/package/@rdcp.dev/server)
+[![npm: @rdcp.dev/conformance](https://img.shields.io/npm/v/%40rdcp.dev/conformance?label=%40rdcp.dev%2Fconformance)](https://www.npmjs.com/package/@rdcp.dev/conformance)
 [![CI](https://github.com/mojoatomic/rdcp/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/mojoatomic/rdcp/actions/workflows/ci.yml)
 [![Conformance](https://mojoatomic.github.io/rdcp/badges/rdcp-summary.svg)](https://mojoatomic.github.io/rdcp/badges/rdcp-summary.svg)
 [![Protocol Compliance](https://img.shields.io/badge/RDCP-v1.0%20Compliant-green)](https://github.com/mojoatomic/rdcp/blob/main/PROTOCOL-COMPLIANCE-REPORT.md)
