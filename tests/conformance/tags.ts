@@ -53,6 +53,14 @@ function allowedTags() {
       'status',
       'headers',
       'read',
+      'integration',
+      'admin',
+      'etag',
+      'util',
+      'keyring',
+      'jwt',
+      'cache',
+      'otel',
     ])
   }
   const level = String(d.security.level || 'basic')
