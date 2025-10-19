@@ -15,6 +15,23 @@ inputs:
     required: false
     default: reports/rdcp.discovery.json
 
+outputs:
+  tests-passed:
+    description: Number of tests passed
+    value: ${{ steps.set.outputs.tests_passed }}
+  tests-total:
+    description: Number of tests
+    value: ${{ steps.set.outputs.tests_total }}
+  pass-rate:
+    description: Pass rate percent (rounded)
+    value: ${{ steps.set.outputs.pass_rate }}
+  suites-passed:
+    description: Number of suites passed
+    value: ${{ steps.set.outputs.suites_passed }}
+  suites-total:
+    description: Number of suites
+    value: ${{ steps.set.outputs.suites_total }}
+
 runs:
   using: composite
   steps:
@@ -45,6 +62,26 @@ runs:
       shell: bash
       run: |
         node scripts/conformance-badges.mjs || echo 'Badge generation skipped'
+    - name: Set outputs from results
+      id: set
+      shell: bash
+      run: |
+        node -e "
+        const fs=require('fs');
+        let r={summary:{}};
+        try{ r=JSON.parse(fs.readFileSync('reports/rdcp.results.json','utf8')); }catch(e){}
+        const s=r.summary||{};
+        const p=Number(s.passed||0);
+        const t=Number(s.total||0);
+        const sp=Number(s.suitesPassed||0);
+        const st=Number(s.suitesTotal||0);
+        const rate=t?Math.round((p/t)*100):0;
+        console.log('tests_passed='+p);
+        console.log('tests_total='+t);
+        console.log('pass_rate='+rate);
+        console.log('suites_passed='+sp);
+        console.log('suites_total='+st);
+        " >> "$GITHUB_OUTPUT"
     - name: Upload conformance reports
       uses: actions/upload-artifact@v4
       with:
