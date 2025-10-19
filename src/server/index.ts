@@ -474,12 +474,55 @@ export class RDCPServer {
         )
       }
     }
-    // Type guard to ensure body has expected shape
+    // Handle both legacy {action, categories} and modern {key, value} formats
     const requestBody = body as {
+      // Legacy format
       action?: string
       categories?: string[]
+      // Modern format
+      key?: string
+      value?: boolean | number | string
       options?: { temporary?: boolean; duration?: number | string }
     }
+
+    // Modern format: {key, value, options}
+    if ('key' in requestBody && requestBody.key) {
+      const { key, value, options: _options } = requestBody
+
+      // Apply change to tenant config when key matches a known category
+      const tenantConfig = getTenantDebugConfig(tenantContext.tenantId)
+      if (key in tenantConfig && typeof value === 'boolean') {
+        const updatedConfig: Partial<TenantDebugConfig> = {
+          [key]: value,
+        }
+        setTenantDebugConfig(tenantContext.tenantId, updatedConfig)
+      }
+
+      const changes: ControlChange[] = [
+        {
+          category: key,
+          action: value ? 'enabled' : 'disabled',
+          tenantScope: tenantContext.tenantId,
+          isolationLevel: tenantContext.isolationLevel,
+        },
+      ]
+
+      const response: RDCPControlResponse = {
+        protocol: 'rdcp/1.0',
+        timestamp: new Date().toISOString(),
+        tenant: {
+          id: tenantContext.tenantId,
+          isolationLevel: tenantContext.isolationLevel,
+          scope: tenantContext.tenantId ? 'tenant-isolated' : 'global',
+        },
+        changes,
+        status: 'success',
+      }
+
+      return response
+    }
+
+    // Legacy format: {action, categories, options}
     const { action, categories = [], options } = requestBody
 
     if (!action) {

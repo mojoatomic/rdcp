@@ -370,10 +370,10 @@ export function createRDCPMiddleware(
           requestId: reqId,
         })
       } else if (pathname === `${basePath}/control`) {
-        if (req.method !== 'POST') {
+        if (req.method !== 'POST' && req.method !== 'PUT') {
           response = createRDCPError(
             'RDCP_INVALID_ACTION',
-            'POST method required'
+            'POST or PUT method required'
           )
           statusCode = 405
         } else {

@@ -34,17 +34,33 @@ const RATE_NUMBER = z.number().min(0)
 export const protocolVersionSchema = z.literal(PROTOCOL_VERSION)
 
 // Control endpoint schemas (protocol-surface only)
-export const controlRequestSchema = z.object({
-  action: z.enum(['enable', 'disable', 'toggle', 'reset', 'status']),
-  categories: z.union([CATEGORY_NAME, CATEGORY_LIST]),
-  options: z
-    .object({
-      temporary: z.boolean().optional(),
-      duration: DURATION.optional(),
-      reason: z.string().optional(),
-    })
-    .optional(),
-})
+// Supports both legacy {action, categories} and modern {key, value} formats
+export const controlRequestSchema = z.union([
+  // Legacy format: {action, categories, options}
+  z.object({
+    action: z.enum(['enable', 'disable', 'toggle', 'reset', 'status']),
+    categories: z.union([CATEGORY_NAME, CATEGORY_LIST]),
+    options: z
+      .object({
+        temporary: z.boolean().optional(),
+        duration: DURATION.optional(),
+        reason: z.string().optional(),
+      })
+      .optional(),
+  }),
+  // Modern format: {key, value, options}
+  z.object({
+    key: z.string().min(1).max(128),
+    value: z.union([z.boolean(), z.number(), z.string()]),
+    options: z
+      .object({
+        temporary: z.boolean().optional(),
+        duration: DURATION.optional(),
+        reason: z.string().optional(),
+      })
+      .optional(),
+  }),
+])
 
 export const controlResponseSchema = z.object({
   protocol: protocolVersionSchema,

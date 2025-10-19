@@ -71,6 +71,11 @@ export interface RDCPClient {
   postControl: (
     body: z.infer<typeof controlRequestSchema>
   ) => Promise<z.infer<typeof controlResponseSchema>>
+  putControl: (
+    key: string,
+    value: boolean | number | string,
+    options?: { temporary?: boolean; duration?: number | string }
+  ) => Promise<z.infer<typeof controlResponseSchema>>
 }
 
 export function createRDCPClient(options: RDCPClientOptions): RDCPClient {
@@ -129,6 +134,45 @@ export function createRDCPClient(options: RDCPClientOptions): RDCPClient {
         },
         controlResponseSchema
       )
+    },
+    async putControl(
+      key: string,
+      value: boolean | number | string,
+      options?: { temporary?: boolean; duration?: number | string }
+    ): Promise<z.infer<typeof controlResponseSchema>> {
+      const url = `${base}/rdcp/v1/control`
+      const init = {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json', ...baseHeaders },
+        body: JSON.stringify({ key, value, ...(options ? { options } : {}) }),
+      } as const
+      try {
+        return await doFetch(f, url, init, controlResponseSchema)
+      } catch (err) {
+        const e = err as RDCPClientError
+        // Fallback for older servers (no PUT support). Only safe when value is boolean.
+        if (
+          typeof value === 'boolean' &&
+          (e.status === 405 || e.status === 404 || e.status === 400)
+        ) {
+          const legacy = {
+            action: value ? 'enable' : 'disable',
+            categories: [key],
+            ...(options ? { options } : {}),
+          }
+          return doFetch(
+            f,
+            url,
+            {
+              method: 'POST',
+              headers: { 'content-type': 'application/json', ...baseHeaders },
+              body: JSON.stringify(legacy),
+            },
+            controlResponseSchema
+          )
+        }
+        throw e
+      }
     },
   }
 }

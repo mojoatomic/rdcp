@@ -20,6 +20,9 @@ const rdcp = createRDCPClient({ baseUrl: 'http://localhost:3000' })
 
 const discovery = await rdcp.getDiscovery()
 const status = await rdcp.getStatus()
+// Modern key/value control (PUT)
+await rdcp.putControl('DATABASE', true)
+// Legacy format (POST)
 await rdcp.postControl({ action: 'enable', categories: ['DATABASE'] })
 ```
 
@@ -33,6 +36,7 @@ await rdcp.postControl({ action: 'enable', categories: ['DATABASE'] })
 Methods:
 - getDiscovery(): Promise<DiscoveryResponse>
 - getStatus(): Promise<StatusResponse>
+- putControl(key: string, value: boolean | number | string, options?): Promise<ControlResponse>
 - postControl(body: ControlRequest): Promise<ControlResponse>
 
 ## Errors

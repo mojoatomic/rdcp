@@ -1,6 +1,6 @@
 {
   "name": "@rdcp.dev/server",
-  "version": "2.2.1",
+  "version": "2.3.1",
   "description": "JavaScript/TypeScript SDK for Runtime Debug Control Protocol v1.0 endpoints",
   "keywords": [
     "rdcp",
@@ -18,11 +18,7 @@
     "multi-tenant"
   ],
   "license": "Apache-2.0",
-  "author": {
-    "name": "Doug Fennell",
-    "email": "doug@rdcp.dev",
-    "url": "https://github.com/mojoatomic"
-  },
+  "author": "Doug Fennell <doug@rdcp.dev> (https://github.com/mojoatomic)",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/mojoatomic/rdcp.git"
@@ -106,6 +102,9 @@
     "@rdcp.dev/admin-ui": "file:packages/rdcp-admin-ui",
     "@rdcp.dev/admin-ui-react": "file:packages/rdcp-admin-ui-react",
     "@rdcp.dev/core": "file:packages/rdcp-core",
+    "@rdcp.dev/server": "^2.2.1",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
     "fastify-plugin": "^5.0.1",
     "jose": "^5.9.4",
     "jsonwebtoken": "^9.0.2",
@@ -165,5 +164,11 @@
   "publishConfig": {
     "access": "public"
   },
-  "typescript": "5.3.3"
+  "typescript": "5.3.3",
+  "directories": {
+    "doc": "docs",
+    "example": "examples",
+    "test": "tests"
+  },
+  "type": "commonjs"
 }
