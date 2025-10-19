@@ -10,7 +10,7 @@ function headers(method, clientId, extra = {}) {
   }
 }
 
-describe('RDCP Demo App - PUT control (modern format)', () => {
+describe('[basic][standard][control][put] RDCP Demo App - PUT control (modern format)', () => {
   test('PUT /rdcp/v1/control with {key,value} works with api-key', async () => {
     const clientId = `put-modern-${Date.now()}`
     const apiKey = 'dev-key-change-in-production-min-32-chars'

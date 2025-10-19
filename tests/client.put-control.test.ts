@@ -4,7 +4,7 @@ import {
 } from '../packages/rdcp-client/src/index'
 import { controlResponseSchema } from '../packages/rdcp-core/src/schemas'
 
-describe('RDCP Client SDK - putControl', () => {
+describe('[client][control][put] RDCP Client SDK - putControl', () => {
   function makeFetchPutSuccess() {
     const f = async (
       _input: unknown,

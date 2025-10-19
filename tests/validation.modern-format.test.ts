@@ -1,6 +1,6 @@
 import { controlRequestSchema } from '../packages/rdcp-core/src/schemas'
 
-describe('RDCP controlRequestSchema - modern format', () => {
+describe('[schema][control][put] RDCP controlRequestSchema - modern format', () => {
   test('accepts {key,value,options}', () => {
     const req = {
       key: 'DATABASE',
