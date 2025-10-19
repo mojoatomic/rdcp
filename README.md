@@ -13,6 +13,28 @@ First-of-its-kind JavaScript/TypeScript SDK implementing the Runtime Debug Contr
 
 ## Install
 
+### Conformance CLI (npx)
+
+```bash
+# Discover /.well-known/rdcp and write gating config
+npx rdcp-conformance --base-url=http://localhost:3000 \
+  --include-tags=standard --out=reports/rdcp.discovery.json
+
+# Generate reports after tests
+npx rdcp-conformance-junit    # writes reports/rdcp.junit.xml
+npx rdcp-conformance-badges   # writes reports/badges/*
+```
+
+### Composite Action outputs
+
+```yaml
+- uses: ./.github/actions/rdcp-conformance
+  with:
+    base-url: http://service:3000
+  id: rdcp
+- run: echo "Pass rate: ${{ steps.rdcp.outputs.pass-rate }}%"
+```
+
 Quick start (Client SDK)
 
 ```ts path=null start=null
