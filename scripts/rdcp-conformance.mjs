@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // rdcp-conformance (prototype)
-// Usage: node scripts/rdcp-conformance.mjs --base-url=http://localhost:3000
+// Usage: node scripts/rdcp-conformance.mjs --base-url=http://localhost:3000 [--out=reports/rdcp.discovery.json] [--include-tags=basic,standard] [--exclude-tags=jwks]
 
 import { argv, exit } from 'node:process'
 import http from 'node:http'
@@ -13,6 +13,8 @@ function getArg(name, def) {
 
 const baseUrl = getArg('base-url', process.env.RDCP_BASE_URL)
 const outFile = getArg('out', process.env.RDCP_DISCOVERY_FILE || 'reports/rdcp.discovery.json')
+const includeTags = getArg('include-tags', process.env.RDCP_INCLUDE_TAGS || '')
+const excludeTags = getArg('exclude-tags', process.env.RDCP_EXCLUDE_TAGS || '')
 if (!baseUrl) {
   console.error('Missing --base-url or RDCP_BASE_URL')
   exit(2)
@@ -58,6 +60,12 @@ try {
     const dir = path.dirname(outFile)
     fs.mkdirSync(dir, { recursive: true })
     fs.writeFileSync(outFile, JSON.stringify(payload, null, 2))
+    // Save run config for tags gating
+    const runCfg = {
+      includeTags: includeTags ? includeTags.split(',').map(s => s.trim()).filter(Boolean) : [],
+      excludeTags: excludeTags ? excludeTags.split(',').map(s => s.trim()).filter(Boolean) : [],
+    }
+    fs.writeFileSync(path.join(dir, 'rdcp.run.json'), JSON.stringify(runCfg, null, 2))
   } catch {}
   console.log(JSON.stringify(payload, null, 2))
 } catch (e) {
