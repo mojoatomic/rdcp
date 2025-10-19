@@ -48,6 +48,9 @@ runs:
     - name: Discovery
       shell: bash
       run: |
+        npx rdcp-conformance --base-url="${{ inputs.base-url }}" --out="${{ inputs.discovery-out }}" \
+          ${INPUT_INCLUDE:+--include-tags="${{ inputs.include-tags }}"} \
+          ${INPUT_EXCLUDE:+--exclude-tags="${{ inputs.exclude-tags }}"} || \
         node scripts/rdcp-conformance.mjs --base-url="${{ inputs.base-url }}" --out="${{ inputs.discovery-out }}" \
           ${INPUT_INCLUDE:+--include-tags="${{ inputs.include-tags }}"} \
           ${INPUT_EXCLUDE:+--exclude-tags="${{ inputs.exclude-tags }}"}
@@ -57,11 +60,11 @@ runs:
     - name: Generate JUnit report
       shell: bash
       run: |
-        node scripts/conformance-junit.mjs || echo 'JUnit generation skipped'
+        npx rdcp-conformance-junit || node scripts/conformance-junit.mjs || echo 'JUnit generation skipped'
     - name: Generate badges
       shell: bash
       run: |
-        node scripts/conformance-badges.mjs || echo 'Badge generation skipped'
+        npx rdcp-conformance-badges || node scripts/conformance-badges.mjs || echo 'Badge generation skipped'
     - name: Set outputs from results
       id: set
       shell: bash
