@@ -48,12 +48,11 @@ runs:
     - name: Discovery
       shell: bash
       run: |
-        npx rdcp-conformance --base-url="${{ inputs.base-url }}" --out="${{ inputs.discovery-out }}" \
-          ${INPUT_INCLUDE:+--include-tags="${{ inputs.include-tags }}"} \
-          ${INPUT_EXCLUDE:+--exclude-tags="${{ inputs.exclude-tags }}"} || \
-        node scripts/rdcp-conformance.mjs --base-url="${{ inputs.base-url }}" --out="${{ inputs.discovery-out }}" \
-          ${INPUT_INCLUDE:+--include-tags="${{ inputs.include-tags }}"} \
-          ${INPUT_EXCLUDE:+--exclude-tags="${{ inputs.exclude-tags }}"}
+        FLAGS=""
+        if [ -n "${{ inputs.include-tags }}" ]; then FLAGS="$FLAGS --include-tags=\"${{ inputs.include-tags }}\""; fi
+        if [ -n "${{ inputs.exclude-tags }}" ]; then FLAGS="$FLAGS --exclude-tags=\"${{ inputs.exclude-tags }}\""; fi
+        npx rdcp-conformance --base-url="${{ inputs.base-url }}" --out="${{ inputs.discovery-out }}" $FLAGS || \
+        node scripts/rdcp-conformance.mjs --base-url="${{ inputs.base-url }}" --out="${{ inputs.discovery-out }}" $FLAGS
     - name: Run tests (conformance-mode)
       shell: bash
       run: npm test
