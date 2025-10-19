@@ -6,6 +6,7 @@ First-of-its-kind JavaScript/TypeScript SDK implementing the Runtime Debug Contr
 [![npm: @rdcp.dev/client](https://img.shields.io/npm/v/%40rdcp.dev/client?label=%40rdcp.dev%2Fclient)](https://www.npmjs.com/package/@rdcp.dev/client)
 [![npm: @rdcp.dev/server](https://img.shields.io/npm/v/%40rdcp.dev/server?label=%40rdcp.dev%2Fserver)](https://www.npmjs.com/package/@rdcp.dev/server)
 [![CI](https://github.com/mojoatomic/rdcp/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/mojoatomic/rdcp/actions/workflows/ci.yml)
+[![Conformance](https://mojoatomic.github.io/rdcp/badges/rdcp-summary.svg)](https://mojoatomic.github.io/rdcp/badges/rdcp-summary.svg)
 [![Protocol Compliance](https://img.shields.io/badge/RDCP-v1.0%20Compliant-green)](https://github.com/mojoatomic/rdcp/blob/main/PROTOCOL-COMPLIANCE-REPORT.md)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
