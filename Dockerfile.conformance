@@ -1,0 +1,15 @@
+# syntax=docker/dockerfile:1
+FROM node:20-alpine
+WORKDIR /app
+
+# Copy only minimal files to run the conformance runner + tests
+COPY package.json package-lock.json ./
+COPY jest.config.js ./
+COPY scripts/rdcp-conformance.mjs ./scripts/rdcp-conformance.mjs
+COPY tests ./tests
+COPY dist ./dist
+COPY packages ./packages
+
+RUN npm ci --no-audit --no-fund
+
+ENTRYPOINT ["node", "scripts/rdcp-conformance.mjs"]

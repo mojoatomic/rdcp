@@ -28,18 +28,43 @@ class ConformanceReporter {
     const outDir = 'reports'
     ensureDir(outDir)
 
+    let reqMap = {}
+    try {
+      reqMap = JSON.parse(
+        fs.readFileSync(
+          path.join('tests', 'conformance', 'requirements.json'),
+          'utf8'
+        )
+      )
+    } catch (e) {
+      /* no-op */
+    }
+
     const suites = results.testResults.map(s => ({
       file: s.testFilePath,
       status: s.numFailingTests > 0 ? 'failed' : 'passed',
       startTime: s.perfStats?.start || 0,
       endTime: s.perfStats?.end || 0,
       durationMs: s.perfStats ? s.perfStats.end - s.perfStats.start : undefined,
-      suites: s.testResults.map(t => ({
-        title: t.ancestorTitles.concat([t.title]).join(' > '),
-        status: t.status,
-        tags: extractTags(t.ancestorTitles[0] || ''),
-        durationMs: t.duration,
-      })),
+      suites: s.testResults.map(t => {
+        const title = t.ancestorTitles.concat([t.title]).join(' > ')
+        const tags = extractTags(t.ancestorTitles[0] || '')
+        let requirementId = null
+        // Simple contains match on mapping values
+        for (const [req, val] of Object.entries(reqMap)) {
+          if (title.includes(String(val))) {
+            requirementId = req
+            break
+          }
+        }
+        return {
+          title,
+          status: t.status,
+          tags,
+          requirementId,
+          durationMs: t.duration,
+        }
+      }),
     }))
 
     const summary = {

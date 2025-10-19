@@ -35,7 +35,8 @@
   "files": [
     "dist",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "scripts/rdcp-conformance.mjs"
   ],
   "exports": {
     ".": {
@@ -170,5 +171,8 @@
     "example": "examples",
     "test": "tests"
   },
-  "type": "commonjs"
+  "type": "commonjs",
+  "bin": {
+    "rdcp-conformance": "scripts/rdcp-conformance.mjs"
+  }
 }

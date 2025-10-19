@@ -27,15 +27,18 @@ function buildApp() {
   return app
 }
 
-describe('Express adapter - RateLimit draft-7 headers', () => {
-  test('GET /.well-known/rdcp returns RateLimit headers when enabled', async () => {
-    const app = buildApp()
+const { withTags } = require('./conformance/tags.ts')
+withTags(['rate-limit', 'headers'], () => {
+  describe('Express adapter - RateLimit draft-7 headers', () => {
+    test('GET /.well-known/rdcp returns RateLimit headers when enabled', async () => {
+      const app = buildApp()
 
-    const res = await request(app).get('/.well-known/rdcp')
+      const res = await request(app).get('/.well-known/rdcp')
 
-    expect(res.status).toBe(200)
-    // draft-7 headers
-    expect(res.headers['ratelimit']).toBeDefined()
-    expect(res.headers['ratelimit-policy']).toBeDefined()
+      expect(res.status).toBe(200)
+      // draft-7 headers
+      expect(res.headers['ratelimit']).toBeDefined()
+      expect(res.headers['ratelimit-policy']).toBeDefined()
+    })
   })
 })

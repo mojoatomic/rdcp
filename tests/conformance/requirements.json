@@ -1,0 +1,5 @@
+{
+  "REQ-CTRL-001": "RDCP Demo App - PUT control (modern format)",
+  "REQ-CTRL-CLIENT-001": "RDCP Client SDK - putControl",
+  "REQ-SCHEMA-CTRL-001": "RDCP controlRequestSchema - modern format"
+}

@@ -49,6 +49,10 @@ function allowedTags() {
       'api-key',
       'mtls',
       'hybrid',
+      'auth',
+      'status',
+      'headers',
+      'read',
     ])
   }
   const level = String(d.security.level || 'basic')
