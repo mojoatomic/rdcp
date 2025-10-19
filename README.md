@@ -33,7 +33,13 @@ npx rdcp-conformance-badges   # writes reports/badges/*
   with:
     base-url: http://service:3000
   id: rdcp
-- run: echo "Pass rate: ${{ steps.rdcp.outputs.pass-rate }}%"
+# Use outputs in subsequent steps/jobs
+- run: echo "Pass rate: ${{ steps.rdcp.outputs.pass-rate }}%" && \
+       echo "Tests: ${{ steps.rdcp.outputs.tests-passed }}/${{ steps.rdcp.outputs.tests-total }}"
+
+# Gate deployment on pass-rate
+- if: ${{ steps.rdcp.outputs.pass-rate == '100' }}
+  run: echo "Conformance OK — proceed to deploy"
 ```
 
 Quick start (Client SDK)
