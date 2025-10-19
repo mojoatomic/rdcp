@@ -102,6 +102,7 @@
     "@rdcp.dev/admin-ui": "file:packages/rdcp-admin-ui",
     "@rdcp.dev/admin-ui-react": "file:packages/rdcp-admin-ui-react",
     "@rdcp.dev/core": "file:packages/rdcp-core",
+    "@rdcp.dev/server": "^2.2.1",
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "fastify-plugin": "^5.0.1",

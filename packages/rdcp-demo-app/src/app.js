@@ -7,7 +7,7 @@ const {
   debug,
   setTraceProvider,
   validateRDCPAuth,
-  createRDCPError
+  createRDCPError,
 } = require('@rdcp.dev/server')
 const { OpenTelemetryProvider } = require('@rdcp.dev/otel-plugin')
 
@@ -30,14 +30,14 @@ const rdcpMiddleware = adapters.express.createRDCPMiddleware({
   security: {
     level: 'basic',
     methods: ['api-key'],
-    required: true
+    required: true,
   },
   capabilities: {
     multiTenancy: true,
     performanceMetrics: true,
     temporaryControls: false,
-    auditTrail: true
-  }
+    auditTrail: true,
+  },
 })
 
 // Build and export the Express app (no listen here; useful for Supertest)
@@ -55,7 +55,12 @@ function enforceRDCPHeaders(req, res, next) {
   if (!method) {
     return res
       .status(401)
-      .json(createRDCPError('RDCP_AUTH_REQUIRED', 'Missing required header: X-RDCP-Auth-Method'))
+      .json(
+        createRDCPError(
+          'RDCP_AUTH_REQUIRED',
+          'Missing required header: X-RDCP-Auth-Method'
+        )
+      )
   }
   const validMethods = ['api-key', 'bearer', 'mtls', 'hybrid']
   if (!validMethods.includes(String(method))) {
@@ -66,7 +71,12 @@ function enforceRDCPHeaders(req, res, next) {
   if (!clientId) {
     return res
       .status(401)
-      .json(createRDCPError('RDCP_AUTH_REQUIRED', 'Missing required header: X-RDCP-Client-ID'))
+      .json(
+        createRDCPError(
+          'RDCP_AUTH_REQUIRED',
+          'Missing required header: X-RDCP-Client-ID'
+        )
+      )
   }
   return next()
 }
@@ -77,19 +87,20 @@ client.collectDefaultMetrics({ register })
 const reqCounter = new client.Counter({
   name: 'rdcp_demo_requests_total',
   help: 'Total HTTP requests',
-  labelNames: ['route', 'method', 'status']
+  labelNames: ['route', 'method', 'status'],
 })
 const reqDuration = new client.Histogram({
   name: 'rdcp_demo_request_duration_seconds',
   help: 'Request duration seconds',
   labelNames: ['route', 'method', 'status'],
-  buckets: [0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1]
+  buckets: [0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1],
 })
 register.registerMetric(reqCounter)
 register.registerMetric(reqDuration)
 
 function classifyRoute(path) {
-  if (path.startsWith('/.well-known/rdcp') || path.startsWith('/rdcp/')) return 'rdcp'
+  if (path.startsWith('/.well-known/rdcp') || path.startsWith('/rdcp/'))
+    return 'rdcp'
   if (path.startsWith('/api/')) return 'api'
   return 'other'
 }
@@ -116,20 +127,28 @@ app.use((req, res, next) => {
 
 // Tenant context decorator: add tenant object to RDCP responses when applicable
 function getTenantContext(req) {
-  const tenantId = String(req.params?.tenantId || req.headers['x-rdcp-tenant-id'] || '').trim()
-  const isolationLevel = String(req.headers['x-rdcp-isolation-level'] || 'organization').trim()
+  const tenantId = String(
+    req.params?.tenantId || req.headers['x-rdcp-tenant-id'] || ''
+  ).trim()
+  const isolationLevel = String(
+    req.headers['x-rdcp-isolation-level'] || 'organization'
+  ).trim()
   const scope = tenantId ? 'tenant-isolated' : 'global'
   return { id: tenantId || 'default', isolationLevel, scope }
 }
 
 function decorateTenantContext(req, res, next) {
   const origJson = res.json.bind(res)
-  res.json = (body) => {
+  res.json = body => {
     try {
       if (body && typeof body === 'object' && !Array.isArray(body)) {
         if (!body.protocol) body.protocol = 'rdcp/1.0'
-        const routeIsRDCP = req.path.startsWith('/rdcp/') || req.path.startsWith('/.well-known/rdcp')
-        const hasTenantHeader = !!(req.params?.tenantId || req.headers['x-rdcp-tenant-id'])
+        const routeIsRDCP =
+          req.path.startsWith('/rdcp/') ||
+          req.path.startsWith('/.well-known/rdcp')
+        const hasTenantHeader = !!(
+          req.params?.tenantId || req.headers['x-rdcp-tenant-id']
+        )
         if (routeIsRDCP && !body.tenant) {
           body.tenant = getTenantContext(req)
         } else if (hasTenantHeader && !body.tenant) {
@@ -150,8 +169,12 @@ function isTenantControlPath(path) {
   return path.startsWith('/rdcp/v1/tenants/') && path.endsWith('/control')
 }
 function rateLimitControl(req, res, next) {
-  if (!(req.path === '/rdcp/v1/control' || isTenantControlPath(req.path))) return next()
-  const windowMs = parseInt(process.env.RATE_LIMIT_CONTROL_WINDOW_MS || '2000', 10)
+  if (!(req.path === '/rdcp/v1/control' || isTenantControlPath(req.path)))
+    return next()
+  const windowMs = parseInt(
+    process.env.RATE_LIMIT_CONTROL_WINDOW_MS || '2000',
+    10
+  )
   const max = parseInt(process.env.RATE_LIMIT_CONTROL_MAX || '3', 10)
   const clientId = req.headers['x-rdcp-client-id'] || 'anonymous'
   let entry = rateState.get(clientId)
@@ -163,28 +186,32 @@ function rateLimitControl(req, res, next) {
   rateState.set(clientId, entry)
   if (entry.count > max) {
     res.setHeader('Retry-After', Math.ceil((entry.resetAt - now) / 1000))
-    return res.status(429).json(createRDCPError('RDCP_RATE_LIMITED', 'Too many control requests'))
+    return res
+      .status(429)
+      .json(createRDCPError('RDCP_RATE_LIMITED', 'Too many control requests'))
   }
   return next()
 }
 
 // Audit trail for control operations (structured log)
 function auditControl(req, res, next) {
-  const isGlobalControl = req.path === '/rdcp/v1/control' && req.method === 'POST'
-  const isTenantControl = isTenantControlPath(req.path) && req.method === 'POST'
+  const isGlobalControl =
+    req.path === '/rdcp/v1/control' && req.method === 'PUT'
+  const isTenantControl = isTenantControlPath(req.path) && req.method === 'PUT'
   if (!(isGlobalControl || isTenantControl)) return next()
   const origJson = res.json.bind(res)
-  res.json = (body) => {
+  res.json = body => {
     try {
       const entry = {
         event: 'RDCP_AUDIT',
         timestamp: new Date().toISOString(),
         action: req.body?.action,
         categories: req.body?.categories,
-        tenantId: req.params?.tenantId || req.headers['x-rdcp-tenant-id'] || 'default',
+        tenantId:
+          req.params?.tenantId || req.headers['x-rdcp-tenant-id'] || 'default',
         method: req.headers['x-rdcp-auth-method'] || 'unknown',
         clientId: req.headers['x-rdcp-client-id'] || null,
-        statusCode: res.statusCode
+        statusCode: res.statusCode,
       }
       console.info('RDCP_AUDIT', JSON.stringify(entry))
     } catch (_) {
@@ -197,7 +224,7 @@ function auditControl(req, res, next) {
 
 // RBAC example: for control endpoint under bearer auth, require 'control' scope
 function enforceControlRBAC(req, res, next) {
-  if (req.path !== '/rdcp/v1/control' || req.method !== 'POST') return next()
+  if (req.path !== '/rdcp/v1/control' || req.method !== 'PUT') return next()
   const method = String(req.headers['x-rdcp-auth-method'] || '')
   if (method !== 'bearer') return next()
   try {
@@ -214,7 +241,14 @@ function enforceControlRBAC(req, res, next) {
     if (!result?.valid || !allowed) {
       return res
         .status(403)
-        .json(createRDCPError('RDCP_FORBIDDEN', tenantId ? 'Insufficient scope for tenant' : 'Insufficient scope: control'))
+        .json(
+          createRDCPError(
+            'RDCP_FORBIDDEN',
+            tenantId
+              ? 'Insufficient scope for tenant'
+              : 'Insufficient scope: control'
+          )
+        )
     }
     return next()
   } catch (e) {
@@ -232,7 +266,8 @@ const ttlTimers = new Map()
 
 function parseDurationToMs(input) {
   if (!input) return 0
-  if (typeof input === 'number' && Number.isFinite(input)) return Math.max(0, input)
+  if (typeof input === 'number' && Number.isFinite(input))
+    return Math.max(0, input)
   const s = String(input).trim()
   const m = s.match(/^(\d+)(ms|s|m)?$/)
   if (!m) return 0
@@ -252,8 +287,11 @@ function scheduleCategoryTTL(tenantId, category, ms) {
   if (ms <= 0) return
   const t = setTimeout(() => {
     try {
-      const cur = tenantSettings.get(tenantId) || { features: [], categories: [] }
-      cur.categories = (cur.categories || []).filter((c) => c !== category)
+      const cur = tenantSettings.get(tenantId) || {
+        features: [],
+        categories: [],
+      }
+      cur.categories = (cur.categories || []).filter(c => c !== category)
       tenantSettings.set(tenantId, cur)
     } finally {
       ttlTimers.delete(key)
@@ -269,12 +307,19 @@ function requireTenantScope(scopeBase) {
     if (method !== 'bearer') {
       return res
         .status(401)
-        .json(createRDCPError('RDCP_AUTH_REQUIRED', 'Bearer token required for tenant route'))
+        .json(
+          createRDCPError(
+            'RDCP_AUTH_REQUIRED',
+            'Bearer token required for tenant route'
+          )
+        )
     }
     try {
       const result = validateRDCPAuth(req)
       if (!result?.valid) {
-        return res.status(401).json(createRDCPError('RDCP_AUTH_REQUIRED', 'Invalid bearer token'))
+        return res
+          .status(401)
+          .json(createRDCPError('RDCP_AUTH_REQUIRED', 'Invalid bearer token'))
       }
       const scopes = Array.isArray(result?.scopes) ? result.scopes : []
       const tenantId = String(req.params?.tenantId || '').trim()
@@ -291,13 +336,17 @@ function requireTenantScope(scopeBase) {
           .json(
             createRDCPError(
               'RDCP_FORBIDDEN',
-              tenantId ? `Insufficient scope for tenant ${tenantId}` : `Insufficient scope: ${scopeBase}`
+              tenantId
+                ? `Insufficient scope for tenant ${tenantId}`
+                : `Insufficient scope: ${scopeBase}`
             )
           )
       }
       return next()
     } catch (e) {
-      return res.status(401).json(createRDCPError('RDCP_AUTH_REQUIRED', 'Invalid bearer token'))
+      return res
+        .status(401)
+        .json(createRDCPError('RDCP_AUTH_REQUIRED', 'Invalid bearer token'))
     }
   }
 }
@@ -305,45 +354,66 @@ function requireTenantScope(scopeBase) {
 // Apply tenant context decorator before defining routes so it affects all handlers
 app.use(decorateTenantContext)
 // Tenant routes
-app.get('/rdcp/v1/tenants/:tenantId/settings', requireTenantScope('read'), (req, res) => {
-  const tenantId = String(req.params.tenantId)
-  const data = tenantSettings.get(tenantId) || { features: [], categories: [] }
-  res.json({ tenantId, settings: data, protocol: 'rdcp/1.0', requestId: req.id })
-})
-
-app.post('/rdcp/v1/tenants/:tenantId/control', requireTenantScope('control'), (req, res) => {
-  const tenantId = String(req.params.tenantId)
-  const { action, categories, options } = req.body || {}
-  const cur = tenantSettings.get(tenantId) || { features: [], categories: [] }
-  const cats = Array.isArray(categories) ? categories : []
-
-  if (action === 'enable') {
-    cur.categories = Array.from(new Set([...(cur.categories || []), ...cats]))
-    // Handle temporary controls with TTL
-    const temporary = !!(options && options.temporary)
-    const durationMs = parseDurationToMs(options && options.duration)
-    if (temporary && durationMs > 0) {
-      for (const c of cats) scheduleCategoryTTL(tenantId, c, durationMs)
+app.get(
+  '/rdcp/v1/tenants/:tenantId/settings',
+  requireTenantScope('read'),
+  (req, res) => {
+    const tenantId = String(req.params.tenantId)
+    const data = tenantSettings.get(tenantId) || {
+      features: [],
+      categories: [],
     }
-  } else if (action === 'disable') {
-    // Clear any pending TTL timers for disabled categories
-    for (const c of cats) {
-      const key = `${tenantId}:${c}`
-      const t = ttlTimers.get(key)
-      if (t) {
-        clearTimeout(t)
-        ttlTimers.delete(key)
+    res.json({
+      tenantId,
+      settings: data,
+      protocol: 'rdcp/1.0',
+      requestId: req.id,
+    })
+  }
+)
+
+app.post(
+  '/rdcp/v1/tenants/:tenantId/control',
+  requireTenantScope('control'),
+  (req, res) => {
+    const tenantId = String(req.params.tenantId)
+    const { action, categories, options } = req.body || {}
+    const cur = tenantSettings.get(tenantId) || { features: [], categories: [] }
+    const cats = Array.isArray(categories) ? categories : []
+
+    if (action === 'enable') {
+      cur.categories = Array.from(new Set([...(cur.categories || []), ...cats]))
+      // Handle temporary controls with TTL
+      const temporary = !!(options && options.temporary)
+      const durationMs = parseDurationToMs(options && options.duration)
+      if (temporary && durationMs > 0) {
+        for (const c of cats) scheduleCategoryTTL(tenantId, c, durationMs)
       }
+    } else if (action === 'disable') {
+      // Clear any pending TTL timers for disabled categories
+      for (const c of cats) {
+        const key = `${tenantId}:${c}`
+        const t = ttlTimers.get(key)
+        if (t) {
+          clearTimeout(t)
+          ttlTimers.delete(key)
+        }
+      }
+      cur.categories = (cur.categories || []).filter(c => !cats.includes(c))
     }
-    cur.categories = (cur.categories || []).filter((c) => !cats.includes(c))
+    tenantSettings.set(tenantId, cur)
+    const response = {
+      success: true,
+      tenantId,
+      protocol: 'rdcp/1.0',
+      requestId: req.id,
+    }
+    if (options && options.temporary && options.duration) {
+      response.temporary = { enabled: true, duration: String(options.duration) }
+    }
+    res.json(response)
   }
-  tenantSettings.set(tenantId, cur)
-  const response = { success: true, tenantId, protocol: 'rdcp/1.0', requestId: req.id }
-  if (options && options.temporary && options.duration) {
-    response.temporary = { enabled: true, duration: String(options.duration) }
-  }
-  res.json(response)
-})
+)
 
 // Mount RDCP middleware (handles /.well-known/rdcp and /rdcp/v1/*)
 app.use(enforceRDCPHeaders)
@@ -359,7 +429,11 @@ apiRouter.get('/users', async (req, res) => {
   debug.api('Listing users', { requestId: req.id })
   debug.database('Fetching users from database')
   await new Promise(r => setTimeout(r, 10)) // Simulate DB call
-  res.json({ users: [{ id: '1', name: 'Ada' }], protocol: 'rdcp/1.0', requestId: req.id })
+  res.json({
+    users: [{ id: '1', name: 'Ada' }],
+    protocol: 'rdcp/1.0',
+    requestId: req.id,
+  })
 })
 
 apiRouter.post('/reports', async (req, res) => {

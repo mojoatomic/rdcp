@@ -29,8 +29,9 @@ export default defineConfig([
       reportUnusedDisableDirectives: 'off',
     },
   },
+  // Apply TypeScript-specific rules only to TypeScript files
   {
-    files: ['**/*.ts', '**/*.js'],
+    files: ['**/*.ts'],
     languageOptions: {
       parser: tsParser,
       ecmaVersion: 'latest',
@@ -73,6 +74,50 @@ export default defineConfig([
       'no-console': 'warn',
       'prefer-const': 'error',
       'no-var': 'error',
+    },
+  },
+  // JS files: use JS recommended rules with Node globals; no TS plugin
+  {
+    files: ['**/*.js'],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'script',
+      globals: {
+        process: 'readonly',
+        console: 'readonly',
+        Buffer: 'readonly',
+        require: 'readonly',
+        module: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        fetch: 'readonly',
+      },
+    },
+    plugins: {
+      prettier: prettierPlugin,
+    },
+    rules: {
+      'prettier/prettier': 'error',
+      'prefer-const': 'error',
+      'no-var': 'error',
+      // Allow unused vars prefixed with _ in JS (demo code convenience)
+      'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '.*' }],
+      // Do not enforce TS-centric rules on JS
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/prefer-nullish-coalescing': 'off',
+      '@typescript-eslint/prefer-optional-chain': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
+    },
+  },
+  // Demo app: allow console logs
+  {
+    files: ['packages/rdcp-demo-app/**/*.js'],
+    rules: {
+      'no-console': 'off',
     },
   },
   // For repository root test files, disable projectService to avoid tsconfig include requirement
