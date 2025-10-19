@@ -54,27 +54,66 @@ function svgBadge(label, message, color) {
 </svg>`
 }
 
-function main() {
-  const results = readResults(RESULTS)
-  const passed = Number(results?.summary?.passed || 0)
-  const total = Number(results?.summary?.total || 0)
+function collectCases(results) {
+  const out = []
+  const suites = Array.isArray(results.suites) ? results.suites : []
+  for (const s of suites) {
+    const inner = Array.isArray(s.suites) ? s.suites : []
+    for (const t of inner) {
+      out.push({
+        status: t.status || 'passed',
+        tags: Array.isArray(t.tags) ? t.tags.map(String) : [],
+        title: t.title || '',
+        file: s.file || '',
+      })
+    }
+  }
+  return out
+}
+
+function writeBadgeFiles(prefix, label, passed, total) {
   const failed = Math.max(0, total - passed)
   const color = colorFor(failed)
-
-  ensureDir(OUT_DIR)
-
-  // Shields JSON
   const shields = {
     schemaVersion: 1,
-    label: 'rdcp conformance',
+    label,
     message: `${passed}/${total}`,
     color,
   }
-  fs.writeFileSync(path.join(OUT_DIR, 'rdcp-summary.json'), JSON.stringify(shields, null, 2))
+  fs.writeFileSync(path.join(OUT_DIR, `${prefix}.json`), JSON.stringify(shields, null, 2))
+  fs.writeFileSync(path.join(OUT_DIR, `${prefix}.svg`), svgBadge(label.toUpperCase(), `${passed}/${total}`, color))
+}
 
-  // SVG badge
-  const svg = svgBadge('RDCP', `${passed}/${total}`, color)
-  fs.writeFileSync(path.join(OUT_DIR, 'rdcp-summary.svg'), svg)
+function summarize(cases, filterFn = () => true) {
+  const list = cases.filter(filterFn)
+  const total = list.length
+  const passed = list.filter(c => c.status === 'passed').length
+  return { passed, total }
+}
+
+function main() {
+  const results = readResults(RESULTS)
+  ensureDir(OUT_DIR)
+
+  const all = collectCases(results)
+  const overall = summarize(all)
+  writeBadgeFiles('rdcp-summary', 'rdcp conformance', overall.passed, overall.total)
+
+  // Profiles
+  const profiles = ['basic', 'standard', 'enterprise']
+  for (const p of profiles) {
+    const { passed, total } = summarize(all, c => c.tags.includes(p))
+    writeBadgeFiles(`profile-${p}`, `${p}`, passed, total)
+  }
+
+  // Capabilities/areas
+  const areas = [
+    'control','jwks','keyring','jwt','admin','etag','util','otel','tenant','ttl','audit','rate-limit','client','integration','status','auth','headers','metrics','put','schema'
+  ]
+  for (const a of areas) {
+    const { passed, total } = summarize(all, c => c.tags.includes(a))
+    writeBadgeFiles(`cap-${a}`, `${a}`, passed, total)
+  }
 
   console.log(`Badges written to ${OUT_DIR}`)
 }
