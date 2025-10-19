@@ -489,8 +489,16 @@ export class RDCPServer {
     if ('key' in requestBody && requestBody.key) {
       const { key, value, options: _options } = requestBody
 
-      // For modern format, we'll implement simplified key-value configuration
-      const _changes: ControlChange[] = [
+      // Apply change to tenant config when key matches a known category
+      const tenantConfig = getTenantDebugConfig(tenantContext.tenantId)
+      if (key in tenantConfig && typeof value === 'boolean') {
+        const updatedConfig: Partial<TenantDebugConfig> = {
+          [key]: value,
+        }
+        setTenantDebugConfig(tenantContext.tenantId, updatedConfig)
+      }
+
+      const changes: ControlChange[] = [
         {
           category: key,
           action: value ? 'enabled' : 'disabled',
@@ -499,28 +507,19 @@ export class RDCPServer {
         },
       ]
 
-      // Simple key-value response for modern format
-      const modernResponse: {
-        protocol: 'rdcp/1.0'
-        timestamp: string
-        changes: Array<{
-          key: string
-          previous: boolean
-          value: boolean | number | string
-        }>
-      } = {
-        protocol: 'rdcp/1.0' as const,
+      const response: RDCPControlResponse = {
+        protocol: 'rdcp/1.0',
         timestamp: new Date().toISOString(),
-        changes: [
-          {
-            key: key,
-            previous: false, // simplified - would need proper state tracking
-            value: value,
-          },
-        ],
+        tenant: {
+          id: tenantContext.tenantId,
+          isolationLevel: tenantContext.isolationLevel,
+          scope: tenantContext.tenantId ? 'tenant-isolated' : 'global',
+        },
+        changes,
+        status: 'success',
       }
 
-      return modernResponse
+      return response
     }
 
     // Legacy format: {action, categories, options}
