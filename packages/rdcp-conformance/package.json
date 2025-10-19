@@ -1,0 +1,18 @@
+{
+  "name": "@rdcp.dev/conformance",
+  "version": "0.1.0",
+  "description": "RDCP Conformance CLI: discovery, reports (JUnit/Badges)",
+  "license": "Apache-2.0",
+  "type": "module",
+  "bin": {
+    "rdcp-conformance": "bin/rdcp-conformance.mjs",
+    "rdcp-conformance-junit": "bin/conformance-junit.mjs",
+    "rdcp-conformance-badges": "bin/conformance-badges.mjs"
+  },
+  "files": [
+    "bin"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
